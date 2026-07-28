@@ -3,6 +3,8 @@
 ## Tools 
 *   **(Antigravity) Google Pro** 
 *   **GitHub Copilot** 
+*   **Gemini on the web (for extra Clarifyications, prompt editing/polish & code reviewing)**
+
 
 # Exact Models Used 
 - Gemini 3.1 Pro (High)
