@@ -1,0 +1,298 @@
+import * as THREE from 'three';
+import type { IExperiment, ParameterSchema } from './IExperiment.ts';
+
+// ---------------------------------------------------------------------------
+// Pendulum — Experiment A
+// ---------------------------------------------------------------------------
+// Models a simple pendulum using the exact equation of motion:
+//
+//   α = -(g / L) * sin(θ) - b * ω
+//
+// where:
+//   θ  — angle from vertical (radians, positive = right)
+//   ω  — angular velocity (rad/s)
+//   α  — angular acceleration (rad/s²)
+//   g  — gravitational acceleration (m/s²)
+//   L  — pendulum length (m)
+//   b  — linear damping coefficient
+//
+// Integration: Semi-Implicit Euler (velocity updated first, then position)
+//   ω(n+1) = ω(n) + α(n) * dt
+//   θ(n+1) = θ(n) + ω(n+1) * dt
+//
+// Zero-crossing detection: each time θ changes sign the pendulum has
+// completed half a swing; two consecutive crossings = one full period.
+// ---------------------------------------------------------------------------
+
+export class Pendulum implements IExperiment {
+  // ── IExperiment identity ──────────────────────────────────────────────────
+
+  readonly id = 'pendulum';
+  readonly name = 'Simple Pendulum';
+  readonly description =
+    'A simple pendulum demonstrating the exact (non-linear) equation of motion ' +
+    'with optional damping, integrated via Semi-Implicit Euler.';
+
+  // ── Parameter schema ──────────────────────────────────────────────────────
+
+  readonly schema: Record<string, ParameterSchema> = {
+    length: {
+      description: 'Pendulum Length',
+      unit: 'm',
+      min: 0.1,
+      max: 10,
+      default: 2,
+      step: 0.1,
+    },
+    gravity: {
+      description: 'Gravitational Acceleration',
+      unit: 'm/s²',
+      min: 0,
+      max: 20,
+      default: 9.81,
+      step: 0.01,
+    },
+    initialAngle: {
+      description: 'Initial Angle',
+      unit: '°',
+      min: -180,
+      max: 180,
+      default: 45,
+      step: 1,
+    },
+    damping: {
+      description: 'Damping Coefficient',
+      unit: '',
+      min: 0,
+      max: 5,
+      default: 0,
+      step: 0.01,
+    },
+  };
+
+  // ── Physics state ─────────────────────────────────────────────────────────
+
+  /** Current angle from vertical (radians). Positive = right of vertical. */
+  private theta: number = 0;
+
+  /** Current angular velocity (rad/s). */
+  private omega: number = 0;
+
+  /** Elapsed simulation time (seconds). */
+  private time: number = 0;
+
+  // ── Period measurement via zero-crossing detection ─────────────────────────
+
+  /** Sign of theta on the previous tick (+1, -1, or 0). */
+  private prevSign: number = 0;
+
+  /** Simulation time of the last zero-crossing (s). */
+  private lastCrossingTime: number = 0;
+
+  /** Whether we have recorded at least one crossing (to anchor the period). */
+  private hasCrossing: boolean = false;
+
+  /** The most recently measured full period (one full swing = 2 crossings, s). */
+  private measuredPeriod: number = 0;
+
+  /** Time of the crossing before `lastCrossingTime` — used to compute full period. */
+  private prevCrossingTime: number = 0;
+
+  // ── Three.js objects ──────────────────────────────────────────────────────
+
+  /** Root anchor point — always at world origin (0, 0, 0). */
+  private pivot: THREE.Object3D | null = null;
+
+  /** The string, rendered as a two-point Line. */
+  private stringLine: THREE.Line | null = null;
+  private stringGeometry: THREE.BufferGeometry | null = null;
+  private stringMaterial: THREE.LineBasicMaterial | null = null;
+
+  /** The pendulum bob. */
+  private bobMesh: THREE.Mesh | null = null;
+  private bobGeometry: THREE.SphereGeometry | null = null;
+  private bobMaterial: THREE.MeshStandardMaterial | null = null;
+
+  /** Reference to the scene — needed so `dispose()` can remove objects. */
+  private scene: THREE.Scene | null = null;
+
+  // ── IExperiment lifecycle ─────────────────────────────────────────────────
+
+  setup(scene: THREE.Scene): void {
+    this.scene = scene;
+
+    // ── String ───────────────────────────────────────────────────────────────
+    // Two vertices: pivot (top) and bob (bottom). Updated every tick.
+    this.stringGeometry = new THREE.BufferGeometry();
+    // Placeholder positions — will be set on the first update() call.
+    const positions = new Float32Array(6); // 2 × vec3
+    this.stringGeometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(positions, 3),
+    );
+    this.stringMaterial = new THREE.LineBasicMaterial({
+      color: 0xd4af7a, // warm brass — industrial aesthetic
+      linewidth: 1,    // note: WebGL only supports linewidth=1 on most GPUs
+    });
+    this.stringLine = new THREE.Line(this.stringGeometry, this.stringMaterial);
+    scene.add(this.stringLine);
+
+    // ── Bob ──────────────────────────────────────────────────────────────────
+    this.bobGeometry = new THREE.SphereGeometry(0.18, 32, 32);
+    this.bobMaterial = new THREE.MeshStandardMaterial({
+      color: 0x22aaff,        // electric blue
+      metalness: 0.6,
+      roughness: 0.25,
+      emissive: 0x003355,
+      emissiveIntensity: 0.3,
+    });
+    this.bobMesh = new THREE.Mesh(this.bobGeometry, this.bobMaterial);
+    this.bobMesh.castShadow = true;
+    scene.add(this.bobMesh);
+
+    // ── Pivot marker (small sphere at origin) ─────────────────────────────────
+    this.pivot = new THREE.Object3D();
+    this.pivot.position.set(0, 0, 0);
+    scene.add(this.pivot);
+
+    // Initialise positions with schema defaults so the scene is correct before
+    // the first physics tick fires.
+    const defaultParams: Record<string, number> = {};
+    for (const [key, s] of Object.entries(this.schema)) {
+      defaultParams[key] = s.default;
+    }
+    this.reset(defaultParams);
+  }
+
+  /**
+   * Advance the simulation by one fixed timestep.
+   *
+   * Semi-Implicit Euler (velocity-first) keeps the pendulum numerically stable
+   * for oscillating systems compared to Explicit Euler.
+   */
+  update(dt: number, params: Record<string, number>): void {
+    const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
+    const g = params['gravity'] ?? this.schema['gravity'].default;
+    const b = params['damping'] ?? this.schema['damping'].default;
+
+    // ── Semi-Implicit Euler integration ───────────────────────────────────────
+    const alpha = -(g / L) * Math.sin(this.theta) - b * this.omega;
+    this.omega += alpha * dt;    // update velocity first
+    this.theta += this.omega * dt; // then position
+
+    this.time += dt;
+
+    // ── Zero-crossing detection for period measurement ────────────────────────
+    const currentSign = Math.sign(this.theta);
+    if (currentSign !== 0 && this.prevSign !== 0 && currentSign !== this.prevSign) {
+      // Sign changed → pendulum crossed the vertical
+      if (this.hasCrossing) {
+        // Two crossings = one full period
+        this.measuredPeriod = (this.time - this.prevCrossingTime) * 2;
+      }
+      this.prevCrossingTime = this.lastCrossingTime;
+      this.lastCrossingTime = this.time;
+      this.hasCrossing = true;
+    }
+    this.prevSign = currentSign;
+
+    // ── Update 3D mesh positions ──────────────────────────────────────────────
+    this.updateMeshes(L);
+  }
+
+  reset(params?: Record<string, number>): void {
+    const initialAngleDeg =
+      params?.['initialAngle'] ?? this.schema['initialAngle'].default;
+
+    this.theta = (initialAngleDeg * Math.PI) / 180;
+    this.omega = 0;
+    this.time = 0;
+
+    // Reset period tracking
+    this.prevSign = Math.sign(this.theta);
+    this.lastCrossingTime = 0;
+    this.prevCrossingTime = 0;
+    this.hasCrossing = false;
+    this.measuredPeriod = 0;
+
+    // Reposition meshes to initial angle without recreating them
+    const L = params?.['length'] ?? this.schema['length'].default;
+    this.updateMeshes(L);
+  }
+
+  getMeasurements(): Record<string, number> {
+    // Retrieve current params from the schema defaults as a fallback.
+    // In practice these are set by Physics.currentParams each tick.
+    const L = this.schema['length'].default;
+    const g = this.schema['gravity'].default;
+
+    const theoreticalPeriod =
+      g > 0 ? 2 * Math.PI * Math.sqrt(L / g) : 0;
+
+    return {
+      angle_deg: (this.theta * 180) / Math.PI,
+      omega_rads: this.omega,
+      time_s: this.time,
+      measured_period_s: this.measuredPeriod,
+      theoretical_period_s: theoreticalPeriod,
+    };
+  }
+
+  dispose(): void {
+    if (this.scene !== null) {
+      if (this.stringLine !== null) this.scene.remove(this.stringLine);
+      if (this.bobMesh !== null) this.scene.remove(this.bobMesh);
+      if (this.pivot !== null) this.scene.remove(this.pivot);
+    }
+
+    this.stringGeometry?.dispose();
+    this.stringMaterial?.dispose();
+    this.bobGeometry?.dispose();
+    this.bobMaterial?.dispose();
+
+    this.stringLine = null;
+    this.stringGeometry = null;
+    this.stringMaterial = null;
+    this.bobMesh = null;
+    this.bobGeometry = null;
+    this.bobMaterial = null;
+    this.pivot = null;
+    this.scene = null;
+  }
+
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Convert the current theta and length into 3D positions and push them
+   * to the string geometry and bob mesh.
+   *
+   * Coordinate convention:
+   *   • Pivot at world origin (0, 0, 0)
+   *   • Positive Y is up
+   *   • Pendulum swings in the XY plane
+   *
+   *   bobX = L * sin(θ)
+   *   bobY = -L * cos(θ)   (negative because bob hangs below pivot)
+   */
+  private updateMeshes(L: number): void {
+    const bobX = L * Math.sin(this.theta);
+    const bobY = -L * Math.cos(this.theta);
+    const bobZ = 0;
+
+    // Update bob position
+    if (this.bobMesh !== null) {
+      this.bobMesh.position.set(bobX, bobY, bobZ);
+    }
+
+    // Update string: vertex 0 = pivot (0,0,0), vertex 1 = bob
+    if (this.stringGeometry !== null) {
+      const pos = this.stringGeometry.attributes['position'] as THREE.BufferAttribute;
+      // Pivot vertex
+      pos.setXYZ(0, 0, 0, 0);
+      // Bob vertex
+      pos.setXYZ(1, bobX, bobY, bobZ);
+      pos.needsUpdate = true;
+      this.stringGeometry.computeBoundingSphere();
+    }
+  }
+}
