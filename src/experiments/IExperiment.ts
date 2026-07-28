@@ -121,8 +121,13 @@ export interface IExperiment {
    * Reuse existing GPU resources — do NOT dispose and re-create meshes.
    * Called when the user clicks the Reset button or changes a parameter
    * that requires a full restart.
+   *
+   * @param params - Optional current parameter snapshot. When provided,
+   *                 the experiment should use `params["initialAngle"]` etc.
+   *                 rather than hard-coded schema defaults, so the reset
+   *                 respects the user's current slider positions.
    */
-  reset(): void;
+  reset(params?: Record<string, number>): void;
 
   /**
    * Return a snapshot of observable quantities for the current simulation state.
