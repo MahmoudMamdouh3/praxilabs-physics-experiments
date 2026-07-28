@@ -179,9 +179,18 @@ export class UI {
     graphLabel.textContent = 'Measurement Graph';
     graphPanel.appendChild(graphLabel);
 
+    // Wrap in a relative container with explicit CSS dimensions.
+    // Chart.js reads the container size to set the canvas backing-store
+    // resolution to containerWidth × devicePixelRatio, eliminating blur
+    // on HiDPI / Retina screens when maintainAspectRatio is false.
+    const chartWrapper = document.createElement('div');
+    chartWrapper.style.cssText = 'position:relative;width:100%;height:130px;';
+
     this.chartCanvas = document.createElement('canvas');
-    this.chartCanvas.style.cssText = 'width:100%;height:130px;display:block;';
-    graphPanel.appendChild(this.chartCanvas);
+    // Do NOT set CSS width/height on the canvas itself — Chart.js controls
+    // both the CSS size and the backing-store size via the wrapper dimensions.
+    chartWrapper.appendChild(this.chartCanvas);
+    graphPanel.appendChild(chartWrapper);
     this.shell.appendChild(graphPanel);
 
     this.initChart();
@@ -383,14 +392,29 @@ export class UI {
     });
     bar.appendChild(stepBtn);
 
-    // Reset
+    // Reset — restores schema defaults, rebuilds sliders, and resets experiment state
     const resetBtn = this.button('↺ Reset', TOKEN.textMuted);
     resetBtn.addEventListener('click', () => {
       const exp = this.engine.getActiveExperiment();
       if (exp === null) return;
-      this.physics.reset();
+
+      // 1. Re-seed physics params map with every schema default value.
+      const defaults: Record<string, number> = {};
+      for (const [k, s] of Object.entries(exp.schema)) defaults[k] = s.default;
+      this.physics.setParams(defaults);
+
+      // 2. Reset the experiment physics state using the fresh defaults.
+      exp.reset(this.physics.currentParams);
+
+      // 3. Rebuild the entire parameter panel so all sliders/inputs snap
+      //    back to their default positions visually.
+      this.buildParameterPanel(exp.schema);
+
+      // 4. Clear the graph buffer.
       this.resetGraph();
-      exp.reset();
+
+      // 5. Reset the accumulator so no leftover partial-tick debt carries over.
+      this.physics.reset();
     });
     bar.appendChild(resetBtn);
 

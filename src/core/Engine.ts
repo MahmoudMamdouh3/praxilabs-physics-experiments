@@ -62,8 +62,8 @@ export class Engine {
       0.01,                                        // near clip
       1_000,                                       // far clip
     );
-    this.camera.position.set(0, 2, 10);
-    this.camera.lookAt(0, 0, 0);
+    this.camera.position.set(0, -2, 24);
+    this.camera.lookAt(0, -4, 0);
 
     // ── Renderer ─────────────────────────────────────────────────────────────
     this.renderer = new THREE.WebGLRenderer({
