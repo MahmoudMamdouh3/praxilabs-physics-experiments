@@ -42,4 +42,10 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
 ├── tests/                  # Vitest unit tests for physics logic
 ├── AI_USAGE.md             # Documentation of AI prompts, workflows, and corrections
 └── package.json            
-\`\`\`
+```
+
+## Known Limitations & Future Work
+If I had more time outside of the 2-3 day timebox, I would implement the following:
+1.  **Runge-Kutta 4 (RK4) Integrator Option:** While Semi-Implicit Euler is fantastic for energy conservation in simple oscillators, an RK4 integration option would provide higher baseline precision for more complex, non-linear chaotic systems (like a double pendulum).
+2.  **Comparison Mode:** Implementing the bonus requirement to run two parameter sets side-by-side. This would require abstracting the `Engine.ts` to manage an array of active experiments rather than a singleton, and splitting the Three.js viewport / UI panel.
+3.  **Advanced 3D Interactivity:** Currently, the parameter schema completely drives the physics state. I would add `THREE.Raycaster` support so users could click and drag the pendulum bob or spring mass directly in the 3D canvas to set the initial displacement, which would natively bi-directionally sync back to the HTML sliders.
