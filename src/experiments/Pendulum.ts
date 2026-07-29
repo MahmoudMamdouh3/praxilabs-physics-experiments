@@ -102,6 +102,8 @@ export class Pendulum implements IExperiment {
   /** The most recently measured full period (one full swing = 2 crossings, s). */
   private measuredPeriod: number = 0;
 
+  private hasRenderedFinalLap: boolean = false;
+
   /** Time of the crossing before `lastCrossingTime` — used to compute full period. */
   private prevCrossingTime: number = 0;
 
@@ -290,9 +292,12 @@ export class Pendulum implements IExperiment {
   render(): void {
     this.updateMeshes(this.currentL);
     
-    // Only update the UI/Canvas once per visual frame, safely separated from physics.
-    if (this.isTiming || this.lapCount >= 20) {
+    if (this.isTiming) {
       this.updateStopwatchUI();
+    } else if (this.lapCount >= 20 && !this.hasRenderedFinalLap) {
+      // Render the final green "success" state exactly once
+      this.updateStopwatchUI();
+      this.hasRenderedFinalLap = true;
     }
   }
 
@@ -317,8 +322,10 @@ export class Pendulum implements IExperiment {
     this.hasCrossing = false;
     this.measuredPeriod = 0;
     
+    // Virtual stopwatch
     this.lapCount = 0;
     this.isTiming = true;
+    this.hasRenderedFinalLap = false;
     this.stopwatchTime = 0;
     this.updateStopwatchUI();
 
