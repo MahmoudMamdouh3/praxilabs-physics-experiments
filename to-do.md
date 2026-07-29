@@ -29,7 +29,7 @@
 ## Physics & Experiments
 - [x] Fix the pendulum clipping behind the measurement graph at maximum length.
 - [x] Address the 180-degree pendulum instability (clamped maximum angle to 179.9°).
-- [ ] Upgrade the simple pendulum to a "real experiment" (e.g., add a virtual clock/timer on screen to imitate a real lab).  --> similar to the praxilabs real exaple prvided in hear --> E:\Praxilabs\praxilabs-physics-experiments\references\NoteGPT_Subtitles_Simple Pendulum Experiment  What Really Controls the Swing.txt
+- [x] Upgrade the simple pendulum to a "real experiment" (e.g., add a virtual clock/timer on screen to imitate a real lab).  --> similar to the praxilabs real exaple prvided in hear --> E:\Praxilabs\praxilabs-physics-experiments\references\NoteGPT_Subtitles_Simple Pendulum Experiment  What Really Controls the Swing.txt
 - [ ] Consider adding a warning or boundary effect when a parameter value produces a degenerate result (e.g., 180° angle).
 
 > **Note:** Future enhancements have been moved to [docs/future_enhancements.md](docs/future_enhancements.md).

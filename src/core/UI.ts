@@ -77,12 +77,48 @@ export class UI {
   private readonly graphPoints: Array<{ x: number; y: number }> = [];
   private graphKey: string = '';  // which measurement key to plot on Y axis
 
-  // ── Readout rows ───────────────────────────────────────────────────────────
+  private showToast(message: string, type: 'warning' | 'info' = 'warning'): void {
+    if (!this.toastContainer) return;
+    
+    const toast = this.el('div', {
+      background: type === 'warning' ? 'rgba(255, 107, 53, 0.95)' : 'rgba(34, 170, 255, 0.95)',
+      color: '#fff',
+      padding: '10px 20px',
+      borderRadius: '6px',
+      fontFamily: TOKEN.fontSans,
+      fontSize: '13px',
+      fontWeight: '600',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+      backdropFilter: 'blur(4px)',
+      opacity: '0',
+      transition: 'opacity 0.3s ease-in-out',
+      pointerEvents: 'none',
+    });
+    toast.textContent = type === 'warning' ? `⚠️ ${message}` : `ℹ️ ${message}`;
+    this.toastContainer.appendChild(toast);
+    
+    // Trigger fade in
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+    });
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 300);
+    }, 4000);
+  }
+
+  // ── Experiment Loading ───────────────────────────────────────────────────────────
   // Key → the value <span> element. Cleared AND DOM-removed together in clearReadouts().
   private readoutRows: Map<string, HTMLSpanElement> = new Map();
 
   // ── CSV History ────────────────────────────────────────────────────────────
   private measurementHistory: Array<Record<string, number>> = [];
+
+  // ── Toast System ───────────────────────────────────────────────────────────
+  private toastContainer: HTMLDivElement | null = null;
 
   // Heading node kept as a reference so clearReadouts() can restore it efficiently.
   private readonly readoutsHeading: HTMLDivElement;
@@ -164,6 +200,21 @@ export class UI {
 
     // Experiment switcher
     this.sidePanel.appendChild(this.buildSwitcher());
+
+    // ── Toast Container ───────────────────────────────────────────────────────
+    this.toastContainer = this.el('div', {
+      position: 'absolute',
+      top: '100px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      pointerEvents: 'none',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '8px',
+      zIndex: '100',
+    });
+    this.shell.appendChild(this.toastContainer);
 
     // Controls bar — build returns the three mutable controls we need for Reset.
     const { bar } = this.buildControlsBar();
@@ -564,12 +615,15 @@ export class UI {
     tsLabel.id = 'ui-ts-label';
     tsRow.appendChild(tsLabel);
 
-    tsSlider.addEventListener('input', () => {
-      const scale = parseFloat(tsSlider.value);
-      this.physics.setTimeScale(scale);
-      tsLabel.textContent = `${scale}×`;
+    tsSlider.addEventListener('input', (e: Event) => {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      this.physics.setTimeScale(val);
+      tsLabel.textContent = `${val}×`;
+      this.styleSlider(tsSlider);
+      if (val === 0) {
+        this.showToast('Time scale is 0. The simulation is frozen.', 'warning');
+      }
     });
-
     bar.appendChild(tsRow);
 
     // ── Wire up Reset now that all controls exist ─────────────────────────────
@@ -667,24 +721,41 @@ export class UI {
       outline:none;text-align:right;
     `;
 
-    const syncParam = (value: number) => {
-      const clamped = Math.min(s.max, Math.max(s.min, value));
-      slider.value = String(clamped);
-      numInput.value = String(clamped);
-      valueDisplay.textContent = `${clamped.toFixed(2)} ${s.unit}`;
-      this.styleSlider(slider); // refresh track fill
+    slider.addEventListener('input', (e: Event) => {
+      const val = parseFloat((e.target as HTMLInputElement).value);
+      
+      // Update our stored params
+      this.physics.currentParams[key] = val;
+      
+      // Format to maximum 2 decimals for display
+      valueDisplay.textContent = `${val.toFixed(2)} ${s.unit}`;
+      
+      // Fill the track to the left of the thumb
+      this.styleSlider(slider);
 
-      this.physics.setParam(key, clamped);
+      // Warning checks
+      if (key === 'initialAngle' && Math.abs(val) === 180) {
+        this.showToast('180° is a singular equilibrium point; it will not oscillate normally.', 'warning');
+      }
 
       const exp = this.engine.getActiveExperiment();
       if (exp !== null) {
         exp.reset(this.physics.currentParams);
         this.resetGraph();
       }
-    };
+      numInput.value = String(val);
+      this.physics.setParam(key, val);
+    });
 
-    slider.addEventListener('input', () => syncParam(parseFloat(slider.value)));
-    numInput.addEventListener('change', () => syncParam(parseFloat(numInput.value)));
+    numInput.addEventListener('change', () => {
+      const val = parseFloat(numInput.value);
+      const clamped = Math.min(s.max, Math.max(s.min, val));
+      slider.value = String(clamped);
+      numInput.value = String(clamped);
+      valueDisplay.textContent = `${clamped.toFixed(2)} ${s.unit}`;
+      this.styleSlider(slider);
+      this.physics.setParam(key, clamped);
+    });
 
     inputRow.appendChild(slider);
     inputRow.appendChild(numInput);
