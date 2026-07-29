@@ -26,7 +26,7 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
 ## Tech Stack & Integrator Choice
 *   **Frontend & Bundling:** Vanilla TypeScript powered by Vite. No heavy frontend frameworks (React/Vue) were used to minimize unnecessary dependencies. HTML/CSS is overlaid directly on the canvas.
 *   **3D Engine:** Three.js.
-*   **Graphing:** [Insert Chart.js or uPlot here once implemented] for plotting 2D measurement data.
+*   **Graphing:** Chart.js is used for plotting real-time 2D measurement data with high-DPI canvas scaling.
 *   **Testing:** Vitest for isolated testing of pure physics functions.
 *   **Physics Integrator:** Semi-Implicit Euler. 
     *   *Justification:* Explicit Euler is inherently unstable for oscillating systems (like springs and pendulums) because mathematical errors accumulate, adding artificial energy to the system. Semi-Implicit Euler calculates the new velocity first, then uses it to calculate position. It is computationally lightweight, simple to implement, and symplectic (it naturally conserves energy in oscillating systems), making it ideal for this scope.
