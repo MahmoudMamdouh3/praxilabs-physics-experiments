@@ -25,7 +25,7 @@
 - [x] Ensure the absolute Reset button fully restores playback state (un-pauses, resets time scale, resets parameters).
 - [ ] Add tooltips on hover to explain to the user exactly what each parameter does.
 - [ ] Better utilize UI spacing (e.g., adding a sci-fi top base, making meshes larger, and reducing empty dark areas).
-- [] add the ability that the user can change the color scheme of the UI based on varios 10 different staplished Cholor Schemes --> to allow for better visiabilty for all types of people 
+- [x] add the ability that the user can change the color scheme of the UI based on varios 10 different staplished Cholor Schemes --> to allow for better visiabilty for all types of people 
 
 ## Physics & Experiments
 - [x] Fix the pendulum clipping behind the measurement graph at maximum length.

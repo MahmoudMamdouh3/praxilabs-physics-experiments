@@ -16,19 +16,147 @@ import type { IExperiment, ParameterSchema } from '../experiments/IExperiment.ts
 Chart.register(LineController, LineElement, PointElement, LinearScale, Filler, Tooltip);
 
 // ---------------------------------------------------------------------------
+// 10 Color Schemes Injector
+// ---------------------------------------------------------------------------
+const STYLES = `
+  :root {
+    --color-bg: rgba(13, 14, 18, 0.82);
+    --color-bg-solid: #0d0e12;
+    --color-border: 1px solid rgba(255,255,255,0.08);
+    --color-border-accent: 1px solid rgba(34,170,255,0.4);
+    --color-accent: #22aaff;
+    --color-accent-dim: rgba(34,170,255,0.15);
+    --color-text: #c8cdd8;
+    --color-text-muted: #8a95a8;
+    --color-text-bright: #eef0f5;
+  }
+  
+  [data-theme="light"] {
+    --color-bg: rgba(240, 242, 245, 0.82);
+    --color-bg-solid: #f0f2f5;
+    --color-border: 1px solid rgba(0,0,0,0.1);
+    --color-border-accent: 1px solid rgba(0,120,215,0.4);
+    --color-accent: #0078d7;
+    --color-accent-dim: rgba(0,120,215,0.15);
+    --color-text: #202428;
+    --color-text-muted: #5a6473;
+    --color-text-bright: #000000;
+  }
+  
+  [data-theme="hc-dark"] {
+    --color-bg: rgba(0, 0, 0, 0.95);
+    --color-bg-solid: #000000;
+    --color-border: 1px solid #ffff00;
+    --color-border-accent: 1px solid #00ff00;
+    --color-accent: #ffff00;
+    --color-accent-dim: rgba(255,255,0,0.2);
+    --color-text: #ffffff;
+    --color-text-muted: #cccccc;
+    --color-text-bright: #ffffff;
+  }
+
+  [data-theme="hc-light"] {
+    --color-bg: rgba(255, 255, 255, 0.95);
+    --color-bg-solid: #ffffff;
+    --color-border: 1px solid #000000;
+    --color-border-accent: 1px solid #0000ff;
+    --color-accent: #0000ff;
+    --color-accent-dim: rgba(0,0,255,0.15);
+    --color-text: #000000;
+    --color-text-muted: #333333;
+    --color-text-bright: #000000;
+  }
+
+  [data-theme="protanopia"] {
+    --color-bg: rgba(13, 14, 18, 0.82);
+    --color-bg-solid: #0d0e12;
+    --color-border: 1px solid rgba(255,255,255,0.08);
+    --color-border-accent: 1px solid rgba(255,194,10,0.4);
+    --color-accent: #ffc20a;
+    --color-accent-dim: rgba(255,194,10,0.15);
+    --color-text: #c8cdd8;
+    --color-text-muted: #8a95a8;
+    --color-text-bright: #eef0f5;
+  }
+
+  [data-theme="deuteranopia"] {
+    --color-bg: rgba(13, 14, 18, 0.82);
+    --color-bg-solid: #0d0e12;
+    --color-border: 1px solid rgba(255,255,255,0.08);
+    --color-border-accent: 1px solid rgba(12,123,220,0.4);
+    --color-accent: #0c7bdc;
+    --color-accent-dim: rgba(12,123,220,0.15);
+    --color-text: #c8cdd8;
+    --color-text-muted: #8a95a8;
+    --color-text-bright: #eef0f5;
+  }
+
+  [data-theme="tritanopia"] {
+    --color-bg: rgba(13, 14, 18, 0.82);
+    --color-bg-solid: #0d0e12;
+    --color-border: 1px solid rgba(255,255,255,0.08);
+    --color-border-accent: 1px solid rgba(212,17,89,0.4);
+    --color-accent: #d41159;
+    --color-accent-dim: rgba(212,17,89,0.15);
+    --color-text: #c8cdd8;
+    --color-text-muted: #8a95a8;
+    --color-text-bright: #eef0f5;
+  }
+
+  [data-theme="solarized-dark"] {
+    --color-bg: rgba(0, 43, 54, 0.82);
+    --color-bg-solid: #002b36;
+    --color-border: 1px solid rgba(147,161,161,0.2);
+    --color-border-accent: 1px solid rgba(38,139,210,0.4);
+    --color-accent: #268bd2;
+    --color-accent-dim: rgba(38,139,210,0.15);
+    --color-text: #839496;
+    --color-text-muted: #586e75;
+    --color-text-bright: #93a1a1;
+  }
+
+  [data-theme="solarized-light"] {
+    --color-bg: rgba(253, 246, 227, 0.82);
+    --color-bg-solid: #fdf6e3;
+    --color-border: 1px solid rgba(101,123,131,0.2);
+    --color-border-accent: 1px solid rgba(38,139,210,0.4);
+    --color-accent: #268bd2;
+    --color-accent-dim: rgba(38,139,210,0.15);
+    --color-text: #657b83;
+    --color-text-muted: #93a1a1;
+    --color-text-bright: #586e75;
+  }
+
+  [data-theme="monokai"] {
+    --color-bg: rgba(39, 40, 34, 0.82);
+    --color-bg-solid: #272822;
+    --color-border: 1px solid rgba(248,248,242,0.1);
+    --color-border-accent: 1px solid rgba(166,226,46,0.4);
+    --color-accent: #a6e22e;
+    --color-accent-dim: rgba(166,226,46,0.15);
+    --color-text: #f8f8f2;
+    --color-text-muted: #75715e;
+    --color-text-bright: #ffffff;
+  }
+`;
+
+const styleEl = document.createElement('style');
+styleEl.textContent = STYLES;
+document.head.appendChild(styleEl);
+
+// ---------------------------------------------------------------------------
 // Design tokens — Technical-Industrial Minimalist palette
 // ---------------------------------------------------------------------------
 const TOKEN = {
-  bg: 'rgba(13, 14, 18, 0.82)',
-  bgSolid: '#0d0e12',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderAccent: '1px solid rgba(34,170,255,0.4)',
-  accent: '#22aaff',
-  accentDim: 'rgba(34,170,255,0.15)',
-  text: '#c8cdd8',
-  // Raised from #596170 → #8a95a8 for WCAG AA contrast (~5.1:1 on near-black bg).
-  textMuted: '#8a95a8',
-  textBright: '#eef0f5',
+  bg: 'var(--color-bg)',
+  bgSolid: 'var(--color-bg-solid)',
+  border: 'var(--color-border)',
+  borderAccent: 'var(--color-border-accent)',
+  accent: 'var(--color-accent)',
+  accentDim: 'var(--color-accent-dim)',
+  text: 'var(--color-text)',
+  textMuted: 'var(--color-text-muted)',
+  textBright: 'var(--color-text-bright)',
   fontMono: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
   fontSans: "'Inter', system-ui, sans-serif",
   radius: '6px',
@@ -578,6 +706,47 @@ export class UI {
       URL.revokeObjectURL(url);
     });
     bar.appendChild(csvBtn);
+
+    // ── Theme Selector ────────────────────────────────────────────────────────
+    const themeSelect = document.createElement('select');
+    themeSelect.style.cssText = `
+      background:transparent; color:${TOKEN.textMuted};
+      border:1px solid rgba(255,255,255,0.1); border-radius:4px;
+      font-size:11px; font-family:${TOKEN.fontSans};
+      padding:3px 6px; cursor:pointer; outline:none;
+    `;
+    
+    const themes = [
+      { val: 'default', name: 'Sci-Fi Dark' },
+      { val: 'light', name: 'Clean Light' },
+      { val: 'hc-dark', name: 'High Contrast Dark' },
+      { val: 'hc-light', name: 'High Contrast Light' },
+      { val: 'protanopia', name: 'Protanopia Safe' },
+      { val: 'deuteranopia', name: 'Deuteranopia Safe' },
+      { val: 'tritanopia', name: 'Tritanopia Safe' },
+      { val: 'solarized-dark', name: 'Solarized Dark' },
+      { val: 'solarized-light', name: 'Solarized Light' },
+      { val: 'monokai', name: 'Monokai' },
+    ];
+    
+    for (const t of themes) {
+      const opt = document.createElement('option');
+      opt.value = t.val;
+      opt.textContent = t.name;
+      opt.style.background = '#0d0e12';
+      opt.style.color = '#fff';
+      themeSelect.appendChild(opt);
+    }
+    
+    themeSelect.addEventListener('change', () => {
+      document.body.dataset.theme = themeSelect.value;
+      if (this.chart !== null) {
+        // Redraw chart to pick up CSS variable changes
+        this.chart.update();
+      }
+    });
+    
+    bar.appendChild(themeSelect);
 
     // ── Time-scale row — always-visible static label + slider + value ──────────
     // A full-width sub-row so the label is always readable (not just on hover).
