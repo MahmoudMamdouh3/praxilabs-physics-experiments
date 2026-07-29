@@ -27,7 +27,12 @@
 - i need to make sure that the project rules --> E:\Praxilabs\praxilabs-physics-experiments\.agents\project-rules.md --> are always following up the rules specified by praxilabs and their docuemnts specified in here --> E:\Praxilabs\praxilabs-physics-experiments\references\Task2_Physics_Experiments_Suite_v2.pdf
 - will the changes i have made in the pendulum affect the rest of the experiments ? with respect to camera and UI and stuff do we  have a defined grid or area that will allow that system / scene to be modular as possible ? 
 - update the .gitignore to also include the python .git ignore since i am using some helper scripts by pyhton 
-
+- time scale does not have the word time scale next to it but it have it only when i hover over it i can read it.
+- i need to let the user know that he can zoom in and out to control the camera using the mouse scroll wheel and perhabs any other way in the keyboard along side it incase his scroll wheel is not working correctly 
+- when i zoomed in to the maximum , i can now only see part of the ball not the entire ball or experiment --> zooming needs fixing --> if i zoomed in to the max i can still see the entire experiment from the top of the string to the bottom of the ball
+- can we make the camera a lerping camera with damaging performarnce ? 
+- reset button should also reset the zooming and the panning 
+- when i pan i should pan in the 2 dimensions not in 3d, because now i pan in 3d and considering the black background everything looks confusing as if it was the other side 
 
 - Future enhancement --> i should notify the user whenever something not making sense:
     - for example if he is setting the time scale to 0, i should let him know that this is why the experiment is freezing, etc

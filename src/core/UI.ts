@@ -446,25 +446,41 @@ export class UI {
     const resetBtn = this.button('↺ Reset', TOKEN.textMuted);
     bar.appendChild(resetBtn);
 
-    // ── Time-scale label ──────────────────────────────────────────────────────
-    const tsLabel = document.createElement('div') as HTMLDivElement;
-    tsLabel.style.cssText = `font-size:10px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};white-space:nowrap;`;
-    tsLabel.textContent = '1×';
-    tsLabel.id = 'ui-ts-label';
+    // ── Time-scale row — always-visible static label + slider + value ──────────
+    // A full-width sub-row so the label is always readable (not just on hover).
+    const tsRow = this.el('div', {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      width: '100%',
+      paddingTop: '6px',
+      borderTop: '1px solid rgba(255,255,255,0.06)',
+      marginTop: '2px',
+    });
 
-    // ── Time-scale slider ─────────────────────────────────────────────────────
-    // Fixed width (120 px) so it doesn't collapse in the flex row.
+    const tsStaticLabel = document.createElement('span');
+    tsStaticLabel.style.cssText = `font-size:10px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};white-space:nowrap;flex-shrink:0;`;
+    tsStaticLabel.textContent = 'Speed:';
+    tsRow.appendChild(tsStaticLabel);
+
     const tsSlider = document.createElement('input');
     tsSlider.type = 'range';
     tsSlider.id = 'ui-ts-slider';
     tsSlider.min = '0';
     tsSlider.max = '4';
-    tsSlider.step = '0.5';     // coarser step — 0×, 0.5×, 1×, 1.5×, 2×, … 4×
+    tsSlider.step = '0.5';     // 0×, 0.5×, 1×, 1.5×, … 4×
     tsSlider.value = '1';
     tsSlider.title = 'Time Scale';
     this.styleSlider(tsSlider);
-    tsSlider.style.width = '120px';
-    tsSlider.style.flexShrink = '0';
+    tsSlider.style.flex = '1';
+    tsSlider.style.minWidth = '0';
+    tsRow.appendChild(tsSlider);
+
+    const tsLabel = document.createElement('div') as HTMLDivElement;
+    tsLabel.style.cssText = `font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};white-space:nowrap;flex-shrink:0;min-width:28px;text-align:right;`;
+    tsLabel.textContent = '1×';
+    tsLabel.id = 'ui-ts-label';
+    tsRow.appendChild(tsLabel);
 
     tsSlider.addEventListener('input', () => {
       const scale = parseFloat(tsSlider.value);
@@ -472,8 +488,7 @@ export class UI {
       tsLabel.textContent = `${scale}×`;
     });
 
-    bar.appendChild(tsSlider);
-    bar.appendChild(tsLabel);
+    bar.appendChild(tsRow);
 
     // ── Wire up Reset now that all controls exist ─────────────────────────────
     resetBtn.addEventListener('click', () => {

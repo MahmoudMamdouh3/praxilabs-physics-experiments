@@ -1,18 +1,30 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { IExperiment } from '../experiments/IExperiment.ts';
 
 // ---------------------------------------------------------------------------
 // Engine
 // ---------------------------------------------------------------------------
-// Owns the SINGLE Three.js Scene, PerspectiveCamera, and WebGLRenderer for
-// the entire application.  All experiments receive this scene via their
-// setup(scene) method; they never create their own renderer or camera.
+// Owns the SINGLE Three.js Scene, PerspectiveCamera, WebGLRenderer, and now
+// OrbitControls for the entire application.
 //
-// Architectural rules enforced here:
-//  • Only Engine.ts creates/destroys the renderer and scene.
-//  • loadExperiment() is the only public entry-point for swapping experiments.
-//  • The render loop is RAF-based; the physics accumulator loop is NOT here
-//    (it will live in Physics.ts and be injected as a callback).
+// Camera / OrbitControls bounding design:
+//
+//  • enablePan = false   — panning moves the orbit target off-centre; the user
+//                          loses the experiment from view. Locked target means
+//                          every zoom/rotate stays anchored to the scene centre.
+//  • minDistance = 2     — prevents the camera clipping inside geometry.
+//  • maxDistance = 30    — at z=30 with 60° FOV, half-height ≈ 17 m, which
+//                          safely frames even a 10 m pendulum above the bottom
+//                          UI panel. Beyond 30 m objects become invisible specks.
+//  • maxPolarAngle = π/1.5 (120°) — blocks the camera from flipping fully
+//                          upside-down (default is π = 180°). The user can still
+//                          peer at the experiment from slightly below, but cannot
+//                          invert the up-vector and lose spatial orientation.
+//  • enableDamping = true — smooth deceleration; requires controls.update()
+//                          every frame to integrate the damping velocity.
+//
+// Zero-Touch Core rule: experiments must NOT create their own scene/camera/renderer.
 // ---------------------------------------------------------------------------
 
 export class Engine {
@@ -21,12 +33,14 @@ export class Engine {
   /** The single authoritative Three.js scene for the whole application. */
   readonly scene: THREE.Scene;
 
-  /** Perspective camera attached to the scene. Aspect ratio is kept in sync
-   *  with the window via the resize handler. */
+  /** Perspective camera. Aspect ratio is kept in sync with the window. */
   readonly camera: THREE.PerspectiveCamera;
 
   /** The WebGL renderer whose canvas is appended to `document.body`. */
   readonly renderer: THREE.WebGLRenderer;
+
+  /** Orbit controls — bounded so the user cannot break the view. */
+  readonly controls: OrbitControls;
 
   // ── Lighting ───────────────────────────────────────────────────────────────
 
@@ -43,8 +57,7 @@ export class Engine {
   private isRunning: boolean = false;
 
   // ── Optional physics tick callback ─────────────────────────────────────────
-  // Kept as a placeholder so the Physics module can register itself later
-  // without requiring any modification to Engine.ts (Zero-Touch Core rule).
+  // Physics.ts registers itself here without modifying Engine.ts (Zero-Touch Core).
 
   private physicsTickCallback: ((dt: number) => void) | null = null;
 
@@ -53,17 +66,18 @@ export class Engine {
   constructor() {
     // ── Scene ────────────────────────────────────────────────────────────────
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0d0d0f); // near-black, matches design language
+    this.scene.background = new THREE.Color(0x0d0d0f);
 
     // ── Camera ───────────────────────────────────────────────────────────────
     this.camera = new THREE.PerspectiveCamera(
-      60,                                          // vertical FOV (degrees)
-      window.innerWidth / window.innerHeight,      // initial aspect ratio
-      0.01,                                        // near clip
-      1_000,                                       // far clip
+      60,                                      // vertical FOV (degrees)
+      window.innerWidth / window.innerHeight,  // initial aspect ratio
+      0.01,                                    // near clip
+      1_000,                                   // far clip
     );
-    this.camera.position.set(0, -2, 24);
-    this.camera.lookAt(0, -4, 0);
+    // Positioned straight ahead on the Z axis so OrbitControls can take
+    // full symmetric control without a pre-rotated camera matrix.
+    this.camera.position.set(0, 0, 15);
 
     // ── Renderer ─────────────────────────────────────────────────────────────
     this.renderer = new THREE.WebGLRenderer({
@@ -75,34 +89,58 @@ export class Engine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // Give the canvas a stable id so the UI module can find/avoid it.
     this.renderer.domElement.id = 'three-canvas';
-    this.renderer.domElement.style.display = 'block'; // remove default inline gap
+    this.renderer.domElement.style.display = 'block';
     document.body.appendChild(this.renderer.domElement);
+
+    // ── OrbitControls ─────────────────────────────────────────────────────────
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
+    // Focus slightly below the pivot so a mid-length pendulum (4–6 m) sits
+    // centred in the viewport rather than the origin being at the top of frame.
+    this.controls.target.set(0, -3, 0);
+
+    // Smooth deceleration — requires controls.update() every render frame.
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+
+    // Disable panning: keeps the orbit target locked on the experiment so the
+    // user cannot accidentally pan the scene out of view.
+    this.controls.enablePan = false;
+
+    // Zoom bounds: close enough to inspect detail, far enough to see max-length pendulum.
+    this.controls.minDistance = 2;
+    this.controls.maxDistance = 30;
+
+    // Polar angle cap: stops camera flipping upside-down (π = fully inverted).
+    // π/1.5 ≈ 120° — user can look from slightly below but cannot invert.
+    this.controls.maxPolarAngle = Math.PI / 1.5;
+
+    // Sync camera look direction with the new orbit target.
+    this.controls.update();
 
     // ── Lighting ─────────────────────────────────────────────────────────────
 
-    // Soft fill light — ensures no object face is completely black.
+    // Soft ambient fill — no object face is ever completely black.
     this.ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
     this.scene.add(this.ambientLight);
 
-    // Primary directional light with shadow casting.
+    // Primary directional light with soft shadow casting.
     this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
     this.directionalLight.position.set(8, 16, 8);
     this.directionalLight.castShadow = true;
 
-    // Shadow map resolution and frustum — tight frustum reduces aliasing.
     this.directionalLight.shadow.mapSize.set(2048, 2048);
     this.directionalLight.shadow.camera.near = 0.5;
     this.directionalLight.shadow.camera.far = 100;
-    this.directionalLight.shadow.camera.left = -20;
-    this.directionalLight.shadow.camera.right = 20;
-    this.directionalLight.shadow.camera.top = 20;
+    this.directionalLight.shadow.camera.left   = -20;
+    this.directionalLight.shadow.camera.right  =  20;
+    this.directionalLight.shadow.camera.top    =  20;
     this.directionalLight.shadow.camera.bottom = -20;
-    this.directionalLight.shadow.bias = -0.0005; // reduce shadow acne
+    this.directionalLight.shadow.bias = -0.0005;
     this.scene.add(this.directionalLight);
 
-    // Secondary rim/fill light from below-left to give depth to objects.
+    // Secondary rim/fill light for edge definition.
     const rimLight = new THREE.DirectionalLight(0x4488ff, 0.25);
     rimLight.position.set(-8, -4, -8);
     this.scene.add(rimLight);
@@ -115,10 +153,7 @@ export class Engine {
 
   /**
    * Register an optional physics-tick callback.
-   * Physics.ts calls this once during its own initialisation so it can hook
-   * into the render loop without modifying Engine.ts.
-   *
-   * @param cb - Receives the frame delta-time in seconds each RAF tick.
+   * Called each RAF tick with the frame delta-time (seconds).
    */
   setPhysicsTickCallback(cb: (dt: number) => void): void {
     this.physicsTickCallback = cb;
@@ -126,36 +161,25 @@ export class Engine {
 
   /**
    * Swap the active experiment.
-   *
-   * Steps:
    *  1. Dispose the outgoing experiment (frees GPU memory).
-   *  2. Store the incoming experiment as active.
-   *  3. Call `setup(this.scene)` so it can add its meshes.
-   *
-   * @param experiment - A fully constructed IExperiment implementation.
+   *  2. Activate the new experiment by calling setup(scene).
    */
   loadExperiment(experiment: IExperiment): void {
-    // --- Tear down the outgoing experiment -----------------------------------
     if (this.currentExperiment !== null) {
       this.currentExperiment.dispose();
     }
-
-    // --- Activate the incoming experiment ------------------------------------
     this.currentExperiment = experiment;
     experiment.setup(this.scene);
   }
 
-  /**
-   * Return the currently active experiment, or `null` if none is loaded.
-   * Read-only reference — do NOT call setup/dispose from outside Engine.ts.
-   */
+  /** Return the currently active experiment, or `null` if none is loaded. */
   getActiveExperiment(): IExperiment | null {
     return this.currentExperiment;
   }
 
   /**
    * Start the RAF render loop.
-   * Safe to call multiple times — subsequent calls are no-ops if already running.
+   * Safe to call multiple times — subsequent calls are no-ops.
    */
   start(): void {
     if (this.isRunning) return;
@@ -164,7 +188,7 @@ export class Engine {
   }
 
   /**
-   * Stop the RAF render loop and cancel the pending animation frame.
+   * Stop the RAF render loop.
    * Does NOT dispose anything — call `destroy()` for full teardown.
    */
   stop(): void {
@@ -174,9 +198,8 @@ export class Engine {
   }
 
   /**
-   * Full teardown: stop the loop, dispose the active experiment, remove the
-   * canvas from the DOM, and clean up event listeners.
-   * Call this when the application itself is being unmounted.
+   * Full teardown: stop the loop, dispose the active experiment,
+   * destroy OrbitControls, remove the canvas, and clean up listeners.
    */
   destroy(): void {
     this.stop();
@@ -186,6 +209,7 @@ export class Engine {
       this.currentExperiment = null;
     }
 
+    this.controls.dispose();
     window.removeEventListener('resize', this.onWindowResize);
 
     this.renderer.dispose();
@@ -197,40 +221,39 @@ export class Engine {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   /**
-   * Core RAF callback.  Uses arrow function to preserve `this` without binding.
+   * Core RAF callback — arrow function preserves `this`.
    *
-   * Execution order each frame:
-   *  1. Schedule the next frame immediately (ensures consistent cadence even
-   *     if an exception is thrown further down).
-   *  2. Invoke the optional physics tick callback with the frame delta.
-   *     (The physics accumulator pattern belongs inside that callback, not here.)
-   *  3. Render the scene.
+   * Frame execution order:
+   *  1. Schedule next frame immediately (consistent cadence).
+   *  2. Run the physics accumulator callback (registered externally).
+   *  3. Update OrbitControls to integrate damping velocity.
+   *  4. Render the master scene.
    */
   private readonly renderLoop = (timestamp: DOMHighResTimeStamp): void => {
     if (!this.isRunning) return;
 
     this.rafId = requestAnimationFrame(this.renderLoop);
 
-    // Compute delta-time in seconds.  Clamp to 100 ms to avoid a spiral of
-    // death if the tab was backgrounded and then foregrounded.
+    // Clamp dt to 100 ms to prevent a spiral of death after tab focus loss.
     const dt = Math.min((timestamp - this.lastTimestamp) / 1_000, 0.1);
     this.lastTimestamp = timestamp;
 
-    // Forward to the physics accumulator (registered externally, if at all).
     if (this.physicsTickCallback !== null) {
       this.physicsTickCallback(dt);
     }
 
-    // Render the master scene.
+    // MUST be called every frame when enableDamping = true.
+    // Integrates the damping deceleration applied to the last user gesture.
+    this.controls.update();
+
     this.renderer.render(this.scene, this.camera);
   };
 
-  /** Timestamp of the previous RAF call, in milliseconds. */
   private lastTimestamp: DOMHighResTimeStamp = 0;
 
   /**
-   * Keeps the camera aspect ratio and renderer size consistent with the
-   * browser window.  Arrow function preserves `this` for the event listener.
+   * Keeps the camera aspect ratio and renderer size in sync with the window.
+   * Also notifies OrbitControls so it recalculates its internal frustum math.
    */
   private readonly onWindowResize = (): void => {
     const w = window.innerWidth;
