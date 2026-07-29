@@ -102,6 +102,26 @@ export class Pendulum implements IExperiment {
   /** Time of the crossing before `lastCrossingTime` — used to compute full period. */
   private prevCrossingTime: number = 0;
 
+  // ── Lab Workflow State (Virtual Stopwatch) ────────────────────────────────
+  
+  /** Number of full oscillations (1 oscillation = A -> B -> A = 2 zero crossings) */
+  private lapCount: number = 0;
+  
+  /** Whether the virtual stopwatch is currently running. */
+  private isTiming: boolean = false;
+  
+  /** Elapsed stopwatch time (s) */
+  private stopwatchTime: number = 0;
+
+  /** HTML overlay for the virtual stopwatch. */
+  private htmlStopwatch: HTMLDivElement | null = null;
+  
+  /** 3D Canvas-based Stopwatch */
+  private watchMesh: THREE.Mesh | null = null;
+  private watchCanvas: HTMLCanvasElement | null = null;
+  private watchCtx: CanvasRenderingContext2D | null = null;
+  private watchTexture: THREE.CanvasTexture | null = null;
+
   // ── Three.js objects ──────────────────────────────────────────────────────
 
   /** Root anchor point — always at world origin (0, 0, 0). */
@@ -140,6 +160,49 @@ export class Pendulum implements IExperiment {
     });
     this.stringLine = new THREE.Line(this.stringGeometry, this.stringMaterial);
     scene.add(this.stringLine);
+
+    // ── HTML Stopwatch Overlay ───────────────────────────────────────────────
+    this.htmlStopwatch = document.createElement('div');
+    this.htmlStopwatch.style.cssText = `
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 13, 15, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid #22aaff;
+      border-radius: 8px;
+      padding: 16px 24px;
+      color: #22aaff;
+      font-family: monospace;
+      font-size: 24px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 15;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    `;
+    this.htmlStopwatch.innerHTML = `
+      <div id="pendulum-laps" style="font-size: 10px; letter-spacing: 2px; color: #8a95a8; margin-bottom: 4px; text-transform: uppercase;">Oscillations: 0 / 20</div>
+      <div id="pendulum-time">00.00 s</div>
+    `;
+    document.body.appendChild(this.htmlStopwatch);
+
+    // ── 3D Stopwatch Mesh ────────────────────────────────────────────────────
+    this.watchCanvas = document.createElement('canvas');
+    this.watchCanvas.width = 512;
+    this.watchCanvas.height = 256;
+    this.watchCtx = this.watchCanvas.getContext('2d');
+    this.watchTexture = new THREE.CanvasTexture(this.watchCanvas);
+    
+    const watchGeo = new THREE.PlaneGeometry(4, 2);
+    const watchMat = new THREE.MeshBasicMaterial({ 
+      map: this.watchTexture,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    this.watchMesh = new THREE.Mesh(watchGeo, watchMat);
+    this.watchMesh.position.set(-3.5, 1, 0); // To the left of the pivot
+    scene.add(this.watchMesh);
 
     // ── Bob ──────────────────────────────────────────────────────────────────
     this.bobGeometry = new THREE.SphereGeometry(0.28, 32, 32);
@@ -186,42 +249,123 @@ export class Pendulum implements IExperiment {
 
     this.time += dt;
 
-    // ── Zero-crossing detection for period measurement ────────────────────────
+    // ── Zero-crossing detection    // 3) Update period measurement (zero-crossing logic)
     const currentSign = Math.sign(this.theta);
-    if (currentSign !== 0 && this.prevSign !== 0 && currentSign !== this.prevSign) {
-      // Sign changed → pendulum crossed the vertical
+    if (currentSign !== this.prevSign && this.prevSign !== 0) {
       if (this.hasCrossing) {
-        // Two crossings = one full period
-        this.measuredPeriod = (this.time - this.prevCrossingTime) * 2;
+        this.prevCrossingTime = this.lastCrossingTime;
       }
-      this.prevCrossingTime = this.lastCrossingTime;
       this.lastCrossingTime = this.time;
+      
+      // Calculate period if we have at least 3 crossings (1 full wave)
+      if (this.hasCrossing && this.prevCrossingTime > 0) {
+        // One full swing = two zero crossings.
+        // Wait, if it crosses every half-period, then the difference between consecutive 
+        // crossings is half a period. So we multiply by 2.
+        this.measuredPeriod = (this.lastCrossingTime - this.prevCrossingTime) * 2;
+      }
       this.hasCrossing = true;
+      
+      // Virtual Stopwatch Logic
+      // Each zero crossing is half an oscillation.
+      if (this.isTiming) {
+        this.lapCount += 0.5;
+        if (this.lapCount >= 20) {
+          this.isTiming = false; // Goal reached, stop timer
+        }
+      }
     }
     this.prevSign = currentSign;
+    
+    if (this.isTiming) {
+      this.stopwatchTime += dt;
+      this.updateStopwatchUI();
+    }
 
     // ── Update 3D mesh positions ──────────────────────────────────────────────
     this.updateMeshes(L);
   }
 
   reset(params?: Record<string, number>): void {
+    const L = params?.['length'] ?? this.schema['length'].default;
     const initialAngleDeg =
       params?.['initialAngle'] ?? this.schema['initialAngle'].default;
 
-    this.theta = (initialAngleDeg * Math.PI) / 180;
+    // Convert to radians, clamp to avoid perfect 180° singularity
+    let initialAngleRad = (initialAngleDeg * Math.PI) / 180;
+    if (Math.abs(initialAngleDeg) === 180) {
+      initialAngleRad = (179.9 * Math.PI) / 180 * Math.sign(initialAngleDeg);
+    }
+
+    this.theta = initialAngleRad;
     this.omega = 0;
     this.time = 0;
 
-    // Reset period tracking
-    this.prevSign = Math.sign(this.theta);
+    this.prevSign = 0;
     this.lastCrossingTime = 0;
     this.prevCrossingTime = 0;
     this.hasCrossing = false;
     this.measuredPeriod = 0;
+    
+    this.lapCount = 0;
+    this.isTiming = true;
+    this.stopwatchTime = 0;
+    this.updateStopwatchUI();
 
-    // Reposition meshes to initial angle without recreating them
-    const L = params?.['length'] ?? this.schema['length'].default;
     this.updateMeshes(L);
+  }
+
+  private updateStopwatchUI(): void {
+    if (this.htmlStopwatch) {
+      const lapsEl = this.htmlStopwatch.querySelector('#pendulum-laps');
+      const timeEl = this.htmlStopwatch.querySelector('#pendulum-time');
+      
+      if (lapsEl) {
+        lapsEl.textContent = `Oscillations: ${Math.floor(this.lapCount)} / 20`;
+      }
+      if (timeEl) {
+        timeEl.textContent = `${this.stopwatchTime.toFixed(2)} s`;
+      }
+      
+      if (this.lapCount >= 20) {
+        this.htmlStopwatch.style.borderColor = '#00ffaa';
+        this.htmlStopwatch.style.color = '#00ffaa';
+        if (lapsEl) (lapsEl as HTMLElement).style.color = '#00ffaa';
+      } else {
+        this.htmlStopwatch.style.borderColor = '#22aaff';
+        this.htmlStopwatch.style.color = '#22aaff';
+        if (lapsEl) (lapsEl as HTMLElement).style.color = '#8a95a8';
+      }
+    }
+    
+    // Update 3D Canvas Stopwatch
+    if (this.watchCtx && this.watchTexture) {
+      const ctx = this.watchCtx;
+      ctx.clearRect(0, 0, 512, 256);
+      
+      // Background panel
+      ctx.fillStyle = 'rgba(13, 13, 15, 0.85)';
+      ctx.fillRect(0, 0, 512, 256);
+      
+      // Border
+      ctx.strokeStyle = this.lapCount >= 20 ? '#00ffaa' : '#22aaff';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(0, 0, 512, 256);
+      
+      // Text - Time
+      ctx.fillStyle = this.lapCount >= 20 ? '#00ffaa' : '#22aaff';
+      ctx.font = 'bold 80px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${this.stopwatchTime.toFixed(2)}s`, 256, 150);
+      
+      // Text - Laps
+      ctx.fillStyle = '#8a95a8';
+      ctx.font = 'bold 24px monospace';
+      ctx.fillText(`OSCILLATIONS: ${Math.floor(this.lapCount)} / 20`, 256, 60);
+      
+      this.watchTexture.needsUpdate = true;
+    }
   }
 
   getMeasurements(): Record<string, number> {
@@ -252,17 +396,28 @@ export class Pendulum implements IExperiment {
   }
 
   dispose(): void {
-    if (this.scene !== null) {
-      if (this.stringLine !== null) this.scene.remove(this.stringLine);
+    if (this.scene) {
       if (this.bobMesh !== null) this.scene.remove(this.bobMesh);
+      if (this.stringLine !== null) this.scene.remove(this.stringLine);
       if (this.pivot !== null) this.scene.remove(this.pivot);
+      if (this.watchMesh !== null) this.scene.remove(this.watchMesh);
     }
 
-    this.stringGeometry?.dispose();
-    this.stringMaterial?.dispose();
     this.bobGeometry?.dispose();
     this.bobMaterial?.dispose();
-
+    this.stringGeometry?.dispose();
+    this.stringMaterial?.dispose();
+    
+    if (this.watchMesh) {
+      this.watchMesh.geometry.dispose();
+      (this.watchMesh.material as THREE.Material).dispose();
+    }
+    this.watchTexture?.dispose();
+    
+    if (this.htmlStopwatch && this.htmlStopwatch.parentNode) {
+      this.htmlStopwatch.parentNode.removeChild(this.htmlStopwatch);
+    }
+    
     this.stringLine = null;
     this.stringGeometry = null;
     this.stringMaterial = null;
