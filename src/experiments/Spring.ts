@@ -34,10 +34,10 @@ import type { IExperiment, ParameterSchema } from './IExperiment.ts';
 // ---------------------------------------------------------------------------
 
 /** World-space Y position of the ceiling anchor. */
-const ANCHOR_Y = 4.5;
+const ANCHOR_Y = 5.0;
 
 /** Visual natural length of the spring at equilibrium (m). */
-const NATURAL_LENGTH = 2.5;
+const NATURAL_LENGTH = 6.0;
 
 /** Number of coil segments in the spring line (more = smoother spring look). */
 const SPRING_SEGMENTS = 60;

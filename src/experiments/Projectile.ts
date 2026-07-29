@@ -85,7 +85,7 @@ export class Projectile implements IExperiment {
       max: 2,
       default: 0,
       step: 0.01,
-      tooltip: 'Air resistance that slows the projectile down, shortening its actual range compared to the predicted path.',
+      tooltip: 'Air resistance that slows the projectile down, shortening its actual range. Note: The dashed line represents the drag-free analytic prediction for comparison.',
     },
   };
 
@@ -221,6 +221,7 @@ export class Projectile implements IExperiment {
       this.y         = 0;
       this.hasLanded = true;
       this.actualRange = this.x;
+      document.dispatchEvent(new CustomEvent('praxilabs-auto-pause'));
     }
   }
 

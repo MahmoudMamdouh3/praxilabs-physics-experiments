@@ -1,0 +1,86 @@
+# PraxiLabs Physics Experiments — Task Tracker
+
+
+- [] Create a user guide/manual inside docs folder
+- [x] the color theme should reset when the user clicks on the absolute reset button, it should save and be persist
+- [x] let us stick with the html osciliation counter instead of the three.js osciliation counter
+- [x] the warning i get when i make the speed at 0 is not displayed properly because it is occluded by other UI element (the html osciliations counter)
+- [x] the  hud  on the top needs to be more down, much more readable becuase again blue to a black background does not make any sense
+- [x] the csv button should have text outside instead of the download emoji that indicates download csv with the exact same hover text no change --> Download measurement history as CSV
+- [x] bug with osciliation counting, it keep on adding forever even after the 20 oscillations, it keep adding to the time on the 40 and 60 i believe. 
+- [x] i need the simulation to start on the pause , not on the on the play mode
+- [x] the color themes messed about the measurement gragh color, i need that to be constant color or at least fix it
+- [x] the color of the warning if the 0 speed should follow the color theme
+- [x] choosing the color them aswell should have text next to it indicating that this is theme selection 
+- [] the 3d space is empty and condsing, we need to add more the the static labratory background, right now i only have these axis lines which looks like shit and confusing aswell.
+- [] drag to tilt is wrong , i do not want to tilt, i need it to act as a panning tool , as if i am panning with a hand tool in a 2d app. 
+- [] the text on the hud does not make any sense and is confusing. 
+- [] in the projectile motion experiment, some lunc angles causes the ball to fall of the right side of the screen and comes out of the canvas so now i can not see it, even when i am zoomed out to the max, and i want all the experiments to start from pause as i mentioned. 
+- [] i want all the experiments to take place in the same 3d environemnt, a proper physics lab, where there is a lab table, and all the equipment is placed on that table, with the background being the physics lab.
+- [x] i want the description panel of each experiment to be larger becauses i can not read them clearly --> like these ones for example --> PraxiLabs
+Projectile Motion A projectile launched at a chosen speed and angle, subject to gravity and optional linear air drag, integrated via Semi-Implicit Euler. The dashed line shows the drag-free analytic trajectory for comparison.
+- [x] i want the cam and scroll guide to be in a more appropriate place perhabs on a small panel that holds only text because now it is not visible at all and confusing. 
+- [x] the projectile experiemnt should reset when it reaches it is target , but i do not mean by that that it is reset compeletly i want the ball to land and still be there but i am facing a bug right now is that when i want to repeat the experimnt i have to click the reset button then play again instead of clicking play at one. 
+- [] the lack of 3d environement around the objects makes it extremely hard to determine the accurecy and realism of what is haoppening. 
+- [x] when i changes the air drag coffiecent the ball did not follow the dotted line, is that normall ? should not the dotted line follow all the parameeters i changes and predicte that path? 
+- [x] the measurement gragh is very bad , i do not know what about it is bad but alot of things i do not like , i do not like the bug where i mentioned when it is first drawn it stutters alt and also when it finishes drawing, i donot like the fact that it is drawing looks finicky does not look polished like the ones we see on an oschiliscope for example. 
+- [x] in the spring mass experment the spring moves past the top base , it goes through it litterly, is that normal ? 
+- [] i need to work on the polishment of the 3d shapes of the experiments item, becuase they all looks ugly
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+- []
+
+
+
+
+
+
+
+
+
+
+
+## Documentation & Workflow
+- [x] Fix the `README.md` (folder structure formatting, terminal setup commands, and graphing section).
+- [x] Update `.gitignore` to include standard Python ignore rules.
+- [x] Add the Python `code_dumper.py` helper utility for codebase inspection.
+- [x] Establish a commit message rule (short titles and comprehensive bullet points).
+- [ ] Ensure all `project-rules.md` constraints remain fully aligned with the assessment PDF.
+
+## Core Engine & Camera
+- [x] Add interactive camera controls (`OrbitControls`) with smooth damping/lerping.
+- [x] Lock the camera to the 2D plane by clamping azimuth rotation to prevent confusing 3D perspective issues.
+- [x] Set maximum and minimum zoom bounds so the user can always see the entire experiment without clipping inside objects.
+- [x] Ensure the absolute Reset button restores the camera to its default position and tilt.
+- [x] Improve the visibility and placement of the floating camera controls hint (added high-contrast frosted glass pill).
+- [ ] Ensure changes maintain a defined grid or modular area so the master scene remains fully modular.
+
+## UI & Layout
+- [x] Fix the blurry Chart.js measurement graph on smaller screens and high-DPI displays.
+- [x] Fix the graph drawing area size and responsiveness when resizing the browser window.
+- [x] Fix the graph stuttering when the simulation is paused or when parameters are adjusted mid-run.
+- [x] Fix the duplicating live readouts on reset.
+- [x] Improve UI text readability (increased contrast for descriptions and labels).
+- [x] Fix the time-scale slider width and make it adjustable while the experiment is running in play mode.
+- [x] Ensure the absolute Reset button fully restores playback state (un-pauses, resets time scale, resets parameters).
+- [ ] Add tooltips on hover to explain to the user exactly what each parameter does.
+- [ ] Better utilize UI spacing (e.g., adding a sci-fi top base, making meshes larger, and reducing empty dark areas).
+- [x] Add the ability for the user to change the color scheme of the UI based on 10 different established color schemes to allow for better visibility for all users.
+
+## Physics & Experiments
+- [x] Fix the pendulum clipping behind the measurement graph at maximum length.
+- [x] Address the 180-degree pendulum instability (clamped maximum angle to 179.9°).
+- [x] Upgrade the simple pendulum to a "real experiment" (e.g., add a virtual clock/timer on screen to imitate a real lab).
+- [x] Consider adding a warning or boundary effect when a parameter value produces a degenerate result (e.g., 180° angle).
+
+> **Note:** Future enhancements have been moved to [docs/future_enhancements.md](docs/future_enhancements.md).

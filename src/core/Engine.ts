@@ -112,7 +112,7 @@ export class Engine {
     // Zoom bounds: minDistance=6 keeps the camera outside the bob geometry.
     // maxDistance=30 is enough to frame a 10 m pendulum with the UI panels clear.
     this.controls.minDistance = 6;
-    this.controls.maxDistance = 30;
+    this.controls.maxDistance = 300;
 
     // Lock horizontal (azimuth) rotation to 0 — experiments are 2D (XY plane).
     // Allowing side-rotation collapses the depth axis and makes the scene look

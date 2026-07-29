@@ -36,7 +36,7 @@ export class Physics {
   // ── Playback controls ──────────────────────────────────────────────────────
 
   /** When `true`, `step()` is a no-op — the simulation is frozen. */
-  isPaused: boolean = false;
+  isPaused: boolean = true;
 
   /**
    * Multiplier applied to the wall-clock delta before it enters the accumulator.

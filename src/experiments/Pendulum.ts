@@ -122,12 +122,6 @@ export class Pendulum implements IExperiment {
 
   /** HTML overlay for the virtual stopwatch. */
   private htmlStopwatch: HTMLDivElement | null = null;
-  
-  /** 3D Canvas-based Stopwatch */
-  private watchMesh: THREE.Mesh | null = null;
-  private watchCanvas: HTMLCanvasElement | null = null;
-  private watchCtx: CanvasRenderingContext2D | null = null;
-  private watchTexture: THREE.CanvasTexture | null = null;
 
   // ── Three.js objects ──────────────────────────────────────────────────────
 
@@ -193,23 +187,6 @@ export class Pendulum implements IExperiment {
       <div id="pendulum-time">00.00 s</div>
     `;
     document.body.appendChild(this.htmlStopwatch);
-
-    // ── 3D Stopwatch Mesh ────────────────────────────────────────────────────
-    this.watchCanvas = document.createElement('canvas');
-    this.watchCanvas.width = 512;
-    this.watchCanvas.height = 256;
-    this.watchCtx = this.watchCanvas.getContext('2d');
-    this.watchTexture = new THREE.CanvasTexture(this.watchCanvas);
-    
-    const watchGeo = new THREE.PlaneGeometry(4, 2);
-    const watchMat = new THREE.MeshBasicMaterial({ 
-      map: this.watchTexture,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-    this.watchMesh = new THREE.Mesh(watchGeo, watchMat);
-    this.watchMesh.position.set(-3.5, 1, 0); // To the left of the pivot
-    scene.add(this.watchMesh);
 
     // ── Bob ──────────────────────────────────────────────────────────────────
     this.bobGeometry = new THREE.SphereGeometry(0.28, 32, 32);
@@ -278,16 +255,16 @@ export class Pendulum implements IExperiment {
       
       // Virtual Stopwatch Logic
       // Each zero crossing is half an oscillation.
-      if (this.isTiming) {
+      if (this.lapCount < 20) {
         this.lapCount += 0.5;
         if (this.lapCount >= 20) {
-          this.isTiming = false; // Goal reached, stop timer
+          this.lapCount = 20; // Clamp
         }
       }
     }
     this.prevSign = currentSign;
     
-    if (this.isTiming) {
+    if (this.lapCount < 20) {
       this.stopwatchTime += dt;
     }
   }
@@ -295,7 +272,7 @@ export class Pendulum implements IExperiment {
   render(): void {
     this.updateMeshes(this.currentL);
     
-    if (this.isTiming) {
+    if (this.lapCount < 20) {
       this.updateStopwatchUI();
     } else if (this.lapCount >= 20 && !this.hasRenderedFinalLap) {
       // Render the final green "success" state exactly once
@@ -328,7 +305,6 @@ export class Pendulum implements IExperiment {
     
     // Virtual stopwatch
     this.lapCount = 0;
-    this.isTiming = true;
     this.hasRenderedFinalLap = false;
     this.stopwatchTime = 0;
     this.updateStopwatchUI();
@@ -358,35 +334,6 @@ export class Pendulum implements IExperiment {
         this.htmlStopwatch.style.color = '#22aaff';
         if (lapsEl) (lapsEl as HTMLElement).style.color = '#8a95a8';
       }
-    }
-    
-    // Update 3D Canvas Stopwatch
-    if (this.watchCtx && this.watchTexture) {
-      const ctx = this.watchCtx;
-      ctx.clearRect(0, 0, 512, 256);
-      
-      // Background panel
-      ctx.fillStyle = 'rgba(13, 13, 15, 0.85)';
-      ctx.fillRect(0, 0, 512, 256);
-      
-      // Border
-      ctx.strokeStyle = this.lapCount >= 20 ? '#00ffaa' : '#22aaff';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(0, 0, 512, 256);
-      
-      // Text - Time
-      ctx.fillStyle = this.lapCount >= 20 ? '#00ffaa' : '#22aaff';
-      ctx.font = 'bold 80px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`${this.stopwatchTime.toFixed(2)}s`, 256, 150);
-      
-      // Text - Laps
-      ctx.fillStyle = '#8a95a8';
-      ctx.font = 'bold 24px monospace';
-      ctx.fillText(`OSCILLATIONS: ${Math.floor(this.lapCount)} / 20`, 256, 60);
-      
-      this.watchTexture.needsUpdate = true;
     }
   }
 
@@ -431,19 +378,12 @@ export class Pendulum implements IExperiment {
       if (this.bobMesh !== null) this.scene.remove(this.bobMesh);
       if (this.stringLine !== null) this.scene.remove(this.stringLine);
       if (this.pivot !== null) this.scene.remove(this.pivot);
-      if (this.watchMesh !== null) this.scene.remove(this.watchMesh);
     }
 
     this.bobGeometry?.dispose();
     this.bobMaterial?.dispose();
     this.stringGeometry?.dispose();
     this.stringMaterial?.dispose();
-    
-    if (this.watchMesh) {
-      this.watchMesh.geometry.dispose();
-      (this.watchMesh.material as THREE.Material).dispose();
-    }
-    this.watchTexture?.dispose();
     
     if (this.htmlStopwatch && this.htmlStopwatch.parentNode) {
       this.htmlStopwatch.parentNode.removeChild(this.htmlStopwatch);

@@ -258,6 +258,13 @@ export class UI {
     // ── Google Fonts ────────────────────────────────────────────────────────
     this.injectFont();
 
+    // Listen for auto-pause events from experiments (e.g. Projectile landing)
+    document.addEventListener('praxilabs-auto-pause', () => {
+      if (!this.physics.isPaused) {
+        document.getElementById('ui-btn-pause')?.click();
+      }
+    });
+
     // ── Root shell (pointer-events: none so Three.js canvas stays interactive)
     this.shell = this.el('div', {
       position: 'fixed',
@@ -658,7 +665,7 @@ export class UI {
     });
 
     // ── Play / Pause ──────────────────────────────────────────────────────────
-    const pauseBtn = this.button('⏸ Pause', TOKEN.accent);
+    const pauseBtn = this.button('▶ Play', TOKEN.accent);
     pauseBtn.id = 'ui-btn-pause';
     pauseBtn.addEventListener('click', () => {
       this.physics.togglePause();
@@ -827,10 +834,10 @@ export class UI {
       // 5. Reset the accumulator so no leftover partial-tick debt carries over.
       this.physics.reset();
 
-      // 6. Restore playback state to "playing" at 1× speed.
-      this.physics.play();
+      // 6. Restore playback state to "paused" at 1× speed.
+      this.physics.pause();
       this.physics.setTimeScale(1);
-      pauseBtn.textContent = '⏸ Pause';
+      pauseBtn.textContent = '▶ Play';
       tsSlider.value = '1';
       tsLabel.textContent = '1×';
       this.styleSlider(tsSlider); // refresh the track fill gradient
