@@ -81,6 +81,9 @@ export class UI {
   // Key → the value <span> element. Cleared AND DOM-removed together in clearReadouts().
   private readoutRows: Map<string, HTMLSpanElement> = new Map();
 
+  // ── CSV History ────────────────────────────────────────────────────────────
+  private measurementHistory: Array<Record<string, number>> = [];
+
   // Heading node kept as a reference so clearReadouts() can restore it efficiently.
   private readonly readoutsHeading: HTMLDivElement;
 
@@ -317,6 +320,8 @@ export class UI {
    * Call this every render frame from main.ts.
    */
   updateReadouts(measurements: Record<string, number>): void {
+    this.measurementHistory.push({ ...measurements });
+
     for (const [key, val] of Object.entries(measurements)) {
       if (!this.readoutRows.has(key)) {
         this.addReadoutRow(key);
@@ -472,6 +477,29 @@ export class UI {
     const resetBtn = this.button('↺ Reset', TOKEN.textMuted);
     bar.appendChild(resetBtn);
 
+    // ── CSV Export ────────────────────────────────────────────────────────────
+    const csvBtn = this.button('⬇️ CSV', TOKEN.accent);
+    csvBtn.title = 'Download measurement history as CSV';
+    csvBtn.addEventListener('click', () => {
+      if (this.measurementHistory.length === 0) return;
+
+      const keys = Array.from(new Set(this.measurementHistory.flatMap(Object.keys)));
+      const headerRow = keys.join(',');
+      const rows = this.measurementHistory.map(row => {
+        return keys.map(k => row[k] ?? '').join(',');
+      });
+      const csvContent = [headerRow, ...rows].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'experiment_data.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    bar.appendChild(csvBtn);
+
     // ── Time-scale row — always-visible static label + slider + value ──────────
     // A full-width sub-row so the label is always readable (not just on hover).
     const tsRow = this.el('div', {
@@ -534,8 +562,9 @@ export class UI {
       //    clearReadouts() to remove orphan DOM rows before re-adding them.
       this.buildParameterPanel(exp.schema);
 
-      // 4. Clear the graph buffer.
+      // 4. Clear the graph buffer and measurement history.
       this.resetGraph();
+      this.measurementHistory.length = 0;
 
       // 5. Reset the accumulator so no leftover partial-tick debt carries over.
       this.physics.reset();
