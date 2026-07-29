@@ -204,22 +204,29 @@ export class UI {
     this.shell.appendChild(graphPanel);
 
     // ── Camera controls hint ─────────────────────────────────────────────────
-    // Subtle floating label that surfaces discoverability without cluttering the UI.
+    // Anchored to the bottom-left of the graph panel so it reads against the
+    // frosted-glass surface rather than the raw black canvas. High-contrast
+    // textBright + backdrop ensures it is readable at a glance.
     const camHint = document.createElement('div');
     camHint.style.cssText = [
       'position:absolute',
-      'bottom:212px',          // just above the 180px graph panel + 16px gap
-      `right:272px`,           // aligned with the graph panel right edge
-      `font-size:9px`,
-      `color:${TOKEN.textMuted}`,
+      'bottom:212px',           // sits just above the 180px graph panel + 16px gap
+      'left:312px',             // aligned with the graph panel left edge
+      'font-size:10px',
+      `color:${TOKEN.textBright}`,
       `font-family:${TOKEN.fontMono}`,
-      'letter-spacing:1.2px',
+      'letter-spacing:1px',
       'text-transform:uppercase',
-      'opacity:0.55',
+      'opacity:0.75',
+      'padding:3px 8px',
+      'border-radius:4px',
+      'background:rgba(13,14,18,0.72)',
+      `border:1px solid rgba(34,170,255,0.2)`,
       'pointer-events:none',
       'user-select:none',
+      'backdrop-filter:blur(6px)',
     ].join(';');
-    camHint.textContent = 'CAM CONTROLS: LEFT-CLICK TO TILT \u2502 SCROLL TO ZOOM';
+    camHint.textContent = 'Cam: drag to tilt  \u2502  scroll to zoom';
     this.shell.appendChild(camHint);
 
     this.initChart();
