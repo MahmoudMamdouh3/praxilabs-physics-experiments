@@ -105,6 +105,12 @@ export class Spring implements IExperiment {
 
   /** Elapsed simulation time (s). */
   private time: number = 0;
+  
+  /** The current mass used in the last physics tick. */
+  private currentM: number = 1;
+  
+  /** The current spring constant used in the last physics tick. */
+  private currentK: number = 10;
 
   // ── Period / frequency measurement via zero-crossing detection ─────────────
   // Pattern mirrored exactly from Pendulum.ts (theta → y).
@@ -211,6 +217,9 @@ export class Spring implements IExperiment {
     const k = Math.max(params['springConstant']    ?? this.schema['springConstant'].default, 0);
     const b =          params['damping']           ?? this.schema['damping'].default;
 
+    this.currentM = m;
+    this.currentK = k;
+
     // ── Semi-Implicit Euler integration ───────────────────────────────────────
     const ay = -(k / m) * this.y - (b / m) * this.vy;
     this.vy += ay * dt;   // velocity first
@@ -232,8 +241,9 @@ export class Spring implements IExperiment {
       this.hasCrossing = true;
     }
     this.prevSign = currentSign;
+  }
 
-    // ── Update 3D mesh positions ──────────────────────────────────────────────
+  render(): void {
     this.updateMeshes();
   }
 
@@ -259,7 +269,10 @@ export class Spring implements IExperiment {
     this.hasCrossing      = false;
     this.measuredPeriod   = 0;
 
-    this.updateMeshes();
+    this.currentM = params?.['mass'] ?? this.schema['mass'].default;
+    this.currentK = params?.['springConstant'] ?? this.schema['springConstant'].default;
+
+    this.render();
   }
 
   getMeasurements(): Record<string, number> {
@@ -273,12 +286,22 @@ export class Spring implements IExperiment {
     const measuredFrequency = this.measuredPeriod > 0
       ? 1 / this.measuredPeriod
       : 0;
+      
+    // Calculate energy
+    // KE = 1/2 * m * v^2
+    const kineticEnergy = 0.5 * this.currentM * (this.vy * this.vy);
+    // PE = 1/2 * k * x^2
+    const potentialEnergy = 0.5 * this.currentK * (this.y * this.y);
+    const totalEnergy = kineticEnergy + potentialEnergy;
 
     return {
       time_s:                  this.time,
       displacement_m:          this.y,
       measured_frequency_Hz:   measuredFrequency,
       theoretical_frequency_Hz: theoreticalFrequency,
+      kinetic_energy:          kineticEnergy,
+      potential_energy:        potentialEnergy,
+      total_energy:            totalEnergy,
     };
   }
 

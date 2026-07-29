@@ -109,15 +109,20 @@ export interface IExperiment {
 
   /**
    * Advance the simulation by one fixed physics step.
-   * Must be pure with respect to rendering — do not call `renderer.render()`.
-   * Mesh positions/rotations may be mutated here so the renderer picks them
-   * up on the next animation frame.
+   * Advance the simulation by one fixed timestep.
+   * Do NOT mutate Three.js objects here; only update mathematical state.
    *
    * @param dt     - Elapsed time in **seconds** for this physics tick.
    * @param params - Current parameter values, keyed by the same identifiers
    *                 used in `schema`. Values are pre-clamped by the engine.
    */
   update(dt: number, params: Record<string, number>): void;
+
+  /**
+   * Sync the Three.js scene meshes to match the current mathematical state.
+   * Called exactly once per render frame by the Engine.
+   */
+  render(): void;
 
   /**
    * Restore the experiment to its initial conditions.

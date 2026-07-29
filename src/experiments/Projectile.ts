@@ -218,17 +218,17 @@ export class Projectile implements IExperiment {
       this.y         = 0;
       this.hasLanded = true;
       this.actualRange = this.x;
-
-      // Show and position the landing ring.
-      if (this.landingMarker !== null) {
-        this.landingMarker.position.set(this.x, 0, 0);
-        this.landingMarker.visible = true;
-      }
     }
+  }
 
-    // ── Sync bob mesh ─────────────────────────────────────────────────────────
+  render(): void {
     if (this.bobMesh !== null) {
       this.bobMesh.position.set(this.x, this.y, 0);
+    }
+    
+    if (this.hasLanded && this.landingMarker !== null) {
+      this.landingMarker.position.set(this.x, 0, 0);
+      this.landingMarker.visible = true;
     }
   }
 
@@ -260,13 +260,10 @@ export class Projectile implements IExperiment {
       this.bobMesh.position.set(0, 0, 0);
     }
 
-    // Hide the landing marker.
-    if (this.landingMarker !== null) {
-      this.landingMarker.visible = false;
-    }
-
     // Rebuild the analytic predicted trajectory.
     this.updateTrajectory(params);
+
+    this.render();
   }
 
   getMeasurements(): Record<string, number> {

@@ -273,6 +273,11 @@ export class Engine {
     // Integrates the damping deceleration applied to the last user gesture.
     this.controls.update();
 
+    // Sync meshes to current state
+    if (this.currentExperiment !== null) {
+      this.currentExperiment.render();
+    }
+
     this.renderer.render(this.scene, this.camera);
   };
 

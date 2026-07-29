@@ -84,6 +84,9 @@ export class Pendulum implements IExperiment {
 
   /** Elapsed simulation time (seconds). */
   private time: number = 0;
+  
+  /** The current length used in the last physics tick (for rendering). */
+  private currentL: number = 0;
 
   // ── Period measurement via zero-crossing detection ─────────────────────────
 
@@ -241,6 +244,8 @@ export class Pendulum implements IExperiment {
     const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
     const g = params['gravity'] ?? this.schema['gravity'].default;
     const b = params['damping'] ?? this.schema['damping'].default;
+    
+    this.currentL = L;
 
     // ── Semi-Implicit Euler integration ───────────────────────────────────────
     const alpha = -(g / L) * Math.sin(this.theta) - b * this.omega;
@@ -281,9 +286,10 @@ export class Pendulum implements IExperiment {
       this.stopwatchTime += dt;
       this.updateStopwatchUI();
     }
+  }
 
-    // ── Update 3D mesh positions ──────────────────────────────────────────────
-    this.updateMeshes(L);
+  render(): void {
+    this.updateMeshes(this.currentL);
   }
 
   reset(params?: Record<string, number>): void {
@@ -312,7 +318,8 @@ export class Pendulum implements IExperiment {
     this.stopwatchTime = 0;
     this.updateStopwatchUI();
 
-    this.updateMeshes(L);
+    this.currentL = L;
+    this.render();
   }
 
   private updateStopwatchUI(): void {
@@ -385,6 +392,14 @@ export class Pendulum implements IExperiment {
         ? (Math.abs(this.measuredPeriod - theoreticalPeriod) / theoreticalPeriod) * 100
         : 0;
 
+    // Calculate energy (assuming mass = 1kg)
+    // KE = 1/2 * m * v^2 where v = L * omega
+    const v = this.currentL * this.omega;
+    const kineticEnergy = 0.5 * 1 * (v * v);
+    // PE = m * g * h where h = L * (1 - cos(theta))
+    const potentialEnergy = 1 * g * this.currentL * (1 - Math.cos(this.theta));
+    const totalEnergy = kineticEnergy + potentialEnergy;
+
     return {
       angle_deg:             (this.theta * 180) / Math.PI,
       omega_rads:            this.omega,
@@ -392,6 +407,9 @@ export class Pendulum implements IExperiment {
       measured_period_s:     this.measuredPeriod,
       theoretical_period_s:  theoreticalPeriod,
       period_difference_pct: periodDifferencePct,
+      kinetic_energy:        kineticEnergy,
+      potential_energy:      potentialEnergy,
+      total_energy:          totalEnergy,
     };
   }
 
