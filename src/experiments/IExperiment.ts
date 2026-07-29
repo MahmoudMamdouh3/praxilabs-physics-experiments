@@ -34,6 +34,9 @@ export interface ParameterSchema {
    * The UI uses this as the `step` attribute of the generated range input.
    */
   readonly step: number;
+
+  /** Optional detailed explanation of what this parameter does, shown on hover. */
+  readonly tooltip?: string;
 }
 
 // ---------------------------------------------------------------------------

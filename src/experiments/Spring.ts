@@ -64,6 +64,7 @@ export class Spring implements IExperiment {
       max: 20,
       default: 1,
       step: 0.1,
+      tooltip: 'The mass of the block hanging from the spring. Heavier masses lower the frequency.',
     },
     springConstant: {
       description: 'Spring Constant',
@@ -72,6 +73,7 @@ export class Spring implements IExperiment {
       max: 100,
       default: 10,
       step: 0.5,
+      tooltip: 'Stiffness of the spring (Hooke\'s Law k-value). Higher values mean a stiffer, faster spring.',
     },
     damping: {
       description: 'Damping Coefficient',
@@ -80,6 +82,7 @@ export class Spring implements IExperiment {
       max: 5,
       default: 0,
       step: 0.01,
+      tooltip: 'Friction or resistance that dissipates the spring\'s energy over time.',
     },
     initialDisplacement: {
       description: 'Initial Displacement',
@@ -88,6 +91,7 @@ export class Spring implements IExperiment {
       max: 5,
       default: 3,
       step: 0.1,
+      tooltip: 'Starting stretch or compression of the spring from its natural equilibrium point.',
     },
   };
 

@@ -58,6 +58,7 @@ export class Projectile implements IExperiment {
       max: 50,
       default: 20,
       step: 0.5,
+      tooltip: 'The launch velocity of the projectile.',
     },
     launchAngle: {
       description: 'Launch Angle',
@@ -66,6 +67,7 @@ export class Projectile implements IExperiment {
       max: 90,
       default: 45,
       step: 1,
+      tooltip: 'The angle above the horizontal at which the projectile is fired.',
     },
     gravity: {
       description: 'Gravitational Acceleration',
@@ -74,6 +76,7 @@ export class Projectile implements IExperiment {
       max: 20,
       default: 9.81,
       step: 0.01,
+      tooltip: 'The downward acceleration pulling the projectile to the ground.',
     },
     dragCoefficient: {
       description: 'Air Drag Coefficient',
@@ -82,6 +85,7 @@ export class Projectile implements IExperiment {
       max: 2,
       default: 0,
       step: 0.01,
+      tooltip: 'Air resistance that slows the projectile down, shortening its actual range compared to the predicted path.',
     },
   };
 

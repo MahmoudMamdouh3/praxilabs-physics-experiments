@@ -43,6 +43,7 @@ export class Pendulum implements IExperiment {
       max: 10,
       default: 2,
       step: 0.1,
+      tooltip: 'The length of the string from the pivot to the center of the bob. Controls the period of oscillation.',
     },
     gravity: {
       description: 'Gravitational Acceleration',
@@ -51,6 +52,7 @@ export class Pendulum implements IExperiment {
       max: 20,
       default: 9.81,
       step: 0.01,
+      tooltip: 'The strength of gravity pulling the bob downwards. Earth is ~9.81 m/s².',
     },
     initialAngle: {
       description: 'Initial Angle',
@@ -59,6 +61,7 @@ export class Pendulum implements IExperiment {
       max: 180,
       default: 45,
       step: 1,
+      tooltip: 'The starting displacement angle from the vertical equilibrium (0°).',
     },
     damping: {
       description: 'Damping Coefficient',
@@ -67,6 +70,7 @@ export class Pendulum implements IExperiment {
       max: 5,
       default: 0,
       step: 0.01,
+      tooltip: 'Air resistance or friction that causes the pendulum to lose energy and eventually stop.',
     },
   };
 

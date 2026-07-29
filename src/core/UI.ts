@@ -598,6 +598,12 @@ export class UI {
     label.htmlFor = `param-slider-${key}`;
     label.style.cssText = `font-size:12px;color:${TOKEN.text};font-family:${TOKEN.fontSans};`;
     label.textContent = s.description;
+
+    if (s.tooltip) {
+      label.title = s.tooltip;
+      label.style.cursor = 'help';
+      label.style.borderBottom = `1px dotted ${TOKEN.textMuted}`;
+    }
     topRow.appendChild(label);
 
     const valueDisplay = document.createElement('span');
