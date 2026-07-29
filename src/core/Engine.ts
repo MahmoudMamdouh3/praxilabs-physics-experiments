@@ -10,10 +10,11 @@ import type { IExperiment } from '../experiments/IExperiment.ts';
 //
 // Camera / OrbitControls bounding design:
 //
-//  • enablePan = false   — panning moves the orbit target off-centre; the user
-//                          loses the experiment from view. Locked target means
-//                          every zoom/rotate stays anchored to the scene centre.
-//  • minDistance = 2     — prevents the camera clipping inside geometry.
+//  • minAzimuthAngle = maxAzimuthAngle = 0 — locks horizontal rotation.
+//                          The experiments are 2D (XY plane); side-rotating
+//                          the camera collapses depth and makes the scene look
+//                          flat and confusing. Only vertical tilt + zoom allowed.
+//  • minDistance = 6     — prevents the camera clipping inside the pendulum bob.
 //  • maxDistance = 30    — at z=30 with 60° FOV, half-height ≈ 17 m, which
 //                          safely frames even a 10 m pendulum above the bottom
 //                          UI panel. Beyond 30 m objects become invisible specks.
@@ -108,9 +109,16 @@ export class Engine {
     // user cannot accidentally pan the scene out of view.
     this.controls.enablePan = false;
 
-    // Zoom bounds: close enough to inspect detail, far enough to see max-length pendulum.
-    this.controls.minDistance = 2;
+    // Zoom bounds: minDistance=6 keeps the camera outside the bob geometry.
+    // maxDistance=30 is enough to frame a 10 m pendulum with the UI panels clear.
+    this.controls.minDistance = 6;
     this.controls.maxDistance = 30;
+
+    // Lock horizontal (azimuth) rotation to 0 — experiments are 2D (XY plane).
+    // Allowing side-rotation collapses the depth axis and makes the scene look
+    // flat or inside-out against the black background.
+    this.controls.minAzimuthAngle = 0;
+    this.controls.maxAzimuthAngle = 0;
 
     // Polar angle cap: stops camera flipping upside-down (π = fully inverted).
     // π/1.5 ≈ 120° — user can look from slightly below but cannot invert.
@@ -175,6 +183,17 @@ export class Engine {
   /** Return the currently active experiment, or `null` if none is loaded. */
   getActiveExperiment(): IExperiment | null {
     return this.currentExperiment;
+  }
+
+  /**
+   * Restore the camera and orbit target to their default positions.
+   * Call this from the UI Reset button so the user can always recover
+   * to a known-good viewpoint regardless of how far they have zoomed/tilted.
+   */
+  resetCamera(): void {
+    this.camera.position.set(0, 0, 15);
+    this.controls.target.set(0, -3, 0);
+    this.controls.update();
   }
 
   /**

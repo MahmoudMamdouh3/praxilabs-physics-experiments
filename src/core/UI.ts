@@ -40,7 +40,7 @@ const TOKEN = {
 // ---------------------------------------------------------------------------
 // Max data points kept in the rolling graph buffer
 // ---------------------------------------------------------------------------
-const MAX_GRAPH_POINTS = 300;
+const MAX_GRAPH_POINTS = 150;
 
 // ---------------------------------------------------------------------------
 // Experiment registry — maps id → factory function.
@@ -202,6 +202,25 @@ export class UI {
     chartWrapper.appendChild(this.chartCanvas);
     graphPanel.appendChild(chartWrapper);
     this.shell.appendChild(graphPanel);
+
+    // ── Camera controls hint ─────────────────────────────────────────────────
+    // Subtle floating label that surfaces discoverability without cluttering the UI.
+    const camHint = document.createElement('div');
+    camHint.style.cssText = [
+      'position:absolute',
+      'bottom:212px',          // just above the 180px graph panel + 16px gap
+      `right:272px`,           // aligned with the graph panel right edge
+      `font-size:9px`,
+      `color:${TOKEN.textMuted}`,
+      `font-family:${TOKEN.fontMono}`,
+      'letter-spacing:1.2px',
+      'text-transform:uppercase',
+      'opacity:0.55',
+      'pointer-events:none',
+      'user-select:none',
+    ].join(';');
+    camHint.textContent = 'CAM CONTROLS: LEFT-CLICK TO TILT \u2502 SCROLL TO ZOOM';
+    this.shell.appendChild(camHint);
 
     this.initChart();
   }
@@ -521,6 +540,9 @@ export class UI {
       tsSlider.value = '1';
       tsLabel.textContent = '1×';
       this.styleSlider(tsSlider); // refresh the track fill gradient
+
+      // 7. Restore the camera to its default zoom/tilt position.
+      this.engine.resetCamera();
     });
 
     return { bar, pauseBtn, tsSlider, tsLabel };

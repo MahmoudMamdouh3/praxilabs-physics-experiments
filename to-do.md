@@ -33,6 +33,7 @@
 - can we make the camera a lerping camera with damaging performarnce ? 
 - reset button should also reset the zooming and the panning 
 - when i pan i should pan in the 2 dimensions not in 3d, because now i pan in 3d and considering the black background everything looks confusing as if it was the other side 
+- i need to let the user know how to pan and how to zoom in and out, they are not obvios at all. 
 
 - Future enhancement --> i should notify the user whenever something not making sense:
     - for example if he is setting the time scale to 0, i should let him know that this is why the experiment is freezing, etc
