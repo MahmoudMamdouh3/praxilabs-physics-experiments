@@ -25,12 +25,12 @@
 - [x] Ensure the absolute Reset button fully restores playback state (un-pauses, resets time scale, resets parameters).
 - [ ] Add tooltips on hover to explain to the user exactly what each parameter does.
 - [ ] Better utilize UI spacing (e.g., adding a sci-fi top base, making meshes larger, and reducing empty dark areas).
-- [x] add the ability that the user can change the color scheme of the UI based on varios 10 different staplished Cholor Schemes --> to allow for better visiabilty for all types of people 
+- [x] Add the ability for the user to change the color scheme of the UI based on 10 different established color schemes to allow for better visibility for all users.
 
 ## Physics & Experiments
 - [x] Fix the pendulum clipping behind the measurement graph at maximum length.
 - [x] Address the 180-degree pendulum instability (clamped maximum angle to 179.9°).
-- [x] Upgrade the simple pendulum to a "real experiment" (e.g., add a virtual clock/timer on screen to imitate a real lab).  --> similar to the praxilabs real exaple prvided in hear --> E:\Praxilabs\praxilabs-physics-experiments\references\NoteGPT_Subtitles_Simple Pendulum Experiment  What Really Controls the Swing.txt
+- [x] Upgrade the simple pendulum to a "real experiment" (e.g., add a virtual clock/timer on screen to imitate a real lab).
 - [x] Consider adding a warning or boundary effect when a parameter value produces a degenerate result (e.g., 180° angle).
 
 > **Note:** Future enhancements have been moved to [docs/future_enhancements.md](docs/future_enhancements.md).
