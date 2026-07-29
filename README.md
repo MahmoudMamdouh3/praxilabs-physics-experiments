@@ -7,10 +7,11 @@ To run this project locally, you will need Node.js. If you do not have it instal
 
 Once Node.js is installed, open your terminal in the project root and run:
 
-\`\`\`Terminal
+```bash
 npm install
 npm run dev
-\`\`\`
+```
+
 The application will be available at `http://localhost:5173`.
 
 ## Architecture Overview

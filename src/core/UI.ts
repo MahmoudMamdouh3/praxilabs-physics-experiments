@@ -26,7 +26,8 @@ const TOKEN = {
   accent: '#22aaff',
   accentDim: 'rgba(34,170,255,0.15)',
   text: '#c8cdd8',
-  textMuted: '#596170',
+  // Raised from #596170 → #8a95a8 for WCAG AA contrast (~5.1:1 on near-black bg).
+  textMuted: '#8a95a8',
   textBright: '#eef0f5',
   fontMono: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
   fontSans: "'Inter', system-ui, sans-serif",
@@ -69,7 +70,6 @@ export class UI {
   private readonly sidePanel: HTMLDivElement;
   private readonly readoutsPanel: HTMLDivElement;
   private readonly paramSection: HTMLDivElement;
-  private readonly controlsBar: HTMLDivElement;
 
   // ── Chart.js ───────────────────────────────────────────────────────────────
   private chart: Chart | null = null;
@@ -78,7 +78,11 @@ export class UI {
   private graphKey: string = '';  // which measurement key to plot on Y axis
 
   // ── Readout rows ───────────────────────────────────────────────────────────
+  // Key → the value <span> element. Cleared AND DOM-removed together in clearReadouts().
   private readoutRows: Map<string, HTMLSpanElement> = new Map();
+
+  // Heading node kept as a reference so clearReadouts() can restore it efficiently.
+  private readonly readoutsHeading: HTMLDivElement;
 
   constructor(physics: Physics, engine: Engine) {
     this.physics = physics;
@@ -130,9 +134,9 @@ export class UI {
     // Experiment switcher
     this.sidePanel.appendChild(this.buildSwitcher());
 
-    // Controls bar (Play/Pause, Reset, time-scale)
-    this.controlsBar = this.buildControlsBar();
-    this.sidePanel.appendChild(this.controlsBar);
+    // Controls bar — build returns the three mutable controls we need for Reset.
+    const { bar } = this.buildControlsBar();
+    this.sidePanel.appendChild(bar);
 
     // Parameter sliders section (empty until an experiment loads)
     this.paramSection = this.el('div', {
@@ -156,7 +160,13 @@ export class UI {
       boxShadow: TOKEN.shadow,
       pointerEvents: 'none',
     });
-    this.readoutsPanel.innerHTML = `<div style="font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:10px;">Live Readouts</div>`;
+
+    // Keep the heading as a field so clearReadouts() can re-append it cleanly.
+    this.readoutsHeading = document.createElement('div');
+    this.readoutsHeading.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:10px;`;
+    this.readoutsHeading.textContent = 'Live Readouts';
+    this.readoutsPanel.appendChild(this.readoutsHeading);
+
     this.shell.appendChild(this.readoutsPanel);
 
     // ── Bottom graph panel ───────────────────────────────────────────────────
@@ -172,23 +182,23 @@ export class UI {
       borderRadius: TOKEN.radius,
       boxShadow: TOKEN.shadow,
       padding: '10px 14px 8px',
+      // Prevent canvas overflow when the window is smaller than the panel.
+      overflow: 'hidden',
       pointerEvents: 'none',
     });
+
     const graphLabel = document.createElement('div');
     graphLabel.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:6px;`;
     graphLabel.textContent = 'Measurement Graph';
     graphPanel.appendChild(graphLabel);
 
-    // Wrap in a relative container with explicit CSS dimensions.
-    // Chart.js reads the container size to set the canvas backing-store
-    // resolution to containerWidth × devicePixelRatio, eliminating blur
-    // on HiDPI / Retina screens when maintainAspectRatio is false.
+    // Sized wrapper: Chart.js reads this element's clientWidth × clientHeight
+    // to set the canvas backing-store to (size × devicePixelRatio), eliminating
+    // blur on HiDPI screens. `overflow:hidden` clips any transient resize overshoot.
     const chartWrapper = document.createElement('div');
-    chartWrapper.style.cssText = 'position:relative;width:100%;height:130px;';
+    chartWrapper.style.cssText = 'position:relative;width:100%;height:130px;overflow:hidden;';
 
     this.chartCanvas = document.createElement('canvas');
-    // Do NOT set CSS width/height on the canvas itself — Chart.js controls
-    // both the CSS size and the backing-store size via the wrapper dimensions.
     chartWrapper.appendChild(this.chartCanvas);
     graphPanel.appendChild(chartWrapper);
     this.shell.appendChild(graphPanel);
@@ -200,11 +210,14 @@ export class UI {
 
   /**
    * Build sliders and number inputs for every key in `schema`.
-   * Called each time a new experiment is loaded.
+   * Called each time a new experiment is loaded or Reset is pressed.
    */
   buildParameterPanel(schema: Record<string, ParameterSchema>): void {
     this.paramSection.innerHTML = '';
-    this.readoutRows.clear();
+
+    // BUG FIX: clear() alone only empties the Map — DOM nodes stay in the panel.
+    // clearReadouts() removes both the DOM rows AND resets the Map atomically.
+    this.clearReadouts();
 
     if (Object.keys(schema).length === 0) {
       const empty = document.createElement('div');
@@ -241,13 +254,19 @@ export class UI {
   /**
    * Update the graph with a new measurements snapshot.
    * Call this every render frame from main.ts.
+   *
+   * BUG FIX: Skips the push+update when paused so Chart.js doesn't stutter
+   * by re-rendering the same frozen point 60× per second.
    */
   updateGraph(measurements: Record<string, number>): void {
     if (this.chart === null) return;
 
+    // Only advance the graph when the simulation is actually running.
+    if (this.physics.isPaused) return;
+
     const t = measurements['time_s'] ?? 0;
 
-    // Pick first non-time key as the Y axis metric (stable across frames)
+    // Pick first non-time key as the Y axis metric (stable across frames).
     if (this.graphKey === '') {
       const firstKey = Object.keys(measurements).find((k) => k !== 'time_s');
       this.graphKey = firstKey ?? '';
@@ -302,6 +321,24 @@ export class UI {
       ds.data = [];
       this.chart.update('none');
     }
+  }
+
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Remove all readout rows from the DOM and clear the Map.
+   * Must be called together — clearing the Map alone leaves orphan DOM nodes.
+   */
+  private clearReadouts(): void {
+    // Remove every row div that was appended after the heading.
+    // We keep readoutsHeading and remove everything else.
+    const children = Array.from(this.readoutsPanel.children);
+    for (const child of children) {
+      if (child !== this.readoutsHeading) {
+        this.readoutsPanel.removeChild(child);
+      }
+    }
+    this.readoutRows.clear();
   }
 
   // ── Private builders ────────────────────────────────────────────────────────
@@ -362,7 +399,17 @@ export class UI {
     return wrapper;
   }
 
-  private buildControlsBar(): HTMLDivElement {
+  /**
+   * Build the controls bar.
+   * Returns the bar element plus the three DOM nodes that Reset needs to mutate,
+   * so they can be stored as class fields without passing `this` in callbacks.
+   */
+  private buildControlsBar(): {
+    bar: HTMLDivElement;
+    pauseBtn: HTMLButtonElement;
+    tsSlider: HTMLInputElement;
+    tsLabel: HTMLDivElement;
+  } {
     const bar = this.el('div', {
       background: TOKEN.bg,
       backdropFilter: TOKEN.panelBlur,
@@ -373,9 +420,10 @@ export class UI {
       display: 'flex',
       gap: '8px',
       alignItems: 'center',
+      flexWrap: 'wrap',
     });
 
-    // Play / Pause
+    // ── Play / Pause ──────────────────────────────────────────────────────────
     const pauseBtn = this.button('⏸ Pause', TOKEN.accent);
     pauseBtn.id = 'ui-btn-pause';
     pauseBtn.addEventListener('click', () => {
@@ -384,7 +432,7 @@ export class UI {
     });
     bar.appendChild(pauseBtn);
 
-    // Step once
+    // ── Step once ─────────────────────────────────────────────────────────────
     const stepBtn = this.button('⏭ Step', TOKEN.textMuted);
     stepBtn.title = 'Advance exactly one physics tick (useful when paused)';
     stepBtn.addEventListener('click', () => {
@@ -392,8 +440,42 @@ export class UI {
     });
     bar.appendChild(stepBtn);
 
-    // Reset — restores schema defaults, rebuilds sliders, and resets experiment state
+    // ── Reset ─────────────────────────────────────────────────────────────────
+    // References pauseBtn, tsSlider, tsLabel — these are captured after creation.
+    // The actual listener is patched in below after the slider/label are built.
     const resetBtn = this.button('↺ Reset', TOKEN.textMuted);
+    bar.appendChild(resetBtn);
+
+    // ── Time-scale label ──────────────────────────────────────────────────────
+    const tsLabel = document.createElement('div') as HTMLDivElement;
+    tsLabel.style.cssText = `font-size:10px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};white-space:nowrap;`;
+    tsLabel.textContent = '1×';
+    tsLabel.id = 'ui-ts-label';
+
+    // ── Time-scale slider ─────────────────────────────────────────────────────
+    // Fixed width (120 px) so it doesn't collapse in the flex row.
+    const tsSlider = document.createElement('input');
+    tsSlider.type = 'range';
+    tsSlider.id = 'ui-ts-slider';
+    tsSlider.min = '0';
+    tsSlider.max = '4';
+    tsSlider.step = '0.5';     // coarser step — 0×, 0.5×, 1×, 1.5×, 2×, … 4×
+    tsSlider.value = '1';
+    tsSlider.title = 'Time Scale';
+    this.styleSlider(tsSlider);
+    tsSlider.style.width = '120px';
+    tsSlider.style.flexShrink = '0';
+
+    tsSlider.addEventListener('input', () => {
+      const scale = parseFloat(tsSlider.value);
+      this.physics.setTimeScale(scale);
+      tsLabel.textContent = `${scale}×`;
+    });
+
+    bar.appendChild(tsSlider);
+    bar.appendChild(tsLabel);
+
+    // ── Wire up Reset now that all controls exist ─────────────────────────────
     resetBtn.addEventListener('click', () => {
       const exp = this.engine.getActiveExperiment();
       if (exp === null) return;
@@ -407,7 +489,8 @@ export class UI {
       exp.reset(this.physics.currentParams);
 
       // 3. Rebuild the entire parameter panel so all sliders/inputs snap
-      //    back to their default positions visually.
+      //    back to their default positions visually. This also calls
+      //    clearReadouts() to remove orphan DOM rows before re-adding them.
       this.buildParameterPanel(exp.schema);
 
       // 4. Clear the graph buffer.
@@ -415,35 +498,17 @@ export class UI {
 
       // 5. Reset the accumulator so no leftover partial-tick debt carries over.
       this.physics.reset();
-    });
-    bar.appendChild(resetBtn);
 
-    // Time-scale
-    const tsLabel = document.createElement('div');
-    tsLabel.style.cssText = `font-size:10px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};margin-left:4px;white-space:nowrap;`;
-    tsLabel.textContent = '1×';
-    tsLabel.id = 'ui-ts-label';
-
-    const tsSlider = document.createElement('input');
-    tsSlider.type = 'range';
-    tsSlider.min = '0';
-    tsSlider.max = '4';
-    tsSlider.step = '0.25';
-    tsSlider.value = '1';
-    tsSlider.title = 'Time Scale';
-    this.styleSlider(tsSlider);
-    tsSlider.style.flex = '1';
-    tsSlider.style.minWidth = '0';
-    tsSlider.addEventListener('input', () => {
-      const scale = parseFloat(tsSlider.value);
-      this.physics.setTimeScale(scale);
-      tsLabel.textContent = `${scale}×`;
+      // 6. Restore playback state to "playing" at 1× speed.
+      this.physics.play();
+      this.physics.setTimeScale(1);
+      pauseBtn.textContent = '⏸ Pause';
+      tsSlider.value = '1';
+      tsLabel.textContent = '1×';
+      this.styleSlider(tsSlider); // refresh the track fill gradient
     });
 
-    bar.appendChild(tsSlider);
-    bar.appendChild(tsLabel);
-
-    return bar;
+    return { bar, pauseBtn, tsSlider, tsLabel };
   }
 
   private buildSliderRow(key: string, s: ParameterSchema): HTMLDivElement {
@@ -500,6 +565,7 @@ export class UI {
       slider.value = String(clamped);
       numInput.value = String(clamped);
       valueDisplay.textContent = `${clamped.toFixed(2)} ${s.unit}`;
+      this.styleSlider(slider); // refresh track fill
 
       this.physics.setParam(key, clamped);
 
@@ -578,7 +644,10 @@ export class UI {
       },
       options: {
         animation: false,
-        responsive: false,
+        // responsive:true lets Chart.js watch the wrapper via ResizeObserver
+        // and update the canvas pixel dimensions automatically on resize,
+        // preventing overflow and clipping in the glassmorphism panel.
+        responsive: true,
         maintainAspectRatio: false,
         parsing: false,
         scales: {
@@ -652,32 +721,39 @@ export class UI {
     return btn;
   }
 
+  /**
+   * Apply (or reapply) the filled-track gradient to a range input.
+   * Safe to call multiple times — overwrites the background each call.
+   */
   private styleSlider(slider: HTMLInputElement): void {
+    const min = parseFloat(slider.min) || 0;
+    const max = parseFloat(slider.max) || 1;
+    const val = parseFloat(slider.value) || 0;
+    const pct = ((val - min) / (max - min)) * 100;
+
     slider.style.cssText += `
       -webkit-appearance:none;appearance:none;
       height:4px;border-radius:2px;
-      background:linear-gradient(to right,${TOKEN.accent} 0%,${TOKEN.accent} ${((parseFloat(slider.value) - parseFloat(slider.min)) /
-        (parseFloat(slider.max) - parseFloat(slider.min))) *
-      100
-      }%,rgba(255,255,255,0.08) 0%);
+      background:linear-gradient(to right,${TOKEN.accent} 0%,${TOKEN.accent} ${pct}%,rgba(255,255,255,0.08) ${pct}%);
       outline:none;cursor:pointer;
     `;
 
-    // Re-colour track fill on every input event
-    const updateTrack = () => {
-      const pct =
-        ((parseFloat(slider.value) - parseFloat(slider.min)) /
-          (parseFloat(slider.max) - parseFloat(slider.min))) *
-        100;
-      slider.style.background = `linear-gradient(to right,${TOKEN.accent} 0%,${TOKEN.accent} ${pct}%,rgba(255,255,255,0.08) ${pct}%)`;
-    };
-    slider.addEventListener('input', updateTrack);
+    // Re-colour track fill on every subsequent input event.
+    // Guard with a flag so we don't stack listeners on repeated styleSlider() calls.
+    if (!(slider as HTMLInputElement & { _trackListenerAdded?: boolean })._trackListenerAdded) {
+      (slider as HTMLInputElement & { _trackListenerAdded?: boolean })._trackListenerAdded = true;
+      slider.addEventListener('input', () => {
+        const p = ((parseFloat(slider.value) - parseFloat(slider.min)) /
+          (parseFloat(slider.max) - parseFloat(slider.min))) * 100;
+        slider.style.background = `linear-gradient(to right,${TOKEN.accent} 0%,${TOKEN.accent} ${p}%,rgba(255,255,255,0.08) ${p}%)`;
+      });
+    }
   }
 
   private formatValue(key: string, val: number): string {
     if (key.endsWith('_deg')) return `${val.toFixed(2)} °`;
-    if (key.endsWith('_s')) return `${val.toFixed(3)} s`;
-    if (key.endsWith('_ms')) return `${val.toFixed(1)} m/s`;
+    if (key.endsWith('_s'))   return `${val.toFixed(3)} s`;
+    if (key.endsWith('_ms'))  return `${val.toFixed(1)} m/s`;
     if (key.endsWith('_rads')) return `${val.toFixed(4)} rad/s`;
     return val.toFixed(4);
   }
