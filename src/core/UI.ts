@@ -209,15 +209,15 @@ export class UI {
     if (!this.toastContainer) return;
     
     const toast = this.el('div', {
-      background: type === 'warning' ? 'rgba(255, 107, 53, 0.95)' : 'rgba(34, 170, 255, 0.95)',
-      color: '#fff',
+      background: TOKEN.bgSolid,
+      border: type === 'warning' ? '1px solid #ff4444' : TOKEN.borderAccent,
+      color: TOKEN.textBright,
       padding: '10px 20px',
       borderRadius: '6px',
       fontFamily: TOKEN.fontSans,
       fontSize: '13px',
       fontWeight: '600',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-      backdropFilter: 'blur(4px)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.8)',
       opacity: '0',
       transition: 'opacity 0.3s ease-in-out',
       pointerEvents: 'none',
@@ -272,22 +272,26 @@ export class UI {
     // ── Top Sci-Fi HUD ────────────────────────────────────────────────────────
     const topHud = this.el('div', {
       position: 'absolute',
-      top: '0',
-      left: '0',
-      right: '0',
+      top: '16px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: 'fit-content',
+      padding: '0 32px',
+      borderRadius: '8px',
       height: '36px',
-      background: 'linear-gradient(180deg, rgba(13,13,15,0.9) 0%, rgba(13,13,15,0.2) 100%)',
-      borderBottom: `1px solid ${TOKEN.border}`,
-      backdropFilter: 'blur(4px)',
+      background: 'linear-gradient(180deg, rgba(13,13,15,0.9) 0%, rgba(13,13,15,0.4) 100%)',
+      border: `1px solid rgba(255,255,255,0.1)`,
+      backdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       pointerEvents: 'none',
       zIndex: '20',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
     });
     
     topHud.innerHTML = `
-      <div style="display:flex; gap: 40px; align-items:center; opacity:0.6; font-family:${TOKEN.fontMono}; font-size:10px; letter-spacing:2px; color:${TOKEN.accent};">
+      <div style="display:flex; gap: 40px; align-items:center; font-family:${TOKEN.fontMono}; font-size:11px; letter-spacing:2px; color:${TOKEN.textBright}; font-weight:600;">
         <span>SYS.STATUS: ONLINE</span>
         <div style="width: 200px; height: 1px; background: linear-gradient(90deg, transparent, ${TOKEN.accent}, transparent); opacity:0.3;"></div>
         <span>SIMULATION: ENGAGED</span>
@@ -302,7 +306,7 @@ export class UI {
       position: 'absolute',
       top: '56px',
       left: '16px',
-      width: '280px',
+      width: '320px',
       display: 'flex',
       flexDirection: 'column',
       gap: '10px',
@@ -332,7 +336,7 @@ export class UI {
     // ── Toast Container ───────────────────────────────────────────────────────
     this.toastContainer = this.el('div', {
       position: 'absolute',
-      top: '100px',
+      top: '70px',
       left: '50%',
       transform: 'translateX(-50%)',
       pointerEvents: 'none',
@@ -340,7 +344,7 @@ export class UI {
       flexDirection: 'column',
       alignItems: 'center',
       gap: '8px',
-      zIndex: '100',
+      zIndex: '9999',
     });
     this.shell.appendChild(this.toastContainer);
 
@@ -414,30 +418,22 @@ export class UI {
     this.shell.appendChild(graphPanel);
 
     // ── Camera controls hint ─────────────────────────────────────────────────
-    // Anchored to the bottom-left of the graph panel so it reads against the
-    // frosted-glass surface rather than the raw black canvas. High-contrast
-    // textBright + backdrop ensures it is readable at a glance.
-    const camHint = document.createElement('div');
-    camHint.style.cssText = [
-      'position:absolute',
-      'bottom:212px',           // sits just above the 180px graph panel + 16px gap
-      'left:312px',             // aligned with the graph panel left edge
-      'font-size:10px',
-      `color:${TOKEN.textBright}`,
-      `font-family:${TOKEN.fontMono}`,
-      'letter-spacing:1px',
-      'text-transform:uppercase',
-      'opacity:0.75',
-      'padding:3px 8px',
-      'border-radius:4px',
-      'background:rgba(13,14,18,0.72)',
-      `border:1px solid rgba(34,170,255,0.2)`,
-      'pointer-events:none',
-      'user-select:none',
-      'backdrop-filter:blur(6px)',
-    ].join(';');
-    camHint.textContent = 'Cam: drag to tilt  \u2502  scroll to zoom';
-    this.shell.appendChild(camHint);
+    const camHint = this.el('div', {
+      padding: '12px 16px',
+      background: TOKEN.bg,
+      backdropFilter: TOKEN.panelBlur,
+      border: TOKEN.border,
+      borderRadius: TOKEN.radius,
+      boxShadow: TOKEN.shadow,
+    });
+    camHint.innerHTML = `
+      <div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">Camera Controls</div>
+      <div style="font-size:12px;color:${TOKEN.textMuted};font-family:${TOKEN.fontSans};line-height:1.6;">
+        <b style="color:${TOKEN.textBright};">Left Click + Drag</b>: Pan View<br>
+        <b style="color:${TOKEN.textBright};">Scroll Wheel</b>: Zoom In / Out
+      </div>
+    `;
+    this.sidePanel.appendChild(camHint);
 
     this.initChart();
   }
@@ -685,7 +681,7 @@ export class UI {
     bar.appendChild(resetBtn);
 
     // ── CSV Export ────────────────────────────────────────────────────────────
-    const csvBtn = this.button('⬇️ CSV', TOKEN.accent);
+    const csvBtn = this.button('Download CSV', TOKEN.accent);
     csvBtn.title = 'Download measurement history as CSV';
     csvBtn.addEventListener('click', () => {
       if (this.measurementHistory.length === 0) return;
@@ -708,12 +704,20 @@ export class UI {
     bar.appendChild(csvBtn);
 
     // ── Theme Selector ────────────────────────────────────────────────────────
+    const themeWrapper = document.createElement('div');
+    themeWrapper.style.cssText = `display:flex; align-items:center; gap:6px; margin-left:auto;`;
+    
+    const themeLabel = document.createElement('span');
+    themeLabel.textContent = 'Theme:';
+    themeLabel.style.cssText = `font-size:11px; color:${TOKEN.textMuted}; font-family:${TOKEN.fontSans};`;
+    themeWrapper.appendChild(themeLabel);
+
     const themeSelect = document.createElement('select');
     themeSelect.style.cssText = `
-      background:transparent; color:${TOKEN.textMuted};
-      border:1px solid rgba(255,255,255,0.1); border-radius:4px;
+      background:transparent; color:${TOKEN.textBright};
+      border:1px solid rgba(255,255,255,0.2); border-radius:4px;
       font-size:11px; font-family:${TOKEN.fontSans};
-      padding:3px 6px; cursor:pointer; outline:none;
+      padding:4px 8px; cursor:pointer; outline:none;
     `;
     
     const themes = [
@@ -738,15 +742,18 @@ export class UI {
       themeSelect.appendChild(opt);
     }
     
+    themeWrapper.appendChild(themeSelect);
+    bar.appendChild(themeWrapper);
+
+    // Initialize theme from localStorage
+    const savedTheme = localStorage.getItem('praxilabs-theme') || 'default';
+    document.body.dataset.theme = savedTheme;
+    themeSelect.value = savedTheme;
+
     themeSelect.addEventListener('change', () => {
       document.body.dataset.theme = themeSelect.value;
-      if (this.chart !== null) {
-        // Redraw chart to pick up CSS variable changes
-        this.chart.update();
-      }
+      localStorage.setItem('praxilabs-theme', themeSelect.value);
     });
-    
-    bar.appendChild(themeSelect);
 
     // ── Time-scale row — always-visible static label + slider + value ──────────
     // A full-width sub-row so the label is always readable (not just on hover).
@@ -828,7 +835,12 @@ export class UI {
       tsLabel.textContent = '1×';
       this.styleSlider(tsSlider); // refresh the track fill gradient
 
-      // 7. Restore the camera to its default zoom/tilt position.
+      // 7. Reset Theme
+      themeSelect.value = 'default';
+      document.body.dataset.theme = 'default';
+      localStorage.removeItem('praxilabs-theme');
+
+      // 8. Restore the camera to its default zoom/tilt position.
       this.engine.resetCamera();
     });
 
@@ -980,12 +992,12 @@ export class UI {
           {
             label: '',
             data: [],
-            borderColor: TOKEN.accent,
-            backgroundColor: TOKEN.accentDim,
-            borderWidth: 1.5,
+            borderColor: '#00ffcc', // Constant Oscilloscope Green
+            backgroundColor: 'rgba(0, 255, 204, 0.1)',
+            borderWidth: 2,
             pointRadius: 0,
             fill: true,
-            tension: 0.3,
+            tension: 0.4, // Smooth curved lines
           } as ChartDataset<'line', Array<{ x: number; y: number }>>,
         ],
       },
