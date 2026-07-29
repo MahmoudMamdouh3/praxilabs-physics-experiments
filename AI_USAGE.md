@@ -47,6 +47,10 @@ Analyze these issues, explain your intended fixes briefly, and then generate the
 
 ## AI Corrections (Suboptimal or Wrong Output)
 
-### Case 1:
+### Case 1: Physics and Rendering Coupling
+**The Issue:** The AI initially implemented the `update(dt)` loop for the experiments by calculating physics and immediately calling Three.js methods (e.g., `this.bobMesh.position.set(...)`). While visually correct, this structurally bound the mathematical logic to the DOM rendering engine, violating strict separation of concerns.
+**The Fix:** I instructed the AI to decouple this logic. We introduced a `render(): void` contract in `IExperiment.ts`. The AI was prompted to move all mesh mutations into `render()` and have `Engine.ts` call it exactly once per render frame. This successfully isolated the math engine.
 
-### Case 2:
+### Case 2: Headless Testability
+**The Issue:** Because the early physics loop mutated Three.js meshes, we couldn't properly unit test the physics in a headless environment without complex DOM mocks or canvas errors.
+**The Fix:** After enforcing the `render()` separation (Case 1), I tasked the AI to install Vitest and write a pure mathematical integration test (`Pendulum.test.ts`). The test successfully calls `setup()`, ticks `update()`, and verifies Semi-Implicit Euler energy conservation without touching the Three.js mesh pipeline at all, proving the robustness of the architecture.
