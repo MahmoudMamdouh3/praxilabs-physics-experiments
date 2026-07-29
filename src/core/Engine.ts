@@ -192,6 +192,52 @@ export class Engine {
     gridHelper.material.transparent = true;
     this.scene.add(gridHelper);
 
+    // 4. Lab Props (Whiteboard, Cabinets, etc.) to fill the empty space
+    const propsGroup = new THREE.Group();
+    
+    // Whiteboard on back wall
+    const boardGeo = new THREE.BoxGeometry(80, 30, 1);
+    const boardMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.8 });
+    const board = new THREE.Mesh(boardGeo, boardMat);
+    board.position.set(20, 25, -49.5); // On the back wall (z=-50)
+    propsGroup.add(board);
+    
+    // Whiteboard frame
+    const boardFrameGeo = new THREE.BoxGeometry(82, 32, 0.5);
+    const boardFrameMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
+    const boardFrame = new THREE.Mesh(boardFrameGeo, boardFrameMat);
+    boardFrame.position.set(20, 25, -49.8);
+    propsGroup.add(boardFrame);
+    
+    // Tall Metal Cabinet (Left)
+    const cabGeo = new THREE.BoxGeometry(20, 50, 15);
+    const cabMat = new THREE.MeshStandardMaterial({ color: 0x2a2d34, roughness: 0.7, metalness: 0.3 });
+    const cab = new THREE.Mesh(cabGeo, cabMat);
+    cab.position.set(-50, 5, -42.5); // Resting on floor (y=-20), height is 50 -> center is 5
+    cab.castShadow = true;
+    propsGroup.add(cab);
+
+    // Tall Metal Cabinet (Right)
+    const cab2 = cab.clone();
+    cab2.position.set(120, 5, -42.5);
+    propsGroup.add(cab2);
+    
+    // Window on the right wall
+    const windowGeo = new THREE.BoxGeometry(1, 40, 60);
+    const windowMat = new THREE.MeshStandardMaterial({ color: 0xaaccff, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.4 });
+    const labWindow = new THREE.Mesh(windowGeo, windowMat);
+    labWindow.position.set(299.5, 30, 0); // On the right wall (x=300)
+    propsGroup.add(labWindow);
+    
+    // Window frame
+    const winFrameGeo = new THREE.BoxGeometry(2, 42, 62);
+    const winFrameMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const winFrame = new THREE.Mesh(winFrameGeo, winFrameMat);
+    winFrame.position.set(299.8, 30, 0);
+    propsGroup.add(winFrame);
+    
+    this.scene.add(propsGroup);
+
     // ── Resize handler ────────────────────────────────────────────────────────
     window.addEventListener('resize', this.onWindowResize);
   }

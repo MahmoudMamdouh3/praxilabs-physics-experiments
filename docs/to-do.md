@@ -1,7 +1,7 @@
 # PraxiLabs Physics Experiments — Task Tracker
 
 
-- [] Create a user guide/manual inside docs folder
+- [x] Create a user guide/manual inside docs folder
 - [x] the color theme should reset when the user clicks on the absolute reset button, it should save and be persist
 - [x] let us stick with the html osciliation counter instead of the three.js osciliation counter
 - [x] the warning i get when i make the speed at 0 is not displayed properly because it is occluded by other UI element (the html osciliations counter)
@@ -12,10 +12,10 @@
 - [x] the color themes messed about the measurement gragh color, i need that to be constant color or at least fix it
 - [x] the color of the warning if the 0 speed should follow the color theme
 - [x] choosing the color them aswell should have text next to it indicating that this is theme selection 
-- [] the 3d space is empty and condsing, we need to add more the the static labratory background, right now i only have these axis lines which looks like shit and confusing aswell.
+- [x] the 3d space is empty and condsing, we need to add more the the static labratory background, right now i only have these axis lines which looks like shit and confusing aswell.
 - [x] drag to tilt is wrong , i do not want to tilt, i need it to act as a panning tool , as if i am panning with a hand tool in a 2d app. 
-- [] the text on the hud does not make any sense and is confusing. 
-- [] in the projectile motion experiment, some lunc angles causes the ball to fall of the right side of the screen and comes out of the canvas so now i can not see it, even when i am zoomed out to the max, and i want all the experiments to start from pause as i mentioned. 
+- [x] the text on the hud does not make any sense and is confusing. 
+- [x] in the projectile motion experiment, some lunc angles causes the ball to fall of the right side of the screen and comes out of the canvas so now i can not see it, even when i am zoomed out to the max, and i want all the experiments to start from pause as i mentioned. 
 - [x] i want all the experiments to take place in the same 3d environemnt, a proper physics lab, where there is a lab table, and all the equipment is placed on that table, with the background being the physics lab.
 - [x] i want the description panel of each experiment to be larger becauses i can not read them clearly --> like these ones for example --> PraxiLabs
 Projectile Motion A projectile launched at a chosen speed and angle, subject to gravity and optional linear air drag, integrated via Semi-Implicit Euler. The dashed line shows the drag-free analytic trajectory for comparison.
