@@ -284,12 +284,16 @@ export class Pendulum implements IExperiment {
     
     if (this.isTiming) {
       this.stopwatchTime += dt;
-      this.updateStopwatchUI();
     }
   }
 
   render(): void {
     this.updateMeshes(this.currentL);
+    
+    // Only update the UI/Canvas once per visual frame, safely separated from physics.
+    if (this.isTiming || this.lapCount >= 20) {
+      this.updateStopwatchUI();
+    }
   }
 
   reset(params?: Record<string, number>): void {
