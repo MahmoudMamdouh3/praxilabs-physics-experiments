@@ -13,19 +13,19 @@
 - [x] the color of the warning if the 0 speed should follow the color theme
 - [x] choosing the color them aswell should have text next to it indicating that this is theme selection 
 - [] the 3d space is empty and condsing, we need to add more the the static labratory background, right now i only have these axis lines which looks like shit and confusing aswell.
-- [] drag to tilt is wrong , i do not want to tilt, i need it to act as a panning tool , as if i am panning with a hand tool in a 2d app. 
+- [x] drag to tilt is wrong , i do not want to tilt, i need it to act as a panning tool , as if i am panning with a hand tool in a 2d app. 
 - [] the text on the hud does not make any sense and is confusing. 
 - [] in the projectile motion experiment, some lunc angles causes the ball to fall of the right side of the screen and comes out of the canvas so now i can not see it, even when i am zoomed out to the max, and i want all the experiments to start from pause as i mentioned. 
-- [] i want all the experiments to take place in the same 3d environemnt, a proper physics lab, where there is a lab table, and all the equipment is placed on that table, with the background being the physics lab.
+- [x] i want all the experiments to take place in the same 3d environemnt, a proper physics lab, where there is a lab table, and all the equipment is placed on that table, with the background being the physics lab.
 - [x] i want the description panel of each experiment to be larger becauses i can not read them clearly --> like these ones for example --> PraxiLabs
 Projectile Motion A projectile launched at a chosen speed and angle, subject to gravity and optional linear air drag, integrated via Semi-Implicit Euler. The dashed line shows the drag-free analytic trajectory for comparison.
 - [x] i want the cam and scroll guide to be in a more appropriate place perhabs on a small panel that holds only text because now it is not visible at all and confusing. 
 - [x] the projectile experiemnt should reset when it reaches it is target , but i do not mean by that that it is reset compeletly i want the ball to land and still be there but i am facing a bug right now is that when i want to repeat the experimnt i have to click the reset button then play again instead of clicking play at one. 
-- [] the lack of 3d environement around the objects makes it extremely hard to determine the accurecy and realism of what is haoppening. 
+- [x] the lack of 3d environement around the objects makes it extremely hard to determine the accurecy and realism of what is haoppening. 
 - [x] when i changes the air drag coffiecent the ball did not follow the dotted line, is that normall ? should not the dotted line follow all the parameeters i changes and predicte that path? 
 - [x] the measurement gragh is very bad , i do not know what about it is bad but alot of things i do not like , i do not like the bug where i mentioned when it is first drawn it stutters alt and also when it finishes drawing, i donot like the fact that it is drawing looks finicky does not look polished like the ones we see on an oschiliscope for example. 
 - [x] in the spring mass experment the spring moves past the top base , it goes through it litterly, is that normal ? 
-- [] i need to work on the polishment of the 3d shapes of the experiments item, becuase they all looks ugly
+- [x] i need to work on the polishment of the 3d shapes of the experiments item, becuase they all looks ugly
 - []
 - []
 - []

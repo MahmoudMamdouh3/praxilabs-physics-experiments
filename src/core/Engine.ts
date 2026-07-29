@@ -105,9 +105,16 @@ export class Engine {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
 
-    // Disable panning: keeps the orbit target locked on the experiment so the
-    // user cannot accidentally pan the scene out of view.
-    this.controls.enablePan = false;
+    // Enable 2D Panning (Left Click + Drag)
+    this.controls.enablePan = true;
+    this.controls.enableRotate = false; // Disable tilting completely
+    
+    // Lock to Right Click to Rotate (which is disabled) and Left Click to Pan
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.ROTATE
+    };
 
     // Zoom bounds: minDistance=6 keeps the camera outside the bob geometry.
     // maxDistance=30 is enough to frame a 10 m pendulum with the UI panels clear.
@@ -115,14 +122,12 @@ export class Engine {
     this.controls.maxDistance = 300;
 
     // Lock horizontal (azimuth) rotation to 0 — experiments are 2D (XY plane).
-    // Allowing side-rotation collapses the depth axis and makes the scene look
-    // flat or inside-out against the black background.
     this.controls.minAzimuthAngle = 0;
     this.controls.maxAzimuthAngle = 0;
 
-    // Polar angle cap: stops camera flipping upside-down (π = fully inverted).
-    // π/1.5 ≈ 120° — user can look from slightly below but cannot invert.
-    this.controls.maxPolarAngle = Math.PI / 1.5;
+    // Lock polar angle (tilt) to exactly face-on (90 degrees / Math.PI / 2).
+    this.controls.minPolarAngle = Math.PI / 2;
+    this.controls.maxPolarAngle = Math.PI / 2;
 
     // Sync camera look direction with the new orbit target.
     this.controls.update();
@@ -153,11 +158,37 @@ export class Engine {
     rimLight.position.set(-8, -4, -8);
     this.scene.add(rimLight);
 
-    // ── Grid Floor ───────────────────────────────────────────────────────────
-    // Fills the bottom dark space and gives a sense of scale and grounding.
-    const gridHelper = new THREE.GridHelper(60, 60, 0x22aaff, 0x111118);
-    gridHelper.position.set(0, -12, 0); // Positioned well below the lowest experiment parts
-    gridHelper.material.opacity = 0.15;
+    // ── 3D Lab Environment ───────────────────────────────────────────────────
+    
+    // 1. Lab Room (Background Walls/Floor)
+    const roomGeo = new THREE.BoxGeometry(400, 200, 100);
+    const roomMat = new THREE.MeshStandardMaterial({
+      color: 0x0f1115,       // Very dark industrial walls
+      roughness: 0.95,
+      side: THREE.BackSide,  // Render inside
+    });
+    const roomMesh = new THREE.Mesh(roomGeo, roomMat);
+    roomMesh.position.set(100, 50, 0); 
+    roomMesh.receiveShadow = true;
+    this.scene.add(roomMesh);
+
+    // 2. Lab Table (Where experiments rest)
+    // The top surface of this table is exactly at y = 0.
+    const tableGeo = new THREE.BoxGeometry(350, 4, 40);
+    const tableMat = new THREE.MeshStandardMaterial({
+      color: 0x181a20,       // Slate/metal lab table
+      roughness: 0.7,
+      metalness: 0.1,
+    });
+    const tableMesh = new THREE.Mesh(tableGeo, tableMat);
+    tableMesh.position.set(100, -2, -5); // x=100 so it extends far right for projectiles
+    tableMesh.receiveShadow = true;
+    this.scene.add(tableMesh);
+    
+    // 3. Subtle Table Grid (To help with scale)
+    const gridHelper = new THREE.GridHelper(350, 350, 0x22aaff, 0x111118);
+    gridHelper.position.set(100, 0.01, -5); // Just above table surface
+    gridHelper.material.opacity = 0.1;
     gridHelper.material.transparent = true;
     this.scene.add(gridHelper);
 

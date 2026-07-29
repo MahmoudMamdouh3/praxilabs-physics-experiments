@@ -165,6 +165,23 @@ export class Spring implements IExperiment {
     this.anchorMesh = new THREE.Mesh(this.anchorGeometry, this.anchorMaterial);
     this.anchorMesh.position.set(0, ANCHOR_Y, 0);
     this.anchorMesh.castShadow = true;
+    
+    // ── Anchor Stand ──────────────────────────────────────────────────────────
+    const standGeo = new THREE.CylinderGeometry(0.15, 0.15, ANCHOR_Y);
+    const standMat = new THREE.MeshStandardMaterial({ color: 0x556677, metalness: 0.8, roughness: 0.2 });
+    const standPole = new THREE.Mesh(standGeo, standMat);
+    // Relative to anchorMesh at (0, ANCHOR_Y, 0)
+    standPole.position.set(-2, -ANCHOR_Y / 2, -1);
+    standPole.castShadow = true;
+    this.anchorMesh.add(standPole);
+
+    const standArmGeo = new THREE.CylinderGeometry(0.1, 0.1, 3);
+    const standArm = new THREE.Mesh(standArmGeo, standMat);
+    standArm.rotation.z = Math.PI / 2;
+    standArm.position.set(-0.5, 0, -1);
+    standArm.castShadow = true;
+    this.anchorMesh.add(standArm);
+
     scene.add(this.anchorMesh);
 
     // ── Mass block ────────────────────────────────────────────────────────────

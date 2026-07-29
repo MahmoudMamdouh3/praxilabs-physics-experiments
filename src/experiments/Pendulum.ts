@@ -114,9 +114,6 @@ export class Pendulum implements IExperiment {
   /** Number of full oscillations (1 oscillation = A -> B -> A = 2 zero crossings) */
   private lapCount: number = 0;
   
-  /** Whether the virtual stopwatch is currently running. */
-  private isTiming: boolean = false;
-  
   /** Elapsed stopwatch time (s) */
   private stopwatchTime: number = 0;
 
@@ -201,10 +198,35 @@ export class Pendulum implements IExperiment {
     this.bobMesh.castShadow = true;
     scene.add(this.bobMesh);
 
-    // ── Pivot marker (small sphere at origin) ─────────────────────────────────
-    this.pivot = new THREE.Object3D();
-    this.pivot.position.set(0, 0, 0);
-    scene.add(this.pivot);
+    // ── Stand / Crane ────────────────────────────────────────────────────────
+    this.pivot = new THREE.Group();
+    
+    // Vertical Pole
+    const poleGeo = new THREE.CylinderGeometry(0.15, 0.15, 12);
+    const metalMat = new THREE.MeshStandardMaterial({
+      color: 0x556677, metalness: 0.8, roughness: 0.2
+    });
+    const pole = new THREE.Mesh(poleGeo, metalMat);
+    pole.position.set(-2, 6, -1); // Off to the left and back
+    pole.castShadow = true;
+    this.pivot.add(pole);
+
+    // Horizontal Arm
+    const armGeo = new THREE.CylinderGeometry(0.1, 0.1, 4);
+    const arm = new THREE.Mesh(armGeo, metalMat);
+    arm.rotation.z = Math.PI / 2;
+    arm.position.set(-0.5, 12, -1);
+    arm.castShadow = true;
+    this.pivot.add(arm);
+
+    // Pivot mount (where string attaches at 0, 12, 0)
+    const mountGeo = new THREE.SphereGeometry(0.2);
+    const mount = new THREE.Mesh(mountGeo, metalMat);
+    mount.position.set(0, 12, 0);
+    mount.castShadow = true;
+    this.pivot.add(mount);
+
+    this.scene.add(this.pivot);
 
     // Initialise positions with schema defaults so the scene is correct before
     // the first physics tick fires.
@@ -415,7 +437,7 @@ export class Pendulum implements IExperiment {
    */
   private updateMeshes(L: number): void {
     const bobX = L * Math.sin(this.theta);
-    const bobY = -L * Math.cos(this.theta);
+    const bobY = 12 - L * Math.cos(this.theta);
     const bobZ = 0;
 
     // Update bob position
@@ -427,7 +449,7 @@ export class Pendulum implements IExperiment {
     if (this.stringGeometry !== null) {
       const pos = this.stringGeometry.attributes['position'] as THREE.BufferAttribute;
       // Pivot vertex
-      pos.setXYZ(0, 0, 0, 0);
+      pos.setXYZ(0, 0, 12, 0);
       // Bob vertex
       pos.setXYZ(1, bobX, bobY, bobZ);
       pos.needsUpdate = true;

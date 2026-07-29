@@ -125,6 +125,10 @@ export class Projectile implements IExperiment {
   private landingGeometry: THREE.RingGeometry | null = null;
   private landingMaterial: THREE.MeshBasicMaterial | null = null;
 
+  /** Cannon / Launcher ─────────────────────────────────────────────────────── */
+  private launcherGroup: THREE.Group | null = null;
+  private launcherBarrel: THREE.Mesh | null = null;
+
   /** Reference to the master scene (needed for dispose()). */
   private scene: THREE.Scene | null = null;
 
@@ -145,6 +149,28 @@ export class Projectile implements IExperiment {
     this.bobMesh = new THREE.Mesh(this.bobGeometry, this.bobMaterial);
     this.bobMesh.castShadow = true;
     scene.add(this.bobMesh);
+
+    // ── Launcher Stand ───────────────────────────────────────────────────────
+    this.launcherGroup = new THREE.Group();
+    
+    const baseGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x334455, metalness: 0.8, roughness: 0.2 });
+    const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+    baseMesh.position.set(0, 0.1, 0); // Sits on the table (y=0)
+    baseMesh.castShadow = true;
+    this.launcherGroup.add(baseMesh);
+
+    this.launcherBarrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.15, 0.15, 1.2, 16),
+      baseMat
+    );
+    // Shift geometry so its pivot is at its bottom base instead of center
+    this.launcherBarrel.geometry.translate(0, 0.6, 0); 
+    this.launcherBarrel.position.set(0, 0.2, 0);
+    this.launcherBarrel.castShadow = true;
+    this.launcherGroup.add(this.launcherBarrel);
+    
+    scene.add(this.launcherGroup);
 
     // ── Predicted trajectory (dashed line) ───────────────────────────────────
     // Pre-allocate TRAJECTORY_SEGMENTS+1 vertices; content set in reset().
@@ -227,11 +253,11 @@ export class Projectile implements IExperiment {
 
   render(): void {
     if (this.bobMesh !== null) {
-      this.bobMesh.position.set(this.x, this.y, 0);
+      this.bobMesh.position.set(this.x, this.y + BOB_RADIUS, 0);
     }
     
     if (this.hasLanded && this.landingMarker !== null) {
-      this.landingMarker.position.set(this.x, 0, 0);
+      this.landingMarker.position.set(this.x, 0.02, 0);
       this.landingMarker.visible = true;
     }
   }
@@ -262,7 +288,11 @@ export class Projectile implements IExperiment {
 
     // Reposition the bob at the launch point.
     if (this.bobMesh !== null) {
-      this.bobMesh.position.set(0, 0, 0);
+      this.bobMesh.position.set(0, BOB_RADIUS, 0);
+    }
+
+    if (this.launcherBarrel !== null) {
+      this.launcherBarrel.rotation.z = angleRad - Math.PI / 2;
     }
 
     // Rebuild the analytic predicted trajectory.
@@ -295,6 +325,7 @@ export class Projectile implements IExperiment {
       if (this.bobMesh        !== null) this.scene.remove(this.bobMesh);
       if (this.trajectoryLine !== null) this.scene.remove(this.trajectoryLine);
       if (this.landingMarker  !== null) this.scene.remove(this.landingMarker);
+      if (this.launcherGroup  !== null) this.scene.remove(this.launcherGroup);
     }
 
     this.bobGeometry?.dispose();
