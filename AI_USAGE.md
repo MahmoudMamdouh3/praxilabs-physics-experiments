@@ -24,26 +24,19 @@ I did this because Large Language Models tend to default to React/canned physics
 This guaranteed that all subsequent AI generation aligned with a scalable, highly performant architecture.
 
 ## Fully Hand-Written Parts
+I manually scaffolded the `.agents/project-rules.md` to strictly control the AI's architecture decisions. I also manually verified all the mathematical formulas (like the Semi-Implicit Euler integration for the spring-mass system) before allowing the AI to integrate them, to ensure they mapped precisely to the rubric requirements rather than generic approximations.
 
 ## Representative Prompts
-1.  **on Memory Management Strategy:** *"What do you think is the best way to handle the 3D scene setup—should the Core Engine create a single master scene and just swap the meshes in and out, or should every experiment generate its own separate Three.js scene container?"*
-2.  """
-I am experiencing several UX, state, and layout bugs in `src/core/UI.ts`. Before generating the updated code, please investigate the root causes of these specific issues. My initial thoughts and directives are below, but rely on your own analysis if a better architectural solution exists:
-
-1. **Live Readouts Duplicating:** When I click reset, the live readouts keep repeating, making the menu gigantic. (Hypothesis: `buildParameterPanel` calls `this.readoutRows.clear()`, but the actual DOM elements aren't being removed from `this.readoutsPanel`).
-2. **Graph Stuttering & Responsiveness:** 
-    - The measurement graph stutters wildly at the end of the wave when I click Pause, or when I adjust parameters on the fly. How do we ensure Chart.js only redraws/pushes data when the simulation is actually advancing?
-    - The graph drawing area gets cut off and does not match the container size, especially when resizing the browser window. How do we ensure Chart.js properly handles responsive resizing without overflowing the glassmorphism panel?
-3. **Text Readability:** The dark-grey description text on the near-black background is hard to read. Please update `TOKEN.textMuted` to a brighter, highly legible color to maintain the technical-industrial minimalist aesthetic while ensuring high contrast.
-4. **Time Scale Slider:** The time scale slider is too short and the adjustments feel too small to be usable. Make it physically wider (e.g., `width: '120px'`, `flex: 'none'`) and ensure the step size is intuitive.
-5. **Absolute Reset:** The Reset button doesn't reset the playback state. When clicked, it must:
-    - Completely reset the playback state to "Play" (unpause).
-    - Reset the time scale to 1.0.
-    - Visually update the time scale slider's DOM `.value` and label to reflect `1`.
-    - Reset the pause button's text back to `'⏸ Pause'`.
-
-Analyze these issues, explain your intended fixes briefly, and then generate the complete, updated TypeScript code for `src/core/UI.ts`.
-"""
+1.  **On Memory Management Strategy (Claude Sonnet 4.6):** *"What do you think is the best way to handle the 3D scene setup—should the Core Engine create a single master scene and just swap the meshes in and out, or should every experiment generate its own separate Three.js scene container?"*
+2.  **On Debugging State & Layout (Gemini Pro):**
+    """
+    I am experiencing several UX, state, and layout bugs in `src/core/UI.ts`. Before generating the updated code, please investigate the root causes of these specific issues. 
+    1. Live Readouts Duplicating: When I click reset, the live readouts keep repeating, making the menu gigantic.
+    2. Graph Stuttering: The measurement graph stutters wildly at the end of the wave when I click Pause.
+    ... Analyze these issues, explain your intended fixes briefly, and then generate the complete, updated TypeScript code.
+    """
+3.  **On Projectile Trajectory (Claude Sonnet 4.6):** *"We need to fulfill the Projectile experiment requirements. Please implement `src/experiments/Projectile.ts`. Ensure that before launch, it shows a predicted analytic trajectory (no drag) as a dotted curve using `THREE.LineDashedMaterial`. Remember to call `computeLineDistances()` on the geometry so the dashes actually render."*
+4.  **On Strict Physics/Render Separation (Gemini Pro):** *"The reviewer noted that calling `updateMeshes()` directly inside `update(dt)` violates strict mathematical/rendering decoupling and makes headless unit testing impossible. Please decouple this logic by introducing a `render(): void` contract in `IExperiment.ts` and moving all mesh mutations there, then have `Engine.ts` call it exactly once per visual frame."*
 
 ## AI Corrections (Suboptimal or Wrong Output)
 
@@ -54,3 +47,7 @@ Analyze these issues, explain your intended fixes briefly, and then generate the
 ### Case 2: Headless Testability
 **The Issue:** Because the early physics loop mutated Three.js meshes, we couldn't properly unit test the physics in a headless environment without complex DOM mocks or canvas errors.
 **The Fix:** After enforcing the `render()` separation (Case 1), I tasked the AI to install Vitest and write a pure mathematical integration test (`Pendulum.test.ts`). The test successfully calls `setup()`, ticks `update()`, and verifies Semi-Implicit Euler energy conservation without touching the Three.js mesh pipeline at all, proving the robustness of the architecture.
+
+### Case 3: File Confusion (Hallucination)
+**The Issue:** At one point during the implementation of the Projectile experiment, the AI became confused by its context window and attempted to apply `Projectile.ts` physics changes directly into `src/core/UI.ts`.
+**The Fix:** I recognized the hallucination immediately because it caused typescript compiler syntax errors (`tsc`) and broke the block structures in `UI.ts`. I explicitly instructed the AI to revert the `UI.ts` changes using the `multi_replace_file_content` tool and pointed out that the physics logic belonged strictly in `src/experiments/Projectile.ts`. The AI then correctly re-routed its output and fixed the build.
