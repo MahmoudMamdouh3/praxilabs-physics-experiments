@@ -150,7 +150,7 @@ export class Spring implements IExperiment {
     this.scene = scene;
 
     // ── Ceiling anchor ────────────────────────────────────────────────────────
-    this.anchorGeometry = new THREE.BoxGeometry(0.6, 0.2, 0.3);
+    this.anchorGeometry = new THREE.BoxGeometry(1.0, 0.3, 0.5);
     this.anchorMaterial = new THREE.MeshStandardMaterial({
       color: 0x8899aa,
       metalness: 0.8,
@@ -162,7 +162,7 @@ export class Spring implements IExperiment {
     scene.add(this.anchorMesh);
 
     // ── Mass block ────────────────────────────────────────────────────────────
-    this.massGeometry = new THREE.BoxGeometry(0.55, 0.55, 0.55);
+    this.massGeometry = new THREE.BoxGeometry(0.85, 0.85, 0.85);
     this.massMaterial = new THREE.MeshStandardMaterial({
       color: 0x22aaff,       // electric blue — matches Pendulum bob for consistency
       metalness: 0.5,

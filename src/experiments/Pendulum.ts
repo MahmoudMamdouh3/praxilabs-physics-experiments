@@ -142,7 +142,7 @@ export class Pendulum implements IExperiment {
     scene.add(this.stringLine);
 
     // ── Bob ──────────────────────────────────────────────────────────────────
-    this.bobGeometry = new THREE.SphereGeometry(0.18, 32, 32);
+    this.bobGeometry = new THREE.SphereGeometry(0.28, 32, 32);
     this.bobMaterial = new THREE.MeshStandardMaterial({
       color: 0x22aaff,        // electric blue
       metalness: 0.6,

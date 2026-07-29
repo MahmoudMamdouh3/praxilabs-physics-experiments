@@ -153,6 +153,14 @@ export class Engine {
     rimLight.position.set(-8, -4, -8);
     this.scene.add(rimLight);
 
+    // ── Grid Floor ───────────────────────────────────────────────────────────
+    // Fills the bottom dark space and gives a sense of scale and grounding.
+    const gridHelper = new THREE.GridHelper(60, 60, 0x22aaff, 0x111118);
+    gridHelper.position.set(0, -12, 0); // Positioned well below the lowest experiment parts
+    gridHelper.material.opacity = 0.15;
+    gridHelper.material.transparent = true;
+    this.scene.add(gridHelper);
+
     // ── Resize handler ────────────────────────────────────────────────────────
     window.addEventListener('resize', this.onWindowResize);
   }

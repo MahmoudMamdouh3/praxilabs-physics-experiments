@@ -105,10 +105,38 @@ export class UI {
     });
     document.body.appendChild(this.shell);
 
+    // ── Top Sci-Fi HUD ────────────────────────────────────────────────────────
+    const topHud = this.el('div', {
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      right: '0',
+      height: '36px',
+      background: 'linear-gradient(180deg, rgba(13,13,15,0.9) 0%, rgba(13,13,15,0.2) 100%)',
+      borderBottom: `1px solid ${TOKEN.border}`,
+      backdropFilter: 'blur(4px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointerEvents: 'none',
+      zIndex: '20',
+    });
+    
+    topHud.innerHTML = `
+      <div style="display:flex; gap: 40px; align-items:center; opacity:0.6; font-family:${TOKEN.fontMono}; font-size:10px; letter-spacing:2px; color:${TOKEN.accent};">
+        <span>SYS.STATUS: ONLINE</span>
+        <div style="width: 200px; height: 1px; background: linear-gradient(90deg, transparent, ${TOKEN.accent}, transparent); opacity:0.3;"></div>
+        <span>SIMULATION: ENGAGED</span>
+        <div style="width: 200px; height: 1px; background: linear-gradient(90deg, transparent, ${TOKEN.accent}, transparent); opacity:0.3;"></div>
+        <span>RENDER: NOMINAL</span>
+      </div>
+    `;
+    this.shell.appendChild(topHud);
+
     // ── Left side panel ─────────────────────────────────────────────────────
     this.sidePanel = this.el('div', {
       position: 'absolute',
-      top: '16px',
+      top: '56px',
       left: '16px',
       width: '280px',
       display: 'flex',
@@ -152,7 +180,7 @@ export class UI {
     // ── Right panel: readouts ────────────────────────────────────────────────
     this.readoutsPanel = this.el('div', {
       position: 'absolute',
-      top: '16px',
+      top: '56px',
       right: '16px',
       width: '240px',
       padding: '14px 16px',
