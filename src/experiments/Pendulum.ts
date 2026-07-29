@@ -229,12 +229,21 @@ export class Pendulum implements IExperiment {
     const theoreticalPeriod =
       g > 0 ? 2 * Math.PI * Math.sqrt(L / g) : 0;
 
+    // Percentage difference: |measured − theoretical| / theoretical × 100.
+    // Guard: return 0 if theoretical period is zero (g = 0) or if a full
+    // period hasn't been completed yet (measuredPeriod still 0).
+    const periodDifferencePct =
+      theoreticalPeriod > 0 && this.measuredPeriod > 0
+        ? (Math.abs(this.measuredPeriod - theoreticalPeriod) / theoreticalPeriod) * 100
+        : 0;
+
     return {
-      angle_deg: (this.theta * 180) / Math.PI,
-      omega_rads: this.omega,
-      time_s: this.time,
-      measured_period_s: this.measuredPeriod,
-      theoretical_period_s: theoreticalPeriod,
+      angle_deg:             (this.theta * 180) / Math.PI,
+      omega_rads:            this.omega,
+      time_s:                this.time,
+      measured_period_s:     this.measuredPeriod,
+      theoretical_period_s:  theoreticalPeriod,
+      period_difference_pct: periodDifferencePct,
     };
   }
 
