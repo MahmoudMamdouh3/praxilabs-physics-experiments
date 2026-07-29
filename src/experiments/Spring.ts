@@ -276,8 +276,8 @@ export class Spring implements IExperiment {
   }
 
   getMeasurements(): Record<string, number> {
-    const k = this.schema['springConstant'].default;
-    const m = this.schema['mass'].default;
+    const k = this.currentK;
+    const m = this.currentM;
 
     // Theoretical angular frequency: ω₀ = √(k / m)
     // Theoretical frequency: f₀ = ω₀ / (2π) = (1 / 2π) * √(k / m)

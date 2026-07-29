@@ -105,6 +105,8 @@ export class Projectile implements IExperiment {
   private hasLanded: boolean = false;
   /** Horizontal position at landing (m); 0 until landed. */
   private actualRange: number = 0;
+  
+  private cachedParams: Record<string, number> = {};
 
   // ── Three.js objects ──────────────────────────────────────────────────────
 
@@ -195,6 +197,7 @@ export class Projectile implements IExperiment {
    * Semi-Implicit Euler: update v first, then x.
    */
   update(dt: number, params: Record<string, number>): void {
+    this.cachedParams = params;
     if (this.hasLanded) return;
 
     const g    = params['gravity']          ?? this.schema['gravity'].default;
@@ -241,6 +244,7 @@ export class Projectile implements IExperiment {
    *               than hard-coded schema defaults.
    */
   reset(params?: Record<string, number>): void {
+    if (params) this.cachedParams = params;
     const speed = params?.['initialSpeed']     ?? this.schema['initialSpeed'].default;
     const angle = params?.['launchAngle']      ?? this.schema['launchAngle'].default;
 
@@ -267,9 +271,9 @@ export class Projectile implements IExperiment {
   }
 
   getMeasurements(): Record<string, number> {
-    const speed  = this.schema['initialSpeed'].default;
-    const angle  = this.schema['launchAngle'].default;
-    const g      = this.schema['gravity'].default;
+    const speed  = this.cachedParams['initialSpeed'] ?? this.schema['initialSpeed'].default;
+    const angle  = this.cachedParams['launchAngle'] ?? this.schema['launchAngle'].default;
+    const g      = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
 
     // Analytic range (drag-free): R = v² * sin(2θ) / g
     const angleRad = (angle * Math.PI) / 180;

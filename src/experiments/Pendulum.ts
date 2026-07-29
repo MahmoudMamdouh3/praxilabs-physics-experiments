@@ -102,6 +102,8 @@ export class Pendulum implements IExperiment {
   /** The most recently measured full period (one full swing = 2 crossings, s). */
   private measuredPeriod: number = 0;
 
+  private cachedParams: Record<string, number> = {};
+
   private hasRenderedFinalLap: boolean = false;
 
   /** Time of the crossing before `lastCrossingTime` — used to compute full period. */
@@ -243,6 +245,7 @@ export class Pendulum implements IExperiment {
    * for oscillating systems compared to Explicit Euler.
    */
   update(dt: number, params: Record<string, number>): void {
+    this.cachedParams = params;
     const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
     const g = params['gravity'] ?? this.schema['gravity'].default;
     const b = params['damping'] ?? this.schema['damping'].default;
@@ -302,6 +305,7 @@ export class Pendulum implements IExperiment {
   }
 
   reset(params?: Record<string, number>): void {
+    if (params) this.cachedParams = params;
     const L = params?.['length'] ?? this.schema['length'].default;
     const initialAngleDeg =
       params?.['initialAngle'] ?? this.schema['initialAngle'].default;
@@ -387,10 +391,8 @@ export class Pendulum implements IExperiment {
   }
 
   getMeasurements(): Record<string, number> {
-    // Retrieve current params from the schema defaults as a fallback.
-    // In practice these are set by Physics.currentParams each tick.
-    const L = this.schema['length'].default;
-    const g = this.schema['gravity'].default;
+    const L = this.cachedParams['length'] ?? this.schema['length'].default;
+    const g = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
 
     const theoreticalPeriod =
       g > 0 ? 2 * Math.PI * Math.sqrt(L / g) : 0;
