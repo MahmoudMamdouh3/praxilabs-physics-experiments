@@ -125,6 +125,9 @@ export class Projectile implements IExperiment {
   private landingGeometry: THREE.RingGeometry | null = null;
   private landingMaterial: THREE.MeshBasicMaterial | null = null;
 
+  /** HTML overlay for predicted vs actual range readouts. */
+  private htmlRangeMetrics: HTMLDivElement | null = null;
+
   /** Cannon / Launcher ─────────────────────────────────────────────────────── */
   private launcherGroup: THREE.Group | null = null;
   private launcherBarrel: THREE.Mesh | null = null;
@@ -206,6 +209,32 @@ export class Projectile implements IExperiment {
     this.landingMarker.visible = false;
     scene.add(this.landingMarker);
 
+    this.htmlRangeMetrics = document.createElement('div');
+    this.htmlRangeMetrics.style.cssText = `
+      position: absolute;
+      top: 190px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 13, 15, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 107, 53, 0.45);
+      border-radius: 8px;
+      padding: 12px 18px;
+      color: #cdd2d9;
+      font-family: monospace;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 15;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    `;
+    this.htmlRangeMetrics.innerHTML = `
+      <div style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Range Comparison</div>
+      <div id="projectile-range-status">Predicted range shown before launch.</div>
+      <div id="projectile-range-values" style="margin-top:4px; color:#ff6b35;">Predicted: -- m · Actual: -- m</div>
+    `;
+    document.body.appendChild(this.htmlRangeMetrics);
+
     // Initialise everything to schema defaults.
     const defaults: Record<string, number> = {};
     for (const [key, s] of Object.entries(this.schema)) defaults[key] = s.default;
@@ -260,6 +289,8 @@ export class Projectile implements IExperiment {
       this.landingMarker.position.set(this.x, 0.02, 0);
       this.landingMarker.visible = true;
     }
+
+    this.updateRangeMetricsUI();
   }
 
   /**
@@ -301,6 +332,29 @@ export class Projectile implements IExperiment {
     this.render();
   }
 
+  private updateRangeMetricsUI(): void {
+    if (!this.htmlRangeMetrics) return;
+
+    const statusEl = this.htmlRangeMetrics.querySelector('#projectile-range-status');
+    const valuesEl = this.htmlRangeMetrics.querySelector('#projectile-range-values');
+
+    const speed = this.cachedParams['initialSpeed'] ?? this.schema['initialSpeed'].default;
+    const angle = this.cachedParams['launchAngle'] ?? this.schema['launchAngle'].default;
+    const g = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
+    const angleRad = (angle * Math.PI) / 180;
+    const predictedRange = g > 0 ? (speed * speed * Math.sin(2 * angleRad)) / g : 0;
+
+    if (statusEl) {
+      statusEl.textContent = this.hasLanded
+        ? 'Actual range captured at landing.'
+        : 'Predicted range shown before launch.';
+    }
+
+    if (valuesEl) {
+      valuesEl.textContent = `Predicted: ${predictedRange.toFixed(2)} m · Actual: ${this.hasLanded ? this.actualRange.toFixed(2) : '--'} m`;
+    }
+  }
+
   getMeasurements(): Record<string, number> {
     const speed  = this.cachedParams['initialSpeed'] ?? this.schema['initialSpeed'].default;
     const angle  = this.cachedParams['launchAngle'] ?? this.schema['launchAngle'].default;
@@ -326,6 +380,10 @@ export class Projectile implements IExperiment {
       if (this.trajectoryLine !== null) this.scene.remove(this.trajectoryLine);
       if (this.landingMarker  !== null) this.scene.remove(this.landingMarker);
       if (this.launcherGroup  !== null) this.scene.remove(this.launcherGroup);
+    }
+
+    if (this.htmlRangeMetrics && this.htmlRangeMetrics.parentNode) {
+      this.htmlRangeMetrics.parentNode.removeChild(this.htmlRangeMetrics);
     }
 
     this.bobGeometry?.dispose();
