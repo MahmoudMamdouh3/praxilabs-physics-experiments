@@ -56,13 +56,13 @@ export class UI {
       style.id = 'compare-mode-styles';
       style.textContent = `
         body.compare-mode .hud-set-a {
-          left: 30% !important;
+          left: 40% !important;
           border-color: rgba(0, 255, 204, 0.4) !important;
         }
         body.compare-mode .hud-set-a .hud-value { color: #00ffcc !important; }
         
         body.compare-mode .hud-set-b {
-          left: 70% !important;
+          left: 60% !important;
           border-color: rgba(255, 153, 0, 0.4) !important;
         }
         body.compare-mode .hud-set-b .hud-value { color: #ff9900 !important; }
