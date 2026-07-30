@@ -360,7 +360,7 @@ export class UI {
     integratorPanel.title = "The Numerical Integrator is the math engine calculating motion frame-by-frame.";
 
     const integratorHeader = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' });
-    integratorHeader.innerHTML = `<div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;letter-spacing:1px;">Numerical Integrator</div>`;
+    integratorHeader.innerHTML = `<div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;letter-spacing:1px;">Numerical Integrator (Experimental)</div>`;
     
     const integratorToggle = document.createElement('button');
     integratorToggle.textContent = '▾';
@@ -381,15 +381,20 @@ export class UI {
     const intSelect = document.createElement('select');
     intSelect.style.cssText = `
       width: 100%;
-      background: transparent;
+      background: #1a1c24;
       color: ${TOKEN.textBright};
       border: 1px solid rgba(255,255,255,0.2);
-      padding: 4px 6px;
+      padding: 6px 10px;
       font-size: 11px;
       font-family: ${TOKEN.fontSans};
       border-radius: 4px;
       outline: none;
       cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2322aaff'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
     `;
     intSelect.title = "Hover over the options to learn more.";
 
@@ -404,6 +409,9 @@ export class UI {
       opt.value = intg.id;
       opt.textContent = intg.name;
       opt.title = intg.desc;
+      // Force background color for options on some OSes
+      opt.style.background = '#1a1c24';
+      opt.style.color = TOKEN.textBright;
       intSelect.appendChild(opt);
     }
 

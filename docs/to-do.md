@@ -67,6 +67,8 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
  - [x] Re-center UI and reset physics state fully when swapping experiments
  - [x] Fix Compare Mode 3D spacing so both experiments are grouped around the center rather than pushed far right
  - [x] Add Launch Direction parameter to Projectile and colorize bobs to prevent visual overlap in compare mode
+ - [x] Fix Numerical Integrator select dropdown styling (background color for options)
+ - [x] Update Numerical Integrator panel title to include "(Experimental)"
 
 
 
