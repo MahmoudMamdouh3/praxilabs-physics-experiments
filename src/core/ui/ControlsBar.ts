@@ -4,6 +4,7 @@ import { TOKEN, el, button, styleSlider } from './tokens.ts';
 import { EXPERIMENT_REGISTRY } from '../UI.ts';
 import type { ParameterPanel } from './ParameterPanel.ts';
 import type { GraphPanel } from './GraphPanel.ts';
+import { buildFriendlyCsvContent } from './exportHelpers.ts';
 
 // ---------------------------------------------------------------------------
 // ControlsBar
@@ -246,12 +247,13 @@ export class ControlsBar {
     csvBtn.addEventListener('click', () => {
       if (this.parameterPanel.measurementHistory.length === 0) return;
 
-      const keys = Array.from(new Set(this.parameterPanel.measurementHistory.flatMap(Object.keys)));
-      const headerRow = keys.join(',');
-      const rows = this.parameterPanel.measurementHistory.map(row => {
-        return keys.map(k => row[k] ?? '').join(',');
-      });
-      const csvContent = [headerRow, ...rows].join('\n');
+      const exp = this.engine.getActiveExperiment();
+      const params = this.physics.currentParams;
+      const csvContent = buildFriendlyCsvContent(
+        this.parameterPanel.measurementHistory,
+        exp?.name ?? 'Experiment',
+        params,
+      );
 
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);

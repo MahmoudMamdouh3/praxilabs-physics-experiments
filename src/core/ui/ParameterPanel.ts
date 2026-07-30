@@ -163,13 +163,26 @@ export class ParameterPanel {
       gap: '14px',
     });
 
+    const headingRow = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' });
     const heading = document.createElement('div');
     heading.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
     heading.textContent = 'Parameters';
-    panelBox.appendChild(heading);
+    headingRow.appendChild(heading);
+    const collapseBtn = document.createElement('button');
+    collapseBtn.textContent = '▾';
+    collapseBtn.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
+    const contentBody = el('div', { display: 'flex', flexDirection: 'column', gap: '14px' });
+    collapseBtn.addEventListener('click', () => {
+      const isCollapsed = contentBody.style.display === 'none';
+      contentBody.style.display = isCollapsed ? 'flex' : 'none';
+      collapseBtn.textContent = isCollapsed ? '▾' : '▸';
+    });
+    headingRow.appendChild(collapseBtn);
+    panelBox.appendChild(headingRow);
+    panelBox.appendChild(contentBody);
 
     for (const [key, s] of Object.entries(schema)) {
-      panelBox.appendChild(this._buildSliderRow(key, s));
+      contentBody.appendChild(this._buildSliderRow(key, s));
     }
 
     this.paramSection.appendChild(panelBox);

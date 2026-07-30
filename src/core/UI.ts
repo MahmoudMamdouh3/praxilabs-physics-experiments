@@ -183,7 +183,20 @@ export class UI {
       flexDirection: 'column',
       gap: '10px'
     });
-    settingsPanel.innerHTML = `<div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;letter-spacing:1px;">Settings</div>`;
+    const settingsHeader = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' });
+    settingsHeader.innerHTML = `<div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;letter-spacing:1px;">Settings</div>`;
+    const settingsToggle = document.createElement('button');
+    settingsToggle.textContent = '▾';
+    settingsToggle.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
+    const settingsContent = el('div', { display: 'flex', flexDirection: 'column', gap: '10px' });
+    settingsToggle.addEventListener('click', () => {
+      const isCollapsed = settingsContent.style.display === 'none';
+      settingsContent.style.display = isCollapsed ? 'flex' : 'none';
+      settingsToggle.textContent = isCollapsed ? '▾' : '▸';
+    });
+    settingsHeader.appendChild(settingsToggle);
+    settingsPanel.appendChild(settingsHeader);
+    settingsPanel.appendChild(settingsContent);
 
     // Theme Selector
     const themeWrapper = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center' });
@@ -228,7 +241,7 @@ export class UI {
     
     themeWrapper.appendChild(themeLabel);
     themeWrapper.appendChild(themeSelect);
-    settingsPanel.appendChild(themeWrapper);
+    settingsContent.appendChild(themeWrapper);
 
     // UI Scale Slider
     const scaleWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '8px' });
@@ -255,7 +268,7 @@ export class UI {
     
     scaleWrapper.appendChild(scaleLabel);
     scaleWrapper.appendChild(scaleSlider);
-    settingsPanel.appendChild(scaleWrapper);
+    settingsContent.appendChild(scaleWrapper);
     
     // Reset Settings Button
     const resetSettingsBtn = document.createElement('button');
@@ -279,7 +292,7 @@ export class UI {
       (this.shell as any).style.zoom = '1.0';
       this.showToast('Settings reset to defaults', 'info');
     });
-    settingsPanel.appendChild(resetSettingsBtn);
+    settingsContent.appendChild(resetSettingsBtn);
     
     rightPanel.appendChild(settingsPanel);
 
