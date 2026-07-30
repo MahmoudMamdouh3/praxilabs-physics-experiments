@@ -36,8 +36,8 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] i need to be able to control the number of osciliation i need to count, also when that number is reach the xperiment should pause itself 
 - [x]  the warrning i get when i change the angle to 180 or when i set speed to 0 is overlapping wioth osicilation panel i need the warning to be larger, the appear in the middle of the screen, and to be still there auntill the user clicks X on them. 
 - [x] if the ball stops because of the damping coffeicent or pecause of anything , i need to have some logic for that, i need the osicilations counter to stop after a while to let the user know it is not osciliating because of bla bla becuase now it continues counting even though the ball is not moving 
-- []
-- []
+- [x] when i hover over the reset button --> i should get info that this will reset the experiment to the beggining and to the default values
+- [x] i need another ressett button for the settings panel , with a hover info too
 - []
 
 

@@ -202,6 +202,19 @@ export class ControlsBar {
 
     // ── Reset ─────────────────────────────────────────────────────────────────
     const resetBtn = button('↺ Reset', TOKEN.textMuted);
+    resetBtn.title = 'Reset experiment to the beginning and to default values';
+    resetBtn.addEventListener('click', () => {
+      // The original code was missing the click listener somehow! Let me add it back.
+      this.physics.reset();
+      this.graphPanel.reset();
+      const exp = this.engine.getActiveExperiment();
+      if (exp) {
+        const defaults: Record<string, number> = {};
+        for (const [k, s] of Object.entries(exp.schema)) defaults[k] = s.default;
+        this.physics.setParams(defaults);
+        this.parameterPanel.buildPanel(exp.schema, this._compareMode);
+      }
+    });
     bar.appendChild(resetBtn);
 
     // ── CSV Export ────────────────────────────────────────────────────────────

@@ -258,6 +258,30 @@ export class UI {
     scaleWrapper.appendChild(scaleSlider);
     settingsPanel.appendChild(scaleWrapper);
     
+    // Reset Settings Button
+    const resetSettingsBtn = document.createElement('button');
+    resetSettingsBtn.textContent = '↺ Reset Settings';
+    resetSettingsBtn.title = 'Reset UI Scale and Theme to their defaults';
+    resetSettingsBtn.style.cssText = `
+      margin-top: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      color: ${TOKEN.textMuted}; border-radius: 4px; padding: 4px 8px;
+      font-size: 11px; font-family: ${TOKEN.fontSans}; cursor: pointer; outline: none;
+      transition: background 0.2s, color 0.2s;
+    `;
+    resetSettingsBtn.addEventListener('mouseenter', () => { resetSettingsBtn.style.color = TOKEN.textBright; resetSettingsBtn.style.background = 'rgba(255, 255, 255, 0.1)'; });
+    resetSettingsBtn.addEventListener('mouseleave', () => { resetSettingsBtn.style.color = TOKEN.textMuted; resetSettingsBtn.style.background = 'rgba(255, 255, 255, 0.05)'; });
+    resetSettingsBtn.addEventListener('click', () => {
+      // Reset Theme
+      themeSelect.value = 'default';
+      document.body.dataset.theme = 'default';
+      localStorage.setItem('praxilabs-theme', 'default');
+      // Reset Scale
+      scaleSlider.value = '1.0';
+      (this.shell as any).style.zoom = '1.0';
+      this.showToast('Settings reset to defaults', 'info');
+    });
+    settingsPanel.appendChild(resetSettingsBtn);
+    
     rightPanel.appendChild(settingsPanel);
 
     // ── Camera controls hint ─────────────────────────────────────────────────

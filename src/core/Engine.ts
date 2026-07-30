@@ -156,110 +156,115 @@ export class Engine {
     // Sync camera look direction with the new orbit target.
     this.controls.update();
 
+    // ── Atmosphere & Fog ─────────────────────────────────────────────────────
+    this.scene.fog = new THREE.FogExp2(0x0f1115, 0.012);
+
     // ── Lighting ─────────────────────────────────────────────────────────────
 
-    // Soft ambient fill — no object face is ever completely black.
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
-    this.scene.add(this.ambientLight);
-
-    // Primary directional light with soft shadow casting.
-    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    this.directionalLight.position.set(8, 16, 8);
+    // 1. Key Light: Strong, warm/neutral, casting sharp shadows
+    this.directionalLight = new THREE.DirectionalLight(0xfff5e6, 1.8);
+    this.directionalLight.position.set(10, 20, 15);
     this.directionalLight.castShadow = true;
-
     this.directionalLight.shadow.mapSize.set(2048, 2048);
     this.directionalLight.shadow.camera.near = 0.5;
     this.directionalLight.shadow.camera.far = 100;
-    this.directionalLight.shadow.camera.left   = -20;
-    this.directionalLight.shadow.camera.right  =  20;
-    this.directionalLight.shadow.camera.top    =  20;
-    this.directionalLight.shadow.camera.bottom = -20;
+    this.directionalLight.shadow.camera.left   = -30;
+    this.directionalLight.shadow.camera.right  =  30;
+    this.directionalLight.shadow.camera.top    =  30;
+    this.directionalLight.shadow.camera.bottom = -30;
     this.directionalLight.shadow.bias = -0.0005;
     this.scene.add(this.directionalLight);
 
-    // Secondary rim/fill light for edge definition.
-    const rimLight = new THREE.DirectionalLight(0x4488ff, 0.25);
-    rimLight.position.set(-8, -4, -8);
+    // 2. Fill Light: Cool-toned (electric blue) to lift shadows
+    const fillLight = new THREE.DirectionalLight(0x22aaff, 0.6);
+    fillLight.position.set(-15, 5, 10);
+    this.scene.add(fillLight);
+
+    // 3. Rim Light: Intense, sharp light from behind
+    const rimLight = new THREE.DirectionalLight(0xd4af7a, 1.5);
+    rimLight.position.set(5, 10, -20);
     this.scene.add(rimLight);
+
+    // Subtle ambient fill
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    this.scene.add(this.ambientLight);
 
     // ── 3D Lab Environment ───────────────────────────────────────────────────
     
-    // 1. Lab Room (Background Walls/Floor)
+    // 1. Lab Room (Dark Industrial Backdrop)
     const roomGeo = new THREE.BoxGeometry(400, 200, 100);
     const roomMat = new THREE.MeshStandardMaterial({
-      color: 0x0f1115,       // Very dark industrial walls
-      roughness: 0.95,
-      side: THREE.BackSide,  // Render inside
+      color: 0x050608,       // Near black
+      roughness: 0.9,
+      metalness: 0.2,
+      side: THREE.BackSide,
     });
     const roomMesh = new THREE.Mesh(roomGeo, roomMat);
     roomMesh.position.set(100, 50, 0); 
     roomMesh.receiveShadow = true;
     this.scene.add(roomMesh);
 
-    // 2. Lab Table (Where experiments rest)
-    // The top surface of this table is exactly at y = 0.
+    // 2. Lab Table (Brushed dark metal)
     const tableGeo = new THREE.BoxGeometry(350, 4, 40);
     const tableMat = new THREE.MeshStandardMaterial({
-      color: 0x181a20,       // Slate/metal lab table
-      roughness: 0.7,
-      metalness: 0.1,
+      color: 0x0f1115,       // Deep gray/black
+      roughness: 0.3,        // Low roughness for reflections
+      metalness: 0.8,        // High metalness
     });
     const tableMesh = new THREE.Mesh(tableGeo, tableMat);
-    tableMesh.position.set(100, -2, -5); // x=100 so it extends far right for projectiles
+    tableMesh.position.set(100, -2, -5); 
     tableMesh.receiveShadow = true;
     this.scene.add(tableMesh);
     
-    // 3. Subtle Table Grid (To help with scale)
-    const gridHelper = new THREE.GridHelper(350, 350, 0x22aaff, 0x111118);
-    gridHelper.position.set(100, 0.01, -5); // Just above table surface
-    gridHelper.material.opacity = 0.1;
+    // 3. Holographic Grid (Intense Electric Blue)
+    const gridHelper = new THREE.GridHelper(350, 350, 0x22aaff, 0x0a111a);
+    gridHelper.position.set(100, 0.01, -5);
+    gridHelper.material.opacity = 0.3;
     gridHelper.material.transparent = true;
+    // Boost color directly for emissive-like pop in a dark scene without post-processing
+    (gridHelper.material as THREE.LineBasicMaterial).color.setHex(0x22aaff);
     this.scene.add(gridHelper);
 
-    // 4. Lab Props (Whiteboard, Cabinets, etc.) to fill the empty space
+    // 4. Architectural Backdrop (Sleek, glowing glass blueprint board)
     const propsGroup = new THREE.Group();
     
-    // Whiteboard on back wall
-    const boardGeo = new THREE.BoxGeometry(80, 30, 1);
-    const boardMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.8 });
+    // Glass Board
+    const boardGeo = new THREE.BoxGeometry(100, 40, 0.5);
+    const boardMat = new THREE.MeshPhysicalMaterial({ 
+      color: 0x111822, 
+      metalness: 0.9,
+      roughness: 0.1,
+      transmission: 0.9,  // Glass-like
+      ior: 1.5,
+      thickness: 0.5,
+      transparent: true,
+      opacity: 0.8
+    });
     const board = new THREE.Mesh(boardGeo, boardMat);
-    board.position.set(20, 25, -49.5); // On the back wall (z=-50)
+    board.position.set(20, 25, -45); 
     propsGroup.add(board);
     
-    // Whiteboard frame
-    const boardFrameGeo = new THREE.BoxGeometry(82, 32, 0.5);
-    const boardFrameMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
+    // Metallic Edge Frame
+    const boardFrameGeo = new THREE.BoxGeometry(102, 42, 0.2);
+    const boardFrameMat = new THREE.MeshStandardMaterial({ 
+      color: 0x08090a, 
+      roughness: 0.4, 
+      metalness: 0.9 
+    });
     const boardFrame = new THREE.Mesh(boardFrameGeo, boardFrameMat);
-    boardFrame.position.set(20, 25, -49.8);
+    boardFrame.position.set(20, 25, -45.1);
     propsGroup.add(boardFrame);
-    
-    // Tall Metal Cabinet (Left)
-    const cabGeo = new THREE.BoxGeometry(20, 50, 15);
-    const cabMat = new THREE.MeshStandardMaterial({ color: 0x2a2d34, roughness: 0.7, metalness: 0.3 });
-    const cab = new THREE.Mesh(cabGeo, cabMat);
-    cab.position.set(-50, 5, -42.5); // Resting on floor (y=-20), height is 50 -> center is 5
-    cab.castShadow = true;
-    propsGroup.add(cab);
 
-    // Tall Metal Cabinet (Right)
-    const cab2 = cab.clone();
-    cab2.position.set(120, 5, -42.5);
-    propsGroup.add(cab2);
-    
-    // Window on the right wall
-    const windowGeo = new THREE.BoxGeometry(1, 40, 60);
-    const windowMat = new THREE.MeshStandardMaterial({ color: 0xaaccff, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.4 });
-    const labWindow = new THREE.Mesh(windowGeo, windowMat);
-    labWindow.position.set(299.5, 30, 0); // On the right wall (x=300)
-    propsGroup.add(labWindow);
-    
-    // Window frame
-    const winFrameGeo = new THREE.BoxGeometry(2, 42, 62);
-    const winFrameMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-    const winFrame = new THREE.Mesh(winFrameGeo, winFrameMat);
-    winFrame.position.set(299.8, 30, 0);
-    propsGroup.add(winFrame);
-    
+    // Glowing schematic lines on the glass board (Abstract)
+    const schematicGeo = new THREE.BoxGeometry(90, 0.2, 0.6);
+    const schematicMat = new THREE.MeshBasicMaterial({ color: 0x22aaff });
+    const line1 = new THREE.Mesh(schematicGeo, schematicMat);
+    line1.position.set(20, 35, -44.9);
+    const line2 = new THREE.Mesh(schematicGeo, schematicMat);
+    line2.position.set(20, 15, -44.9);
+    propsGroup.add(line1);
+    propsGroup.add(line2);
+
     this.scene.add(propsGroup);
 
     // ── Resize handler ────────────────────────────────────────────────────────
