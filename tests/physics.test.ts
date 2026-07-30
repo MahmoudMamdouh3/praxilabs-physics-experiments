@@ -33,6 +33,7 @@ describe('Physics — fixed-timestep accumulator', () => {
 
   beforeEach(() => {
     physics = new Physics();
+    physics.play(); // tests were originally written assuming it starts unpaused
     experiment = makeExperiment();
   });
 
@@ -110,11 +111,12 @@ describe('Physics — fixed-timestep accumulator', () => {
   });
 
   it('togglePause() alternates between paused and playing', () => {
-    expect(physics.isPaused).toBe(false);
-    physics.togglePause();
+    physics.pause();
     expect(physics.isPaused).toBe(true);
     physics.togglePause();
     expect(physics.isPaused).toBe(false);
+    physics.togglePause();
+    expect(physics.isPaused).toBe(true);
   });
 
   // ── stepOnce ──────────────────────────────────────────────────────────────

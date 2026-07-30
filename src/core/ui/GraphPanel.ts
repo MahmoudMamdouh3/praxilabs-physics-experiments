@@ -38,8 +38,16 @@ export class GraphPanel {
   private readonly pointsA: Array<{ x: number; y: number }> = [];
   private readonly pointsB: Array<{ x: number; y: number }> = [];
 
-  /** The measurement key currently plotted on the Y axis. */
+  private readonly pointsA_KE: Array<{ x: number; y: number }> = [];
+  private readonly pointsA_PE: Array<{ x: number; y: number }> = [];
+  private readonly pointsA_TE: Array<{ x: number; y: number }> = [];
+  private readonly pointsB_KE: Array<{ x: number; y: number }> = [];
+  private readonly pointsB_PE: Array<{ x: number; y: number }> = [];
+  private readonly pointsB_TE: Array<{ x: number; y: number }> = [];
+
+  /** The measurement key currently plotted on the Y axis in Primary mode. */
   private graphKey: string = '';
+  private isEnergyMode: boolean = false;
   private readonly physics: Physics;
 
   constructor(physics: Physics) {
@@ -61,10 +69,44 @@ export class GraphPanel {
       pointerEvents: 'none',
     });
 
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;';
+
     const graphLabel = document.createElement('div');
-    graphLabel.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:6px;`;
+    graphLabel.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
     graphLabel.textContent = 'Measurement Graph';
-    this.element.appendChild(graphLabel);
+    header.appendChild(graphLabel);
+
+    const modeSelect = document.createElement('select');
+    modeSelect.id = 'graph-mode-select';
+    modeSelect.style.cssText = `
+      background: transparent;
+      color: ${TOKEN.textMuted};
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      font-size: 9px;
+      font-family: ${TOKEN.fontMono};
+      text-transform: uppercase;
+      padding: 2px 4px;
+      cursor: pointer;
+      outline: none;
+    `;
+    const optPrimary = document.createElement('option');
+    optPrimary.value = 'primary';
+    optPrimary.textContent = 'Primary Variable';
+    const optEnergy = document.createElement('option');
+    optEnergy.value = 'energy';
+    optEnergy.textContent = 'Energy Plot (Bonus)';
+    modeSelect.appendChild(optPrimary);
+    modeSelect.appendChild(optEnergy);
+    
+    modeSelect.addEventListener('change', () => {
+      this.isEnergyMode = modeSelect.value === 'energy';
+      if (this.chart) this.chart.update('none');
+    });
+    header.appendChild(modeSelect);
+
+    this.element.appendChild(header);
 
     // Sized wrapper: Chart.js reads clientWidth × clientHeight for HiDPI scaling.
     const chartWrapper = document.createElement('div');
@@ -104,27 +146,67 @@ export class GraphPanel {
       this.graphKey = firstKey ?? '';
     }
 
-    // ── Set A ────────────────────────────────────────────────────────────────
+    // ── Set A Primary ────────────────────────────────────────────────────────
     const y = measurements[this.graphKey] ?? 0;
     this.pointsA.push({ x: t, y });
     if (this.pointsA.length > MAX_GRAPH_POINTS) this.pointsA.shift();
 
-    const dsA = this.chart.data.datasets[0] as ChartDataset<'line', Array<{ x: number; y: number }>>;
-    dsA.data = [...this.pointsA];
-    dsA.label = `Set A: ${this.graphKey}`;
+    // ── Set A Energy ─────────────────────────────────────────────────────────
+    const keA = measurements['kinetic_energy'] ?? 0;
+    const peA = measurements['potential_energy'] ?? 0;
+    const teA = measurements['total_energy'] ?? 0;
+    this.pointsA_KE.push({ x: t, y: keA });
+    this.pointsA_PE.push({ x: t, y: peA });
+    this.pointsA_TE.push({ x: t, y: teA });
+    if (this.pointsA_KE.length > MAX_GRAPH_POINTS) this.pointsA_KE.shift();
+    if (this.pointsA_PE.length > MAX_GRAPH_POINTS) this.pointsA_PE.shift();
+    if (this.pointsA_TE.length > MAX_GRAPH_POINTS) this.pointsA_TE.shift();
+
+    const dss = this.chart.data.datasets as ChartDataset<'line', Array<{ x: number; y: number }>>[];
+    dss[0].data = [...this.pointsA];
+    dss[0].label = `Set A: ${this.graphKey}`;
+    dss[2].data = [...this.pointsA_KE];
+    dss[3].data = [...this.pointsA_PE];
+    dss[4].data = [...this.pointsA_TE];
 
     // ── Set B (comparison mode only) ─────────────────────────────────────────
-    const dsB = this.chart.data.datasets[1] as ChartDataset<'line', Array<{ x: number; y: number }>>;
     if (compareMode && measurements2 != null) {
       const t2 = measurements2['time_s'] ?? 0;
       const y2 = measurements2[this.graphKey] ?? 0;
       this.pointsB.push({ x: t2, y: y2 });
       if (this.pointsB.length > MAX_GRAPH_POINTS) this.pointsB.shift();
-      dsB.data = [...this.pointsB];
-      dsB.label = `Set B: ${this.graphKey}`;
-      dsB.hidden = false;
+      dss[1].data = [...this.pointsB];
+      dss[1].label = `Set B: ${this.graphKey}`;
+
+      const keB = measurements2['kinetic_energy'] ?? 0;
+      const peB = measurements2['potential_energy'] ?? 0;
+      const teB = measurements2['total_energy'] ?? 0;
+      this.pointsB_KE.push({ x: t2, y: keB });
+      this.pointsB_PE.push({ x: t2, y: peB });
+      this.pointsB_TE.push({ x: t2, y: teB });
+      if (this.pointsB_KE.length > MAX_GRAPH_POINTS) this.pointsB_KE.shift();
+      if (this.pointsB_PE.length > MAX_GRAPH_POINTS) this.pointsB_PE.shift();
+      if (this.pointsB_TE.length > MAX_GRAPH_POINTS) this.pointsB_TE.shift();
+      dss[5].data = [...this.pointsB_KE];
+      dss[6].data = [...this.pointsB_PE];
+      dss[7].data = [...this.pointsB_TE];
+    }
+
+    // ── Update Dataset Visibility ───────────────────────────────────────────
+    if (this.isEnergyMode) {
+      dss[0].hidden = dss[1].hidden = true;
+      // Show Set A Energy
+      dss[2].hidden = dss[3].hidden = dss[4].hidden = false;
+      // Show Set B Energy if in compare mode
+      dss[5].hidden = dss[6].hidden = dss[7].hidden = !compareMode;
     } else {
-      dsB.hidden = true;
+      // Show Primary
+      dss[0].hidden = false;
+      dss[1].hidden = !compareMode;
+      // Hide all energy datasets
+      for (let i = 2; i <= 7; i++) {
+        dss[i].hidden = true;
+      }
     }
 
     this.chart.update('none'); // 'none' skips animation for performance
@@ -137,11 +219,18 @@ export class GraphPanel {
   reset(): void {
     this.pointsA.length = 0;
     this.pointsB.length = 0;
+    this.pointsA_KE.length = 0;
+    this.pointsA_PE.length = 0;
+    this.pointsA_TE.length = 0;
+    this.pointsB_KE.length = 0;
+    this.pointsB_PE.length = 0;
+    this.pointsB_TE.length = 0;
     this.graphKey = '';
 
     if (this.chart !== null) {
-      (this.chart.data.datasets[0] as ChartDataset<'line', Array<{ x: number; y: number }>>).data = [];
-      (this.chart.data.datasets[1] as ChartDataset<'line', Array<{ x: number; y: number }>>).data = [];
+      for (let i = 0; i < 8; i++) {
+        (this.chart.data.datasets[i] as ChartDataset<'line', Array<{ x: number; y: number }>>).data = [];
+      }
       this.chart.update('none');
     }
   }
@@ -176,6 +265,26 @@ export class GraphPanel {
             fill: false,
             tension: 0.4,
             hidden: true,                          // Shown only in comparison mode
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          // ── Set A Energy ──
+          {
+            label: 'Kinetic A', data: [], borderColor: '#ffff00', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, hidden: true,
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          {
+            label: 'Potential A', data: [], borderColor: '#00ccff', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, hidden: true,
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          {
+            label: 'Total A', data: [], borderColor: '#00ffaa', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, hidden: true,
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          // ── Set B Energy ──
+          {
+            label: 'Kinetic B', data: [], borderColor: '#ffff00', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, hidden: true, borderDash: [5, 5],
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          {
+            label: 'Potential B', data: [], borderColor: '#00ccff', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, hidden: true, borderDash: [5, 5],
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          {
+            label: 'Total B', data: [], borderColor: '#00ffaa', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4, hidden: true, borderDash: [5, 5],
           } as ChartDataset<'line', Array<{ x: number; y: number }>>,
         ],
       },
@@ -227,7 +336,10 @@ export class GraphPanel {
             bodyFont: { family: TOKEN.fontMono, size: 11 },
             callbacks: {
               title: (items) => `t = ${(items[0]?.parsed.x ?? 0).toFixed(3)} s`,
-              label: (item) => `${this.graphKey}: ${(item.parsed.y ?? 0).toFixed(4)}`,
+              label: (item) => {
+                const label = item.dataset.label || '';
+                return `${label}: ${(item.parsed.y ?? 0).toFixed(4)}`;
+              },
             },
           },
         },

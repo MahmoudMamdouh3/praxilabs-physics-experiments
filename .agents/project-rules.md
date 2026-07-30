@@ -15,3 +15,14 @@
 
 ## Extensibility Rule (Zero-Touch Core)
 If asked to add a new experiment, you must create a single new file in `src/experiments/` that implements the `IExperiment` interface. You are strictly forbidden from modifying `Engine.ts`, `Physics.ts`, or `UI.ts` to accommodate the new experiment.
+
+## UI Interaction & Testing Rules (Added after Subagent Failures)
+Before doing ANY visual/pixel-based interaction with a UI element you just built (e.g. testing via browser_subagent), FIRST read the source file where you created that element and get its exact id/selector. Never locate an element by guessing screen coordinates when you have direct access to the source that defines it.
+
+For `<select>` elements specifically: do NOT attempt visual click-based interaction at all. Native `<select>` dropdowns render as OS-level popups that automation tools frequently cannot interact with via coordinates. Instead:
+  1. Get the element by its id/selector (e.g. `document.querySelector('#graph-mode-select')`)
+  2. Set its `.value` directly in evaluated JS.
+  3. Dispatch a `change` event manually: `el.dispatchEvent(new Event('change', { bubbles: true }))`
+  4. Screenshot only AFTER this, to verify the resulting state — never to locate the element beforehand.
+
+Hard rule: if any single interaction step fails to produce the expected DOM/visual change after 2 attempts, STOP retrying variations of the same approach. Switch strategy entirely (e.g., move from click-based to JS-eval-based interaction). Never spend more than 5 tool calls total attempting to locate or interact with a single element.
