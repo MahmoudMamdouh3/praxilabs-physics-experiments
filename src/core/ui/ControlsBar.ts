@@ -121,6 +121,12 @@ export class ControlsBar {
       const entry = EXPERIMENT_REGISTRY.find((e) => e.id === select.value);
       if (!entry) return;
 
+      // Always reset global state to normal when switching experiments
+      document.body.classList.remove('compare-mode');
+      this.physics.pause();
+      const pauseBtn = document.getElementById('ui-btn-pause');
+      if (pauseBtn) pauseBtn.textContent = '▶ Play';
+
       // If compare mode is active, turn it off and dispose the second experiment
       if (this._compareMode) {
         this._compareMode = false;
