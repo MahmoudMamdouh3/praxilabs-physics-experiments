@@ -249,7 +249,7 @@ export class Pendulum implements IExperiment {
     this.htmlPeriodMetrics.innerHTML = `
       <div id="pendulum-period-title" style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Period Measurement</div>
       <div id="pendulum-period-status">Waiting for a full cycle...</div>
-      <div id="pendulum-period-values" style="margin-top:4px; color:#22aaff;">Measured: -- s · Theoretical: -- s · Diff: -- %</div>
+      <div id="pendulum-period-values" style="margin-top:4px; color:#22aaff; line-height:1.4;">Measured: -- s <br> Theoretical: -- s (Diff: -- %)</div>
     `;
     document.body.appendChild(this.htmlPeriodMetrics);
 
@@ -494,7 +494,7 @@ export class Pendulum implements IExperiment {
         ? (Math.abs(this.measuredPeriod - theoreticalPeriod) / theoreticalPeriod) * 100
         : 0;
 
-      valuesEl.textContent = `Measured: ${this.measuredPeriod > 0 ? `${this.measuredPeriod.toFixed(3)} s` : '-- s'} · Theoretical: ${theoreticalPeriod > 0 ? `${theoreticalPeriod.toFixed(3)} s` : '-- s'} · Diff: ${diffPct.toFixed(2)} %`;
+      valuesEl.innerHTML = `Measured: ${this.measuredPeriod > 0 ? `${this.measuredPeriod.toFixed(3)} s` : '-- s'} <br> Theoretical: ${theoreticalPeriod > 0 ? `${theoreticalPeriod.toFixed(3)} s` : '-- s'} (Diff: ${diffPct.toFixed(2)} %)`;
     }
   }
 

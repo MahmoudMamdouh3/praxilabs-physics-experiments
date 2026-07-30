@@ -271,7 +271,7 @@ export class Spring implements IExperiment {
     this.htmlFrequencyMetrics.innerHTML = `
       <div id="spring-frequency-title" style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Frequency Comparison</div>
       <div id="spring-frequency-status">Waiting for a full cycle...</div>
-      <div id="spring-frequency-values" style="margin-top:4px; color:#22aaff;">Measured: -- Hz · Theoretical: -- Hz</div>
+      <div id="spring-frequency-values" style="margin-top:4px; color:#22aaff; line-height:1.4;">Measured: -- Hz <br> Theoretical: -- Hz</div>
     `;
     document.body.appendChild(this.htmlFrequencyMetrics);
 
@@ -533,7 +533,7 @@ export class Spring implements IExperiment {
     }
 
     if (valuesEl) {
-      valuesEl.textContent = `Measured: ${measuredFrequency > 0 ? `${measuredFrequency.toFixed(3)} Hz` : '-- Hz'} · Theoretical: ${theoreticalFrequency > 0 ? `${theoreticalFrequency.toFixed(3)} Hz` : '-- Hz'}`;
+      valuesEl.innerHTML = `Measured: ${measuredFrequency > 0 ? `${measuredFrequency.toFixed(3)} Hz` : '-- Hz'} <br> Theoretical: ${theoreticalFrequency > 0 ? `${theoreticalFrequency.toFixed(3)} Hz` : '-- Hz'}`;
     }
   }
 
