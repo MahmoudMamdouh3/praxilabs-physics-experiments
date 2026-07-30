@@ -4,11 +4,12 @@
 *   **(Antigravity) Google Pro** 
 *   **GitHub Copilot** 
 *   **Gemini on the web (for extra Clarifyications, prompt editing/polish & code reviewing)**
+*   **VS Code with Roo Code extension** 
 
 
 # Exact Models Used 
 - Gemini 3.1 Pro (High)
-- Claude Sonnet 4.6 (Thinking)
+- Claude Sonnet 4.6 (Thinking) (Free)
 
 ## Pre-Coding Setup
 **Question:** *What did you set up before writing any code, and why?*

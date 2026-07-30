@@ -51,4 +51,4 @@ For any substantial, multi-file, or complex architectural changes, you MUST writ
 2. **Code-First Architecture:** Keep implementations ultra-minimalist and systems-focused. Avoid unnecessary boilerplate, over-engineering, or deeply nested logic. 
 3. **Strict Typing:** Leverage TypeScript's strict typing system entirely. You are forbidden from using `any`. Define explicit, precise interfaces and types for all data structures, payloads, and component states.
 4. **Scoping and Modularity:** Keep functions small, single-purpose, and pure where possible (especially for physics calculations). Do not pollute the global scope. 
-5. **Fail-Fast & Defensive Programming:** Validate parameters and state boundaries at the top of functions. If a system enters an invalid state, fail loudly and early rather than silently propagating `NaN` or `undefined` through the physics loops.
+5. **Fail-Fast & Defensive Programming:** Validate parameters and state boundaries at the top of functions. If a system enters an invalid state, fail loudly and early rather than silently propagating `NaN` or `undefined` through the physics loops.s

@@ -136,7 +136,6 @@ export class UI {
       this.physics2,
       this.engine,
       () => this.graphPanel.reset(),
-      (msg, type) => this.showToast(msg, type),
       (msg) => this.showModalWarning(msg)
     );
     this.controlsBar = new ControlsBar(

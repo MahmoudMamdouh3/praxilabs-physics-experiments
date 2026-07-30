@@ -156,53 +156,46 @@ export class Engine {
     // Sync camera look direction with the new orbit target.
     this.controls.update();
 
-    // ── Atmosphere & Fog ─────────────────────────────────────────────────────
-    this.scene.fog = new THREE.FogExp2(0x0d0d0f, 0.025);
+    // ── Scene Atmosphere ───────────────────────────────────────────────────
+    this.scene.background = new THREE.Color(0x16181e);
 
-    // ── Studio Three-Point Lighting ──────────────────────────────────────────
-
-    // Ambient: Very dim and cool-toned
-    this.ambientLight = new THREE.AmbientLight(0x111522, 0.4);
+    // ── Studio Lighting ────────────────────────────────────────────────────
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(this.ambientLight);
 
-    // Key Light: Cool white, directly above and slightly in front, casting soft shadows
-    this.directionalLight = new THREE.DirectionalLight(0xeef4ff, 1.5);
-    this.directionalLight.position.set(0, 20, 10);
+    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    this.directionalLight.position.set(10, 20, 15);
     this.directionalLight.castShadow = true;
     this.directionalLight.shadow.mapSize.set(2048, 2048);
     this.directionalLight.shadow.camera.near = 0.5;
     this.directionalLight.shadow.camera.far = 100;
-    this.directionalLight.shadow.camera.left   = -30;
-    this.directionalLight.shadow.camera.right  =  30;
-    this.directionalLight.shadow.camera.top    =  30;
+    this.directionalLight.shadow.camera.left = -30;
+    this.directionalLight.shadow.camera.right = 30;
+    this.directionalLight.shadow.camera.top = 30;
     this.directionalLight.shadow.camera.bottom = -30;
     this.directionalLight.shadow.bias = -0.0005;
+    this.directionalLight.target.position.set(0, 0, 0);
+    this.scene.add(this.directionalLight.target);
     this.scene.add(this.directionalLight);
 
-    // Rim Light: Electric Blue, intense, catching edges from behind
-    const rimLight = new THREE.DirectionalLight(0x22aaff, 2.0);
-    rimLight.position.set(-10, -5, -15);
-    this.scene.add(rimLight);
+    const fillLight = new THREE.DirectionalLight(0x88bbff, 0.3);
+    fillLight.position.set(-10, 10, -10);
+    this.scene.add(fillLight);
 
-    // ── 3D Lab Environment ───────────────────────────────────────────────────
-    
-    // 1. Endless Lab Table (Highly polished slate extending into the fog)
-    const tableGeo = new THREE.BoxGeometry(2000, 4, 2000);
-    const tableMat = new THREE.MeshStandardMaterial({
-      color: 0x0a0a0c,       
-      roughness: 0.2,        
-      metalness: 0.5,        
+    // ── Laboratory Table ───────────────────────────────────────────────────
+    const tableGeometry = new THREE.BoxGeometry(200, 4, 40);
+    const tableMaterial = new THREE.MeshStandardMaterial({
+      color: 0x222630,
+      roughness: 0.5,
+      metalness: 0.2,
     });
-    const tableMesh = new THREE.Mesh(tableGeo, tableMat);
-    tableMesh.position.set(0, -2, 0); 
+    const tableMesh = new THREE.Mesh(tableGeometry, tableMaterial);
+    tableMesh.position.set(0, -2, 0);
     tableMesh.receiveShadow = true;
     this.scene.add(tableMesh);
-    
-    // 2. Holographic Grid 
-    const gridHelper = new THREE.GridHelper(2000, 2000, 0x112233, 0x112233);
+
+    const gridHelper = new THREE.GridHelper(200, 200, 0x22aaff, 0x333948);
     gridHelper.position.set(0, 0.01, 0);
-    gridHelper.material.opacity = 0.15;
-    gridHelper.material.transparent = true;
     this.scene.add(gridHelper);
 
     // ── Resize handler ────────────────────────────────────────────────────────

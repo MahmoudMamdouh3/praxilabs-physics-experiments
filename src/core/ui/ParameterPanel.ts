@@ -20,9 +20,6 @@ import { TOKEN, el, button, styleSlider, formatValue } from './tokens.ts';
 /** Callback type for triggering a graph reset from outside the panel. */
 type OnGraphResetFn = () => void;
 
-/** Callback type for showing a toast notification. */
-type OnToastFn = (msg: string, type: 'warning' | 'info') => void;
-
 /** Callback type for a full screen modal warning */
 type OnModalWarningFn = (msg: string) => void;
 
@@ -45,7 +42,6 @@ export class ParameterPanel {
   private readonly physics2: Physics;
   private readonly engine: Engine;
   private readonly onGraphReset: OnGraphResetFn;
-  private readonly onToast: OnToastFn;
   private readonly onModalWarning: OnModalWarningFn;
 
   constructor(
@@ -53,14 +49,12 @@ export class ParameterPanel {
     physics2: Physics,
     engine: Engine,
     onGraphReset: OnGraphResetFn,
-    onToast: OnToastFn,
     onModalWarning: OnModalWarningFn,
   ) {
     this.physics = physics;
     this.physics2 = physics2;
     this.engine = engine;
     this.onGraphReset = onGraphReset;
-    this.onToast = onToast;
     this.onModalWarning = onModalWarning;
 
     // ── Parameter section (injected into the left panel by UI.ts) ────────────
