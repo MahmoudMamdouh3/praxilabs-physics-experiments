@@ -52,6 +52,15 @@ export class Engine {
 
   private currentExperiment: IExperiment | null = null;
 
+  // ── Comparison Mode — second experiment slot ───────────────────────────────
+  // The second instance lives in the same master scene but is wrapped inside
+  // an offset Group so it doesn't overlap with the primary experiment.
+
+  private currentExperiment2: IExperiment | null = null;
+
+  /** THREE.Group that spatially offsets the second experiment's meshes. */
+  private readonly offsetGroup2: THREE.Group;
+
   // ── Loop state ─────────────────────────────────────────────────────────────
 
   private rafId: number = 0;
@@ -68,6 +77,12 @@ export class Engine {
     // ── Scene ────────────────────────────────────────────────────────────────
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0d0d0f);
+
+    // Offset group for the second experiment (comparison mode).
+    // Set an X offset of 30 so both experiments sit side-by-side on the table.
+    this.offsetGroup2 = new THREE.Group();
+    this.offsetGroup2.position.set(30, 0, 0);
+    this.scene.add(this.offsetGroup2);
 
     // ── Camera ───────────────────────────────────────────────────────────────
     this.camera = new THREE.PerspectiveCamera(
@@ -270,6 +285,50 @@ export class Engine {
     return this.currentExperiment;
   }
 
+  // ── Comparison Mode API ────────────────────────────────────────────────────
+
+  /**
+   * Load a second experiment for side-by-side comparison.
+   * The second experiment's meshes are placed inside an offset Group so it
+   * appears 30 units to the right of the primary without overlapping.
+   *
+   * @param experiment - A fresh instance of any IExperiment implementation.
+   */
+  loadExperiment2(experiment: IExperiment): void {
+    if (this.currentExperiment2 !== null) {
+      this.currentExperiment2.dispose();
+      // Clear children left behind in the offset group
+      while (this.offsetGroup2.children.length > 0) {
+        this.offsetGroup2.remove(this.offsetGroup2.children[0]);
+      }
+    }
+    this.currentExperiment2 = experiment;
+    // The experiment calls scene.add() internally — we intercept by temporarily
+    // making offsetGroup2 act as a fake scene via a proxy.
+    const proxyScene = new THREE.Scene();
+    experiment.setup(proxyScene);
+    // Move all created objects from the proxy into the offset group
+    while (proxyScene.children.length > 0) {
+      this.offsetGroup2.add(proxyScene.children[0]);
+    }
+  }
+
+  /** Return the second experiment used in comparison mode, or `null`. */
+  getActiveExperiment2(): IExperiment | null {
+    return this.currentExperiment2;
+  }
+
+  /** Dispose and remove the second experiment from the scene. */
+  disposeExperiment2(): void {
+    if (this.currentExperiment2 !== null) {
+      this.currentExperiment2.dispose();
+      this.currentExperiment2 = null;
+    }
+    while (this.offsetGroup2.children.length > 0) {
+      this.offsetGroup2.remove(this.offsetGroup2.children[0]);
+    }
+  }
+
   /**
    * Restore the camera and orbit target to their default positions.
    * Call this from the UI Reset button so the user can always recover
@@ -350,9 +409,14 @@ export class Engine {
     // Integrates the damping deceleration applied to the last user gesture.
     this.controls.update();
 
-    // Sync meshes to current state
+    // Sync meshes to current state (primary experiment)
     if (this.currentExperiment !== null) {
       this.currentExperiment.render();
+    }
+
+    // Sync meshes for comparison experiment if active
+    if (this.currentExperiment2 !== null) {
+      this.currentExperiment2.render();
     }
 
     this.renderer.render(this.scene, this.camera);

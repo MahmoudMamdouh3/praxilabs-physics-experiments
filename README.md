@@ -22,6 +22,7 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
 *   **Experiments (The Strategies):** Reside in `src/experiments/`. Each experiment strictly implements the `IExperiment` interface. 
     *   When loaded, an experiment is passed the master scene (e.g., `pendulum.setup(scene)`) and only adds its specific meshes into the room. When swapped out, the core calls `dispose()`, forcing the experiment to delete its shapes, geometries, and materials before the next experiment loads.
 *   **Decoupled Logic:** The core engine is completely blind to which experiment is running. Adding a new experiment requires only dropping a new class file into the directory and registering it, touching zero core rendering or UI files.
+*   **Comparison Mode:** Click the **⚖ Compare** button in the controls bar to spawn a second independent instance of the current experiment side-by-side (offset 30 units right on the lab table). Each instance has its own parameter sliders (Set A / Set B) and its own physics accumulator, while sharing the master scene, camera, and renderer. The graph shows both datasets simultaneously as coloured lines (cyan vs. orange).
 
 ## Tech Stack & Integrator Choice
 *   **Frontend & Bundling:** Vanilla TypeScript powered by Vite. No heavy frontend frameworks (React/Vue) were used to minimize unnecessary dependencies. HTML/CSS is overlaid directly on the canvas.
@@ -50,5 +51,4 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
 ## Known Limitations & Future Work
 If I had more time outside of the 2-3 day timebox, I would implement the following:
 1.  **Runge-Kutta 4 (RK4) Integrator Option:** While Semi-Implicit Euler is fantastic for energy conservation in simple oscillators, an RK4 integration option would provide higher baseline precision for more complex, non-linear chaotic systems (like a double pendulum).
-2.  **Comparison Mode:** Implementing the bonus requirement to run two parameter sets side-by-side. This would require abstracting the `Engine.ts` to manage an array of active experiments rather than a singleton, and splitting the Three.js viewport / UI panel.
-3.  **Advanced 3D Interactivity:** Currently, the parameter schema completely drives the physics state. I would add `THREE.Raycaster` support so users could click and drag the pendulum bob or spring mass directly in the 3D canvas to set the initial displacement, which would natively bi-directionally sync back to the HTML sliders.
+2.  **Advanced 3D Interactivity:** Currently, the parameter schema completely drives the physics state. I would add `THREE.Raycaster` support so users could click and drag the pendulum bob or spring mass directly in the 3D canvas to set the initial displacement, which would natively bi-directionally sync back to the HTML sliders.

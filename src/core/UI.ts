@@ -191,7 +191,11 @@ export function registerExperiment(id: string, label: string, factory: Experimen
 
 export class UI {
   private readonly physics: Physics;
+  private readonly physics2: Physics;
   private readonly engine: Engine;
+
+  // ── Comparison Mode state ──────────────────────────────────────────────────
+  private compareMode: boolean = false;
 
   // ── DOM containers ─────────────────────────────────────────────────────────
   private readonly shell: HTMLDivElement;
@@ -203,6 +207,7 @@ export class UI {
   private chart: Chart | null = null;
   private readonly chartCanvas: HTMLCanvasElement;
   private readonly graphPoints: Array<{ x: number; y: number }> = [];
+  private readonly graphPoints2: Array<{ x: number; y: number }> = [];  // Set B line
   private graphKey: string = '';  // which measurement key to plot on Y axis
 
   private showToast(message: string, type: 'warning' | 'info' = 'warning'): void {
@@ -251,8 +256,9 @@ export class UI {
   // Heading node kept as a reference so clearReadouts() can restore it efficiently.
   private readonly readoutsHeading: HTMLDivElement;
 
-  constructor(physics: Physics, engine: Engine) {
+  constructor(physics: Physics, physics2: Physics, engine: Engine) {
     this.physics = physics;
+    this.physics2 = physics2;
     this.engine = engine;
 
     // ── Google Fonts ────────────────────────────────────────────────────────
@@ -466,28 +472,79 @@ export class UI {
       return;
     }
 
-    const panelBox = this.el('div', {
-      background: TOKEN.bg,
-      backdropFilter: TOKEN.panelBlur,
-      border: TOKEN.border,
-      borderRadius: TOKEN.radius,
-      boxShadow: TOKEN.shadow,
-      padding: '12px 14px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '14px',
-    });
+    if (this.compareMode) {
+      // ── Comparison mode: two labelled side-by-side panels ──────────────────
+      const wrapper = this.el('div', { display: 'flex', flexDirection: 'column', gap: '8px' });
 
-    const heading = document.createElement('div');
-    heading.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
-    heading.textContent = 'Parameters';
-    panelBox.appendChild(heading);
+      // Set A panel (cyan accent — matches graph line)
+      const panelA = this.el('div', {
+        background: TOKEN.bg,
+        backdropFilter: TOKEN.panelBlur,
+        border: '1px solid rgba(0,255,204,0.3)',
+        borderRadius: TOKEN.radius,
+        boxShadow: TOKEN.shadow,
+        padding: '10px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      });
+      const headA = document.createElement('div');
+      headA.style.cssText = `font-size:10px;letter-spacing:2px;color:#00ffcc;font-family:${TOKEN.fontMono};text-transform:uppercase;`;
+      headA.textContent = '● Set A (Cyan)';
+      panelA.appendChild(headA);
+      for (const [key, s] of Object.entries(schema)) {
+        panelA.appendChild(this.buildSliderRow(key, s, this.physics, 'A'));
+      }
+      wrapper.appendChild(panelA);
 
-    for (const [key, schema_entry] of Object.entries(schema)) {
-      panelBox.appendChild(this.buildSliderRow(key, schema_entry));
+      // Set B panel (orange accent — matches graph line)
+      const panelB = this.el('div', {
+        background: TOKEN.bg,
+        backdropFilter: TOKEN.panelBlur,
+        border: '1px solid rgba(255,153,0,0.3)',
+        borderRadius: TOKEN.radius,
+        boxShadow: TOKEN.shadow,
+        padding: '10px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      });
+      const headB = document.createElement('div');
+      headB.style.cssText = `font-size:10px;letter-spacing:2px;color:#ff9900;font-family:${TOKEN.fontMono};text-transform:uppercase;`;
+      headB.textContent = '● Set B (Orange)';
+      panelB.appendChild(headB);
+      for (const [key, s] of Object.entries(schema)) {
+        panelB.appendChild(this.buildSliderRow(key, s, this.physics2, 'B'));
+      }
+      wrapper.appendChild(panelB);
+
+      this.paramSection.appendChild(wrapper);
+
+    } else {
+      // ── Normal single-experiment panel ──────────────────────────────────────
+      const panelBox = this.el('div', {
+        background: TOKEN.bg,
+        backdropFilter: TOKEN.panelBlur,
+        border: TOKEN.border,
+        borderRadius: TOKEN.radius,
+        boxShadow: TOKEN.shadow,
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
+      });
+
+      const heading = document.createElement('div');
+      heading.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
+      heading.textContent = 'Parameters';
+      panelBox.appendChild(heading);
+
+      for (const [key, schema_entry] of Object.entries(schema)) {
+        panelBox.appendChild(this.buildSliderRow(key, schema_entry));
+      }
+
+      this.paramSection.appendChild(panelBox);
     }
-
-    this.paramSection.appendChild(panelBox);
   }
 
   /**
@@ -496,8 +553,11 @@ export class UI {
    *
    * BUG FIX: Skips the push+update when paused so Chart.js doesn't stutter
    * by re-rendering the same frozen point 60× per second.
+   *
+   * @param measurements  - Primary experiment (Set A) data.
+   * @param measurements2 - Optional secondary experiment (Set B) data for comparison mode.
    */
-  updateGraph(measurements: Record<string, number>): void {
+  updateGraph(measurements: Record<string, number>, measurements2?: Record<string, number> | null): void {
     if (this.chart === null) return;
 
     // Only advance the graph when the simulation is actually running.
@@ -513,14 +573,26 @@ export class UI {
 
     const y = measurements[this.graphKey] ?? 0;
     this.graphPoints.push({ x: t, y });
-
-    if (this.graphPoints.length > MAX_GRAPH_POINTS) {
-      this.graphPoints.shift();
-    }
+    if (this.graphPoints.length > MAX_GRAPH_POINTS) this.graphPoints.shift();
 
     const ds = this.chart.data.datasets[0] as ChartDataset<'line', Array<{ x: number; y: number }>>;
     ds.data = [...this.graphPoints];
-    ds.label = this.graphKey;
+    ds.label = `Set A: ${this.graphKey}`;
+
+    // Set B dataset (comparison mode)
+    if (this.compareMode && measurements2 != null) {
+      const t2 = measurements2['time_s'] ?? 0;
+      const y2 = measurements2[this.graphKey] ?? 0;
+      this.graphPoints2.push({ x: t2, y: y2 });
+      if (this.graphPoints2.length > MAX_GRAPH_POINTS) this.graphPoints2.shift();
+
+      const ds2 = this.chart.data.datasets[1] as ChartDataset<'line', Array<{ x: number; y: number }>>;
+      ds2.data = [...this.graphPoints2];
+      ds2.label = `Set B: ${this.graphKey}`;
+      ds2.hidden = false;
+    } else if (this.chart.data.datasets[1]) {
+      (this.chart.data.datasets[1] as ChartDataset<'line', Array<{ x: number; y: number }>>).hidden = true;
+    }
 
     this.chart.update('none'); // 'none' skips animation for performance
   }
@@ -556,10 +628,14 @@ export class UI {
    */
   resetGraph(): void {
     this.graphPoints.length = 0;
+    this.graphPoints2.length = 0;
     this.graphKey = '';
     if (this.chart !== null) {
       const ds = this.chart.data.datasets[0] as ChartDataset<'line', Array<{ x: number; y: number }>>;
       ds.data = [];
+      if (this.chart.data.datasets[1]) {
+        (this.chart.data.datasets[1] as ChartDataset<'line', Array<{ x: number; y: number }>>).data = [];
+      }
       this.chart.update('none');
     }
   }
@@ -621,6 +697,14 @@ export class UI {
     select.addEventListener('change', () => {
       const entry = EXPERIMENT_REGISTRY.find((e) => e.id === select.value);
       if (!entry) return;
+
+      // If compare mode is active, turn it off and dispose the second experiment
+      if (this.compareMode) {
+        this.compareMode = false;
+        this.engine.disposeExperiment2();
+        this.physics2.reset();
+        this.physics2.pause();
+      }
 
       const exp = entry.factory();
       this.physics.reset();
@@ -709,6 +793,57 @@ export class UI {
       URL.revokeObjectURL(url);
     });
     bar.appendChild(csvBtn);
+
+    // ── Compare Mode Toggle ────────────────────────────────────────────────────
+    const compareBtn = this.button('⚖ Compare', '#ff9900');
+    compareBtn.id = 'ui-btn-compare';
+    compareBtn.title = 'Toggle side-by-side comparison of two parameter sets for the same experiment';
+    compareBtn.addEventListener('click', () => {
+      this.compareMode = !this.compareMode;
+
+      if (this.compareMode) {
+        // ── Activate comparison mode ──────────────────────────────────────────
+        compareBtn.style.background = 'rgba(255,153,0,0.18)';
+        compareBtn.style.borderColor = '#ff9900';
+        compareBtn.textContent = '⚖ Comparing';
+
+        // Create a second instance of the current experiment
+        const activeEntry = EXPERIMENT_REGISTRY.find(
+          (e) => e.id === (this.engine.getActiveExperiment()?.id ?? '')
+        );
+        if (activeEntry) {
+          const exp2 = activeEntry.factory();
+          const defaults2: Record<string, number> = {};
+          for (const [k, s] of Object.entries(exp2.schema)) defaults2[k] = s.default;
+          this.physics2.setParams(defaults2);
+          this.engine.loadExperiment2(exp2);
+          this.physics2.reset();
+          this.physics2.pause();
+        }
+
+        // Rebuild parameter panel to show both Set A and Set B sliders
+        const currentExp = this.engine.getActiveExperiment();
+        if (currentExp) this.buildParameterPanel(currentExp.schema);
+        this.showToast('Comparison mode ON — Set B appears 30 units right. Press Play to run both.', 'info');
+
+      } else {
+        // ── Deactivate comparison mode ────────────────────────────────────────
+        compareBtn.style.background = 'transparent';
+        compareBtn.style.borderColor = 'rgba(255,153,0,0.2)';
+        compareBtn.textContent = '⚖ Compare';
+
+        this.engine.disposeExperiment2();
+        this.physics2.reset();
+        this.physics2.pause();
+        this.resetGraph();
+
+        // Restore single-column parameter panel
+        const currentExp = this.engine.getActiveExperiment();
+        if (currentExp) this.buildParameterPanel(currentExp.schema);
+        this.showToast('Comparison mode OFF.', 'info');
+      }
+    });
+    bar.appendChild(compareBtn);
 
     // ── Theme Selector ────────────────────────────────────────────────────────
     const themeWrapper = document.createElement('div');
@@ -854,7 +989,13 @@ export class UI {
     return { bar, pauseBtn, tsSlider, tsLabel };
   }
 
-  private buildSliderRow(key: string, s: ParameterSchema): HTMLDivElement {
+  private buildSliderRow(
+    key: string,
+    s: ParameterSchema,
+    physicsTarget: Physics = this.physics,
+    idSuffix: string = '',
+  ): HTMLDivElement {
+    const sliderId = `param-slider-${key}${idSuffix ? `-${idSuffix}` : ''}`;
     const row = this.el('div', { display: 'flex', flexDirection: 'column', gap: '4px' });
 
     // Top row: label + value display
@@ -865,7 +1006,7 @@ export class UI {
     });
 
     const label = document.createElement('label');
-    label.htmlFor = `param-slider-${key}`;
+    label.htmlFor = sliderId;
     label.style.cssText = `font-size:12px;color:${TOKEN.text};font-family:${TOKEN.fontSans};`;
     label.textContent = s.description;
 
@@ -888,7 +1029,7 @@ export class UI {
 
     const slider = document.createElement('input');
     slider.type = 'range';
-    slider.id = `param-slider-${key}`;
+    slider.id = sliderId;
     slider.min = String(s.min);
     slider.max = String(s.max);
     slider.step = String(s.step);
@@ -912,8 +1053,8 @@ export class UI {
     slider.addEventListener('input', (e: Event) => {
       const val = parseFloat((e.target as HTMLInputElement).value);
 
-      // Update our stored params
-      this.physics.currentParams[key] = val;
+      // Write to the correct physics store (Set A or Set B)
+      physicsTarget.currentParams[key] = val;
 
       // Format to maximum 2 decimals for display
       valueDisplay.textContent = `${val.toFixed(2)} ${s.unit}`;
@@ -926,13 +1067,19 @@ export class UI {
         this.showToast('180° is a singular equilibrium point; it will not oscillate normally.', 'warning');
       }
 
-      const exp = this.engine.getActiveExperiment();
-      if (exp !== null) {
-        exp.reset(this.physics.currentParams);
-        this.resetGraph();
+      // Reset whichever experiment owns this slider
+      if (physicsTarget === this.physics2) {
+        const exp2 = this.engine.getActiveExperiment2();
+        if (exp2 !== null) exp2.reset(physicsTarget.currentParams);
+      } else {
+        const exp = this.engine.getActiveExperiment();
+        if (exp !== null) {
+          exp.reset(physicsTarget.currentParams);
+          this.resetGraph();
+        }
       }
       numInput.value = String(val);
-      this.physics.setParam(key, val);
+      physicsTarget.setParam(key, val);
     });
 
     numInput.addEventListener('change', () => {
@@ -942,7 +1089,7 @@ export class UI {
       numInput.value = String(clamped);
       valueDisplay.textContent = `${clamped.toFixed(2)} ${s.unit}`;
       this.styleSlider(slider);
-      this.physics.setParam(key, clamped);
+      physicsTarget.setParam(key, clamped);
     });
 
     inputRow.appendChild(slider);
@@ -997,14 +1144,25 @@ export class UI {
       data: {
         datasets: [
           {
-            label: '',
+            label: 'Set A',
             data: [],
-            borderColor: '#00ffcc', // Constant Oscilloscope Green
+            borderColor: '#00ffcc', // Cyan — Set A primary line
             backgroundColor: 'rgba(0, 255, 204, 0.1)',
             borderWidth: 2,
             pointRadius: 0,
             fill: true,
-            tension: 0.4, // Smooth curved lines
+            tension: 0.4,
+          } as ChartDataset<'line', Array<{ x: number; y: number }>>,
+          {
+            label: 'Set B',
+            data: [],
+            borderColor: '#ff9900', // Orange — Set B comparison line
+            backgroundColor: 'rgba(255, 153, 0, 0.08)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.4,
+            hidden: true, // Only shown in comparison mode
           } as ChartDataset<'line', Array<{ x: number; y: number }>>,
         ],
       },
@@ -1039,7 +1197,15 @@ export class UI {
           },
         },
         plugins: {
-          legend: { display: false },
+          legend: {
+            display: true,
+            labels: {
+              color: TOKEN.textMuted,
+              font: { family: TOKEN.fontMono, size: 9 },
+              boxWidth: 12,
+              filter: (item) => !item.hidden,
+            },
+          },
           tooltip: {
             enabled: true,
             backgroundColor: TOKEN.bgSolid,

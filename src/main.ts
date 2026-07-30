@@ -16,25 +16,33 @@ registerExperiment('spring', 'Spring-Mass System', () => new Spring());
 
 // ---------------------------------------------------------------------------
 // 2. Boot core systems
+//    physics2 is the independent accumulator for Comparison Mode (Set B).
 // ---------------------------------------------------------------------------
 const engine = new Engine();
 const physics = new Physics();
-const ui = new UI(physics, engine);
+const physics2 = new Physics(); // Second independent physics engine for comparison mode
+const ui = new UI(physics, physics2, engine);
 
 // ---------------------------------------------------------------------------
 // 3. Connect Physics accumulator into the RAF render loop.
 //    The callback also drives the per-frame UI readout & graph updates.
 // ---------------------------------------------------------------------------
 engine.setPhysicsTickCallback((dt: number) => {
-  // Run the fixed-timestep accumulator for the active experiment
+  // Run the fixed-timestep accumulator for the primary active experiment
   physics.step(dt, engine.getActiveExperiment());
+
+  // Run the second accumulator for the comparison experiment (no-op if null)
+  physics2.step(dt, engine.getActiveExperiment2());
 
   // Poll measurements and push to UI every render frame
   const exp = engine.getActiveExperiment();
+  const exp2 = engine.getActiveExperiment2();
+
   if (exp !== null) {
     const measurements = exp.getMeasurements();
+    const measurements2 = exp2 !== null ? exp2.getMeasurements() : null;
     ui.updateReadouts(measurements);
-    ui.updateGraph(measurements);
+    ui.updateGraph(measurements, measurements2);
   }
 });
 
