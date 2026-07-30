@@ -67,10 +67,12 @@ export interface ParameterSchema {
  * **Rules for implementors:**
  * - Do NOT create a `THREE.Scene`, `THREE.Camera`, or `THREE.WebGLRenderer`.
  * - Do NOT import or use any external physics engine.
- * - Use Semi-Implicit Euler integration unless the experiment explicitly
- *   states otherwise.
- * - Adding a new experiment requires only a single new file in
- *   `src/experiments/`; Engine.ts, Physics.ts, and UI.ts must not be touched.
+ * - Use Semi-Implicit Euler integration unless the experiment explicitly states otherwise.
+ * - Adding a new experiment requires only a single new file in `src/experiments/`.
+ * 
+ * **SEE ALSO:** 
+ * For detailed implementation instructions, exact schema rules, and registration 
+ * steps, please read the API Contract at `docs/api-contract.md`.
  */
 export interface IExperiment {
   // ── Identity ──────────────────────────────────────────────────────────────

@@ -16,6 +16,8 @@
 ## Extensibility Rule (Zero-Touch Core)
 If asked to add a new experiment, you must create a single new file in `src/experiments/` that implements the `IExperiment` interface. You are strictly forbidden from modifying `Engine.ts`, `Physics.ts`, or `UI.ts` to accommodate the new experiment.
 
+> **CRITICAL INSTRUCTION:** Before attempting to write or generate code for a new experiment, you MUST read `docs/api-contract.md` for the exact implementation blueprint, schema rules, and registration instructions.
+
 ## UI Interaction & Testing Rules (Added after Subagent Failures)
 Before doing ANY visual/pixel-based interaction with a UI element you just built (e.g. testing via browser_subagent), FIRST read the source file where you created that element and get its exact id/selector. Never locate an element by guessing screen coordinates when you have direct access to the source that defines it.
 
