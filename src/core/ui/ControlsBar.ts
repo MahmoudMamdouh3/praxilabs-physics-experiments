@@ -274,6 +274,7 @@ export class ControlsBar {
     compareBtn.title = 'Toggle side-by-side comparison of two parameter sets for the same experiment';
     compareBtn.addEventListener('click', () => {
       this._compareMode = !this._compareMode;
+      document.body.classList.toggle('compare-mode', this._compareMode);
 
       if (this._compareMode) {
         compareBtn.style.background = 'rgba(255,153,0,0.18)';

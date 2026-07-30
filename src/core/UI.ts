@@ -50,6 +50,26 @@ export class UI {
       document.head.appendChild(link);
     }
 
+    // Inject Compare Mode CSS
+    if (!document.getElementById('compare-mode-styles')) {
+      const style = document.createElement('style');
+      style.id = 'compare-mode-styles';
+      style.textContent = `
+        body.compare-mode .hud-set-a {
+          left: 30% !important;
+          border-color: rgba(0, 255, 204, 0.4) !important;
+        }
+        body.compare-mode .hud-set-a .hud-value { color: #00ffcc !important; }
+        
+        body.compare-mode .hud-set-b {
+          left: 70% !important;
+          border-color: rgba(255, 153, 0, 0.4) !important;
+        }
+        body.compare-mode .hud-set-b .hud-value { color: #ff9900 !important; }
+      `;
+      document.head.appendChild(style);
+    }
+
     // Listen for auto-pause events from experiments (e.g. Projectile landing)
     document.addEventListener('praxilabs-auto-pause', () => {
       if (!this.physics.isPaused) {
@@ -110,6 +130,7 @@ export class UI {
       flexDirection: 'column',
       gap: '10px',
       pointerEvents: 'auto',
+      maxHeight: 'calc(100vh - 72px)',
     });
     this.shell.appendChild(sidePanel);
 

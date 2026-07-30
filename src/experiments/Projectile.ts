@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { IExperiment, ParameterSchema } from './IExperiment.ts';
+import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
 
 // ---------------------------------------------------------------------------
 // Projectile Motion — Experiment B
@@ -135,9 +135,12 @@ export class Projectile implements IExperiment {
   /** Reference to the master scene (needed for dispose()). */
   private scene: THREE.Scene | null = null;
 
+  private config?: ExperimentConfig;
+
   // ── IExperiment lifecycle ─────────────────────────────────────────────────
 
-  setup(scene: THREE.Scene): void {
+  setup(scene: THREE.Scene, config?: ExperimentConfig): void {
+    this.config = config;
     this.scene = scene;
 
     // ── Projectile bob ────────────────────────────────────────────────────────
@@ -190,6 +193,7 @@ export class Projectile implements IExperiment {
     scene.add(this.landingMarker);
 
     this.htmlRangeMetrics = document.createElement('div');
+    this.htmlRangeMetrics.classList.add(this.config?.isSetB ? 'hud-set-b' : 'hud-set-a');
     this.htmlRangeMetrics.style.cssText = `
       position: absolute;
       top: 190px;

@@ -219,12 +219,12 @@ export class Engine {
    *  1. Dispose the outgoing experiment (frees GPU memory).
    *  2. Activate the new experiment by calling setup(scene).
    */
-  loadExperiment(experiment: IExperiment): void {
+  loadExperiment(experiment: IExperiment, config?: { compareMode?: boolean; isSetB?: boolean }): void {
     if (this.currentExperiment !== null) {
       this.currentExperiment.dispose();
     }
     this.currentExperiment = experiment;
-    experiment.setup(this.scene);
+    experiment.setup(this.scene, config);
   }
 
   /** Return the currently active experiment, or `null` if none is loaded. */
@@ -253,7 +253,7 @@ export class Engine {
     // The experiment calls scene.add() internally — we intercept by temporarily
     // making offsetGroup2 act as a fake scene via a proxy.
     const proxyScene = new THREE.Scene();
-    experiment.setup(proxyScene);
+    experiment.setup(proxyScene, { isSetB: true, compareMode: true });
     // Move all created objects from the proxy into the offset group
     while (proxyScene.children.length > 0) {
       this.offsetGroup2.add(proxyScene.children[0]);

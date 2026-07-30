@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import type { IExperiment, ParameterSchema } from './IExperiment.ts';
+import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
+import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
 
 // ---------------------------------------------------------------------------
 // Spring-Mass System — Experiment C
@@ -171,13 +172,17 @@ export class Spring implements IExperiment {
   /** HTML overlay for measured vs theoretical frequency readouts. */
   private htmlFrequencyMetrics: HTMLDivElement | null = null;
 
+  private config?: ExperimentConfig;
+
   // ── IExperiment lifecycle ─────────────────────────────────────────────────
 
-  setup(scene: THREE.Scene): void {
+  setup(scene: THREE.Scene, config?: ExperimentConfig): void {
+    this.config = config;
     this.scene = scene;
 
     // ── HTML Stopwatch Overlay ───────────────────────────────────────────────
     this.htmlStopwatch = document.createElement('div');
+    this.htmlStopwatch.classList.add(this.config?.isSetB ? 'hud-set-b' : 'hud-set-a');
     this.htmlStopwatch.style.cssText = `
       position: absolute;
       top: 100px;
@@ -244,6 +249,7 @@ export class Spring implements IExperiment {
     scene.add(this.springLine);
 
     this.htmlFrequencyMetrics = document.createElement('div');
+    this.htmlFrequencyMetrics.classList.add(this.config?.isSetB ? 'hud-set-b' : 'hud-set-a');
     this.htmlFrequencyMetrics.style.cssText = `
       position: absolute;
       top: 190px;

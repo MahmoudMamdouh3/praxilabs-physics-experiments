@@ -101,13 +101,24 @@ export interface IExperiment {
   // ── Lifecycle Methods ─────────────────────────────────────────────────────
 
   /**
+   * Configuration options passed by the Engine during setup.
+   */
+export interface ExperimentConfig {
+  /** True if the Engine is currently running two experiments side-by-side. */
+  compareMode?: boolean;
+  /** True if this instance is the second experiment (Set B) in compare mode. */
+  isSetB?: boolean;
+}
+
+  /**
    * Initialise the experiment.
    * Create all `THREE.Mesh`, `THREE.Line`, and helper objects then add them
    * to `scene`. Called exactly once per activation.
    *
-   * @param scene - The master Three.js scene owned by Engine.ts.
+   * @param scene  - The master Three.js scene owned by Engine.ts.
+   * @param config - Optional configuration for UI positioning in Compare Mode.
    */
-  setup(scene: THREE.Scene): void;
+  setup(scene: THREE.Scene, config?: ExperimentConfig): void;
 
   /**
    * Advance the simulation by one fixed physics step.

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { IExperiment, ParameterSchema } from './IExperiment.ts';
+import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
 
 // ---------------------------------------------------------------------------
 // Pendulum — Experiment A
@@ -175,9 +175,12 @@ export class Pendulum implements IExperiment {
   /** Reference to the scene — needed so `dispose()` can remove objects. */
   private scene: THREE.Scene | null = null;
 
-  // ── IExperiment lifecycle ─────────────────────────────────────────────────
+  private config?: ExperimentConfig;
 
-  setup(scene: THREE.Scene): void {
+  // ── Initialization ────────────────────────────────────────────────────────
+
+  setup(scene: THREE.Scene, config?: ExperimentConfig): void {
+    this.config = config;
     this.scene = scene;
 
     // ── String ───────────────────────────────────────────────────────────────
@@ -198,6 +201,7 @@ export class Pendulum implements IExperiment {
 
     // ── HTML Stopwatch Overlay ───────────────────────────────────────────────
     this.htmlStopwatch = document.createElement('div');
+    this.htmlStopwatch.classList.add(this.config?.isSetB ? 'hud-set-b' : 'hud-set-a');
     this.htmlStopwatch.style.cssText = `
       position: absolute;
       top: 100px;
@@ -223,6 +227,7 @@ export class Pendulum implements IExperiment {
     document.body.appendChild(this.htmlStopwatch);
 
     this.htmlPeriodMetrics = document.createElement('div');
+    this.htmlPeriodMetrics.classList.add(this.config?.isSetB ? 'hud-set-b' : 'hud-set-a');
     this.htmlPeriodMetrics.style.cssText = `
       position: absolute;
       top: 190px;

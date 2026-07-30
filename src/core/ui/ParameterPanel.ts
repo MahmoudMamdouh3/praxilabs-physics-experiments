@@ -63,7 +63,8 @@ export class ParameterPanel {
       display: 'flex',
       flexDirection: 'column',
       gap: '6px',
-      maxHeight: 'calc(100vh - 250px)',
+      flex: '1',
+      minHeight: '0',
       overflowY: 'auto',
       overflowX: 'hidden',
       paddingRight: '4px' // Room for scrollbar
