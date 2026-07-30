@@ -93,7 +93,7 @@ export class Engine {
     );
     // Positioned straight ahead on the Z axis so OrbitControls can take
     // full symmetric control without a pre-rotated camera matrix.
-    this.camera.position.set(0, 0, 15);
+    this.camera.position.set(0, 5.6, 30.8);
 
     // ── Renderer ─────────────────────────────────────────────────────────────
     this.renderer = new THREE.WebGLRenderer({
@@ -133,7 +133,7 @@ export class Engine {
 
     // Zoom bounds: reduce min/max so users cannot zoom out into a giant empty scene.
     this.controls.minDistance = 1;
-    this.controls.maxDistance = 50;
+    this.controls.maxDistance = 120;
 
     // Lock horizontal (azimuth) rotation to 0 — experiments are 2D (XY plane).
     this.controls.minAzimuthAngle = 0;
@@ -182,7 +182,7 @@ export class Engine {
     this.scene.add(fillLight);
 
     // ── Laboratory Table ───────────────────────────────────────────────────
-    const tableGeometry = new THREE.BoxGeometry(20, 2, 8);
+    const tableGeometry = new THREE.BoxGeometry(160, 2, 160);
     const tableMaterial = new THREE.MeshStandardMaterial({
       color: 0x222630,
       roughness: 0.5,
@@ -193,7 +193,7 @@ export class Engine {
     tableMesh.receiveShadow = true;
     this.scene.add(tableMesh);
 
-    const gridHelper = new THREE.GridHelper(20, 20, 0x22aaff, 0x333948);
+    const gridHelper = new THREE.GridHelper(160, 160, 0x22aaff, 0x333948);
     gridHelper.position.set(0, 0.01, 0);
     this.scene.add(gridHelper);
 
@@ -281,7 +281,7 @@ export class Engine {
    * to a known-good viewpoint regardless of how far they have zoomed/tilted.
    */
   resetCamera(): void {
-    this.camera.position.set(0, 1, 8);
+    this.camera.position.set(0, 4.9, 25.2);
     this.controls.target.set(0, -1, 0);
     this.controls.update();
   }
@@ -292,8 +292,8 @@ export class Engine {
   setCompareCameraView(enabled: boolean): void {
     if (enabled) {
       // Center between the two experiments and pull back to see both.
-      this.camera.position.set(5, 1, 12);
-      this.controls.target.set(5, -1, 0);
+      this.camera.position.set(7, 4.2, 25.2);
+      this.controls.target.set(7, -1, 0);
     } else {
       this.resetCamera();
     }

@@ -143,37 +143,17 @@ export class Projectile implements IExperiment {
     // ── Projectile bob ────────────────────────────────────────────────────────
     this.bobGeometry = new THREE.SphereGeometry(BOB_RADIUS, 32, 32);
     this.bobMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff6b35,       // warm orange — distinct from Pendulum blue
+      color: 0x22aaff,       // cyan
       metalness: 0.4,
       roughness: 0.3,
-      emissive: 0x3a1500,
+      emissive: 0x003355,
       emissiveIntensity: 0.4,
     });
     this.bobMesh = new THREE.Mesh(this.bobGeometry, this.bobMaterial);
     this.bobMesh.castShadow = true;
     scene.add(this.bobMesh);
 
-    // ── Launcher Stand ───────────────────────────────────────────────────────
-    this.launcherGroup = new THREE.Group();
-    
-    const baseGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 32);
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x334455, metalness: 0.8, roughness: 0.2 });
-    const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-    baseMesh.position.set(0, 0.1, 0); // Sits on the table (y=0)
-    baseMesh.castShadow = true;
-    this.launcherGroup.add(baseMesh);
-
-    this.launcherBarrel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.15, 0.15, 1.2, 16),
-      baseMat
-    );
-    // Shift geometry so its pivot is at its bottom base instead of center
-    this.launcherBarrel.geometry.translate(0, 0.6, 0); 
-    this.launcherBarrel.position.set(0, 0.2, 0);
-    this.launcherBarrel.castShadow = true;
-    this.launcherGroup.add(this.launcherBarrel);
-    
-    scene.add(this.launcherGroup);
+    // Launcher Stand removed as per user request
 
     // ── Predicted trajectory (dashed line) ───────────────────────────────────
     // Pre-allocate TRAJECTORY_SEGMENTS+1 vertices; content set in reset().
@@ -198,7 +178,7 @@ export class Projectile implements IExperiment {
     // ── Landing marker (flat ring at y=0) ─────────────────────────────────────
     this.landingGeometry = new THREE.RingGeometry(0.2, 0.35, 32);
     this.landingMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff6b35,
+      color: 0x22aaff,
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 0.75,
@@ -217,23 +197,42 @@ export class Projectile implements IExperiment {
       transform: translateX(-50%);
       background: rgba(13, 13, 15, 0.8);
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 107, 53, 0.45);
+      border: 1px solid rgba(34, 170, 255, 0.45);
       border-radius: 8px;
       padding: 12px 18px;
       color: #cdd2d9;
       font-family: monospace;
       font-size: 13px;
       text-align: center;
-      pointer-events: none;
+      pointer-events: auto;
       z-index: 15;
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
     `;
     this.htmlRangeMetrics.innerHTML = `
-      <div style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Range Comparison</div>
+      <div id="projectile-range-title" style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Range Comparison</div>
       <div id="projectile-range-status">Predicted range shown before launch.</div>
-      <div id="projectile-range-values" style="margin-top:4px; color:#ff6b35;">Predicted: -- m · Actual: -- m</div>
+      <div id="projectile-range-values" style="margin-top:4px; color:#22aaff;">Predicted: -- m · Actual: -- m</div>
     `;
     document.body.appendChild(this.htmlRangeMetrics);
+
+    const rangeToggle = document.createElement('button');
+    rangeToggle.textContent = '▾';
+    rangeToggle.title = 'Collapse or expand range comparison metrics';
+    rangeToggle.style.cssText = `position:absolute;top:6px;right:8px;background:transparent;border:none;color:#8a95a8;cursor:pointer;font-size:12px;`;
+    (this.htmlRangeMetrics as HTMLDivElement).dataset.collapsed = '0';
+    rangeToggle.addEventListener('click', () => {
+      const container = this.htmlRangeMetrics as HTMLDivElement;
+      const isCollapsed = container.dataset.collapsed === '1';
+      for (const child of Array.from(container.children)) {
+        if (child === rangeToggle) continue;
+        const el = child as HTMLElement;
+        if (el.id === 'projectile-range-title') continue;
+        el.style.display = isCollapsed ? '' : 'none';
+      }
+      container.dataset.collapsed = isCollapsed ? '0' : '1';
+      rangeToggle.textContent = isCollapsed ? '▾' : '▸';
+    });
+    this.htmlRangeMetrics.appendChild(rangeToggle);
 
     // Initialise everything to schema defaults.
     const defaults: Record<string, number> = {};
@@ -322,9 +321,7 @@ export class Projectile implements IExperiment {
       this.bobMesh.position.set(0, BOB_RADIUS, 0);
     }
 
-    if (this.launcherBarrel !== null) {
-      this.launcherBarrel.rotation.z = angleRad - Math.PI / 2;
-    }
+
 
     // Rebuild the analytic predicted trajectory.
     this.updateTrajectory(params);
@@ -366,11 +363,19 @@ export class Projectile implements IExperiment {
       ? (speed * speed * Math.sin(2 * angleRad)) / g
       : 0;
 
+    const v2 = this.vx * this.vx + this.vy * this.vy;
+    const kineticEnergy = 0.5 * MASS * v2;
+    const potentialEnergy = MASS * g * this.y;
+    const totalEnergy = kineticEnergy + potentialEnergy;
+
     return {
       time_s:            this.time,
       current_y_m:       this.y,
       predicted_range_m: predictedRange,
       actual_range_m:    this.hasLanded ? this.actualRange : 0,
+      kinetic_energy:    kineticEnergy,
+      potential_energy:  potentialEnergy,
+      total_energy:      totalEnergy,
     };
   }
 
@@ -379,7 +384,6 @@ export class Projectile implements IExperiment {
       if (this.bobMesh        !== null) this.scene.remove(this.bobMesh);
       if (this.trajectoryLine !== null) this.scene.remove(this.trajectoryLine);
       if (this.landingMarker  !== null) this.scene.remove(this.landingMarker);
-      if (this.launcherGroup  !== null) this.scene.remove(this.launcherGroup);
     }
 
     if (this.htmlRangeMetrics && this.htmlRangeMetrics.parentNode) {

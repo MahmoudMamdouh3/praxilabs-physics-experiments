@@ -213,22 +213,6 @@ export class Spring implements IExperiment {
     this.anchorMesh.position.set(0, ANCHOR_Y, 0);
     this.anchorMesh.castShadow = true;
     
-    // ── Anchor Stand ──────────────────────────────────────────────────────────
-    const standGeo = new THREE.CylinderGeometry(0.15, 0.15, ANCHOR_Y);
-    const standMat = new THREE.MeshStandardMaterial({ color: 0x556677, metalness: 0.8, roughness: 0.2 });
-    const standPole = new THREE.Mesh(standGeo, standMat);
-    // Relative to anchorMesh at (0, ANCHOR_Y, 0) — center the stand beneath the anchor
-    standPole.position.set(0, -ANCHOR_Y / 2, 0);
-    standPole.castShadow = true;
-    this.anchorMesh.add(standPole);
-
-    const standArmGeo = new THREE.CylinderGeometry(0.1, 0.1, 3);
-    const standArm = new THREE.Mesh(standArmGeo, standMat);
-    standArm.rotation.z = Math.PI / 2;
-    standArm.position.set(0, 0, 0);
-    standArm.castShadow = true;
-    this.anchorMesh.add(standArm);
-
     scene.add(this.anchorMesh);
 
     // ── Mass block ────────────────────────────────────────────────────────────
@@ -274,16 +258,35 @@ export class Spring implements IExperiment {
       font-family: monospace;
       font-size: 13px;
       text-align: center;
-      pointer-events: none;
+      pointer-events: auto;
       z-index: 15;
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
     `;
     this.htmlFrequencyMetrics.innerHTML = `
-      <div style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Frequency Comparison</div>
+      <div id="spring-frequency-title" style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Frequency Comparison</div>
       <div id="spring-frequency-status">Waiting for a full cycle...</div>
       <div id="spring-frequency-values" style="margin-top:4px; color:#22aaff;">Measured: -- Hz · Theoretical: -- Hz</div>
     `;
     document.body.appendChild(this.htmlFrequencyMetrics);
+
+    const freqToggle = document.createElement('button');
+    freqToggle.textContent = '▾';
+    freqToggle.title = 'Collapse or expand frequency comparison metrics';
+    freqToggle.style.cssText = `position:absolute;top:6px;right:8px;background:transparent;border:none;color:#8a95a8;cursor:pointer;font-size:12px;`;
+    (this.htmlFrequencyMetrics as HTMLDivElement).dataset.collapsed = '0';
+    freqToggle.addEventListener('click', () => {
+      const container = this.htmlFrequencyMetrics as HTMLDivElement;
+      const isCollapsed = container.dataset.collapsed === '1';
+      for (const child of Array.from(container.children)) {
+        if (child === freqToggle) continue;
+        const el = child as HTMLElement;
+        if (el.id === 'spring-frequency-title') continue;
+        el.style.display = isCollapsed ? '' : 'none';
+      }
+      container.dataset.collapsed = isCollapsed ? '0' : '1';
+      freqToggle.textContent = isCollapsed ? '▾' : '▸';
+    });
+    this.htmlFrequencyMetrics.appendChild(freqToggle);
 
     // Initialise positions to schema defaults before the first physics tick.
     const defaults: Record<string, number> = {};

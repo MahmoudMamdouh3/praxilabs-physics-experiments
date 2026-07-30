@@ -237,12 +237,12 @@ export class Pendulum implements IExperiment {
       font-family: monospace;
       font-size: 13px;
       text-align: center;
-      pointer-events: none;
+      pointer-events: auto;
       z-index: 15;
       box-shadow: 0 4px 16px rgba(0,0,0,0.5);
     `;
     this.htmlPeriodMetrics.innerHTML = `
-      <div style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Period Measurement</div>
+      <div id="pendulum-period-title" style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Period Measurement</div>
       <div id="pendulum-period-status">Waiting for a full cycle...</div>
       <div id="pendulum-period-values" style="margin-top:4px; color:#22aaff;">Measured: -- s · Theoretical: -- s · Diff: -- %</div>
     `;
@@ -258,10 +258,11 @@ export class Pendulum implements IExperiment {
     periodToggle.addEventListener('click', () => {
       const container = this.htmlPeriodMetrics as HTMLDivElement;
       const isCollapsed = container.dataset.collapsed === '1';
-      // Toggle all child nodes except the toggle itself
+      // Keep the title visible when collapsed; toggle other content.
       for (const child of Array.from(container.children)) {
         if (child === periodToggle) continue;
         const el = child as HTMLElement;
+        if (el.id === 'pendulum-period-title') continue;
         el.style.display = isCollapsed ? '' : 'none';
       }
       container.dataset.collapsed = isCollapsed ? '0' : '1';

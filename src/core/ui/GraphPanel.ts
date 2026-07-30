@@ -49,7 +49,7 @@ export class GraphPanel {
   private readonly physics: Physics;
   
   /** Dynamic rolling window for graph zoom */
-  private maxPoints: number = 150;
+  private maxPoints: number = 5000;
 
   constructor(physics: Physics) {
     this.physics = physics;
@@ -73,10 +73,13 @@ export class GraphPanel {
     });
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; cursor:grab;';
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:6px; cursor:grab;';
 
     const headerLeft = document.createElement('div');
     headerLeft.style.cssText = 'display:flex; align-items:center; gap:8px;';
+
+    const headerRight = document.createElement('div');
+    headerRight.style.cssText = 'display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px;';
 
     const graphLabel = document.createElement('div');
     graphLabel.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
@@ -88,18 +91,11 @@ export class GraphPanel {
     collapseBtn.title = 'Collapse or expand the graph panel';
     collapseBtn.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
     collapseBtn.addEventListener('click', () => {
-      // Toggle visibility of all non-header children (chart, controls, size slider)
-      const children = Array.from(this.element.children) as HTMLElement[];
-      // children[0] === header; toggle everything else
-      let isCollapsed = false;
-      if (children.length > 1) {
-        isCollapsed = (children[1].style.display === 'none');
-      }
-      for (let i = 1; i < children.length; i++) {
-        children[i].style.display = isCollapsed ? '' : 'none';
-      }
+      const body = this.element.querySelector('[data-panel-body]') as HTMLElement | null;
+      if (!body) return;
+      const isCollapsed = body.style.display === 'none';
+      body.style.display = isCollapsed ? 'flex' : 'none';
       collapseBtn.textContent = isCollapsed ? '▾' : '▸';
-      // Also adjust the panel height when collapsed for a compact header-only view
       this.element.style.height = isCollapsed ? '180px' : '36px';
     });
     headerLeft.appendChild(collapseBtn);
@@ -129,10 +125,14 @@ export class GraphPanel {
     
     modeSelect.addEventListener('change', () => {
       this.isEnergyMode = modeSelect.value === 'energy';
-      if (this.chart) this.chart.update('none');
+      if (this.chart) {
+        this.chart.update('none');
+        this.updateLegend();
+      }
     });
     headerLeft.appendChild(modeSelect);
-    header.appendChild(headerLeft);
+
+    const topControls = el('div', { display: 'flex', alignItems: 'center', gap: '12px' });
 
     // Zoom slider
     const zoomWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '6px' });
@@ -142,21 +142,28 @@ export class GraphPanel {
     zoomSlider.type = 'range';
     // More granular and wider zoom range so user can zoom out further and with better precision
     zoomSlider.min = '50';
-    zoomSlider.max = '5000';
+    zoomSlider.max = '10000';
     zoomSlider.step = '1';
     zoomSlider.value = String(this.maxPoints);
-    zoomSlider.style.cssText = `width: 140px; accent-color:${TOKEN.accent};`;
+    zoomSlider.style.cssText = `width: 220px; accent-color:${TOKEN.accent};`;
     zoomSlider.addEventListener('input', (e) => {
       // Direct mapping: more points => more zoomed-out
-      this.maxPoints = parseInt((e.target as HTMLInputElement).value, 10) || 150;
+      this.maxPoints = parseInt((e.target as HTMLInputElement).value, 10) || 10000;
     });
     // Style the zoom slider track for visibility
     styleSlider(zoomSlider);
     zoomWrapper.appendChild(zoomLabel);
     zoomWrapper.appendChild(zoomSlider);
-    header.appendChild(zoomWrapper);
+    topControls.appendChild(zoomWrapper);
 
+    headerRight.appendChild(topControls);
+    header.appendChild(headerLeft);
+    header.appendChild(headerRight);
     this.element.appendChild(header);
+
+    // Wrap all graph body content so collapse only hides the body, not the header.
+    const panelBody = el('div', { display:'flex', flexDirection:'column', gap:'8px', width:'100%' });
+    panelBody.dataset.panelBody = 'true';
 
     // Make the panel draggable by its header
     let isDragging = false;
@@ -212,62 +219,14 @@ export class GraphPanel {
     legendCol.setAttribute('data-legend-col', 'true');
     chartWrapper.appendChild(legendCol);
 
-    this.element.appendChild(chartWrapper);
+    panelBody.appendChild(chartWrapper);
 
-    // Size controllers: Width and Height sliders (bounded)
-    const sizeWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' });
-    // Width control
-    const widthLabel = el('span', { fontSize: '10px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
-    widthLabel.textContent = 'Width:';
-    const widthSlider = document.createElement('input');
-    widthSlider.type = 'range';
-    const minW = 300;
-    const maxW = Math.max(600, Math.min(1200, window.innerWidth - 200));
-    widthSlider.min = String(minW);
-    widthSlider.max = String(maxW);
-    widthSlider.step = '10';
-    const initW = Math.min(900, Math.max(400, Math.floor((window.innerWidth - 368) * 0.9)));
-    widthSlider.value = String(initW);
-    widthSlider.style.cssText = `width:220px;`;
-    widthSlider.addEventListener('input', (e) => {
-      const w = parseInt((e.target as HTMLInputElement).value, 10) || initW;
-      this.element.style.width = `${w}px`;
-    });
-    styleSlider(widthSlider);
-
-    // Height control
-    const heightLabel = el('span', { fontSize: '10px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
-    heightLabel.textContent = 'Height:';
-    const heightSlider = document.createElement('input');
-    heightSlider.type = 'range';
-    const minH = 80;
-    const maxH = Math.max(120, Math.min(360, Math.floor(window.innerHeight * 0.6)));
-    heightSlider.min = String(minH);
-    heightSlider.max = String(maxH);
-    heightSlider.step = '2';
-    const initH = 180;
-    heightSlider.value = String(initH);
-    heightSlider.style.cssText = `width:180px;`;
-    heightSlider.addEventListener('input', (e) => {
-      const h = parseInt((e.target as HTMLInputElement).value, 10) || initH;
-      this.element.style.height = `${h}px`;
-      // Also update inner chart wrapper height
-      const chartWrap = this.element.querySelector('[data-chart-wrapper]') as HTMLElement | null;
-      if (chartWrap) chartWrap.style.height = `${Math.max(60, h - 40)}px`;
-    });
-    styleSlider(heightSlider);
-
-    sizeWrapper.appendChild(widthLabel);
-    sizeWrapper.appendChild(widthSlider);
-    sizeWrapper.appendChild(heightLabel);
-    sizeWrapper.appendChild(heightSlider);
-    this.element.appendChild(sizeWrapper);
+    this.element.appendChild(panelBody);
 
     // Populate the legend column initially (will be updated on data)
     const legendColEl = this.element.querySelector('[data-legend-col]') as HTMLDivElement | null;
     if (legendColEl) {
       legendColEl.innerHTML = '';
-      // no static title — legend entries will be populated dynamically
     }
 
     this.initChart();
@@ -382,6 +341,7 @@ export class GraphPanel {
     }
 
     this.chart.update('none'); // 'none' skips animation for performance
+    this.updateLegend();
   }
 
   /**
@@ -404,6 +364,7 @@ export class GraphPanel {
         (this.chart.data.datasets[i] as ChartDataset<'line', Array<{ x: number; y: number }>>).data = [];
       }
       this.chart.update('none');
+      this.updateLegend();
     }
   }
 
@@ -490,13 +451,7 @@ export class GraphPanel {
         },
         plugins: {
           legend: {
-            display: true,
-            labels: {
-              color: TOKEN.textMuted,
-              font: { family: TOKEN.fontMono, size: 9 },
-              boxWidth: 12,
-              filter: (item) => !item.hidden,
-            },
+            display: false,
           },
           tooltip: {
             enabled: true,
@@ -514,28 +469,6 @@ export class GraphPanel {
                 return `${label}: ${(item.parsed.y ?? 0).toFixed(4)}`;
               },
               footer: (items) => {
-                if (!self.chart) return '';
-                // Update persistent legend column with current visible datasets
-                const legendCol = document.querySelector('[data-legend-col]') as HTMLElement | null;
-                if (legendCol && self.chart) {
-                  legendCol.innerHTML = '';
-                  const title = document.createElement('div');
-                  title.style.cssText = `font-size:11px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};margin-bottom:6px;`;
-                  title.textContent = 'Legend';
-                  legendCol.appendChild(title);
-                  for (const ds of (self.chart.data.datasets || [])) {
-                    const item = document.createElement('div');
-                    item.style.cssText = 'display:flex;align-items:center;gap:8px;font-family:' + TOKEN.fontMono + ';font-size:12px;color:' + TOKEN.textBright + ';';
-                    const box = document.createElement('span');
-                    box.style.cssText = `width:14px;height:14px;display:inline-block;border-radius:2px;background:${(ds as any).borderColor || '#fff'};`;
-                    const lbl = document.createElement('span');
-                    lbl.textContent = ds.label || '';
-                    item.appendChild(box);
-                    item.appendChild(lbl);
-                    legendCol.appendChild(item);
-                  }
-                }
-                // Footer explanatory text for tooltips
                 if (self.isEnergyMode) {
                   const lbl = items[0]?.dataset.label || '';
                   if (/Kinetic/i.test(lbl)) return 'Kinetic energy (½ m v²)';
@@ -549,5 +482,26 @@ export class GraphPanel {
         },
       },
     });
+    this.updateLegend();
+  }
+
+  private updateLegend(): void {
+    if (!this.chart) return;
+    const legendCol = this.element.querySelector('[data-legend-col]') as HTMLElement | null;
+    if (!legendCol) return;
+    legendCol.innerHTML = '';
+
+    for (const ds of (this.chart.data.datasets || [])) {
+      if (ds.hidden) continue;
+      const item = document.createElement('div');
+      item.style.cssText = `display:flex;align-items:center;gap:8px;font-family:${TOKEN.fontMono};font-size:12px;color:${TOKEN.textBright};`;
+      const box = document.createElement('span');
+      box.style.cssText = `width:14px;height:14px;display:inline-block;border-radius:2px;background:${(ds as any).borderColor || '#fff'};`;
+      const lbl = document.createElement('span');
+      lbl.textContent = ds.label || '';
+      item.appendChild(box);
+      item.appendChild(lbl);
+      legendCol.appendChild(item);
+    }
   }
 }
