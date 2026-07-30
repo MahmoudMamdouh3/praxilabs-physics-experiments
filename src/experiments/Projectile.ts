@@ -259,6 +259,23 @@ export class Projectile implements IExperiment {
     this.reset(defaults);
   }
 
+  /**
+   * Dimensional Analysis:
+   *   Equations: 
+   *     ax = -b * vx
+   *     ay = -g - b * vy
+   *   Units:
+   *     g [m/s²]
+   *     drag [kg/s] / MASS [kg] -> b [1/s]
+   *     vx, vy [m/s]
+   *     
+   *     Therefore: b [1/s] * vx [m/s] -> [m/s²]
+   *     
+   *     Result: 
+   *       ax [m/s²] = -[m/s²]
+   *       ay [m/s²] = -[m/s²] - [m/s²]
+   *     Dimensions match perfectly.
+   */
   private derivative = (state: PhysicsState, params: Record<string, number>): PhysicsState => {
     const g    = params['gravity']          ?? this.schema['gravity'].default;
     const drag = params['dragCoefficient']  ?? this.schema['dragCoefficient'].default;

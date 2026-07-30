@@ -320,6 +320,20 @@ export class Spring implements IExperiment {
     this.currentK = k;
 
     // ── Semi-Implicit Euler integration ───────────────────────────────────────
+    /**
+     * Dimensional Analysis:
+     *   Equation: ay = -(k / m) * y - (b / m) * vy
+     *   Units:
+     *     k [N/m = (kg·m/s²)/m = kg/s²] / m [kg] = [1/s²]
+     *     y [m]
+     *     Therefore: -(k / m) * y -> [1/s²] * [m] = [m/s²]
+     *     
+     *     b [N·s/m = (kg·m/s²)·s/m = kg/s] / m [kg] = [1/s]
+     *     vy [m/s]
+     *     Therefore: -(b / m) * vy -> [1/s] * [m/s] = [m/s²]
+     *     
+     *     Result: ay [m/s²] = [m/s²] - [m/s²]. Dimensions match perfectly.
+     */
     const ay = -(k / m) * this.y - (b / m) * this.vy;
     this.vy += ay * dt;   // velocity first
     this.y  += this.vy * dt; // then position

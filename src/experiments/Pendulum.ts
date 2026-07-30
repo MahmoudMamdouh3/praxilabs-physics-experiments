@@ -331,6 +331,18 @@ export class Pendulum implements IExperiment {
     this.reset(defaultParams);
   }
 
+  /**
+   * Dimensional Analysis:
+   *   Equation: α = -(g / L) * sin(θ) - b * ω
+   *   Units:
+   *     g [m/s²] / L [m] = [1/s²] (which is equivalent to [rad/s²] for angular acceleration)
+   *     sin(θ) = [dimensionless]
+   *     Therefore: -(g / L) * sin(θ) -> [1/s²] -> [rad/s²]
+   *     
+   *     b [1/s] * ω [rad/s] = [rad/s²]
+   *     
+   *     Result: α [rad/s²] = [rad/s²] - [rad/s²]. Dimensions match perfectly.
+   */
   private derivative = (state: PhysicsState, params: Record<string, number>): PhysicsState => {
     const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
     const g = params['gravity'] ?? this.schema['gravity'].default;

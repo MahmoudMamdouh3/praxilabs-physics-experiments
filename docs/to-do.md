@@ -71,6 +71,7 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
  - [x] Update Numerical Integrator panel title to include "(Experimental)"
  - [x] Fix Measurement Graph axis numbers rendering in black (Chart.js cannot parse CSS variables, using explicit RGBA)
  - [x] Add "(DRAG TO MOVE)" hint to the Measurement Graph title
+ - [x] Perform rigorous numerical mathematical physics audit (write `tests/physics-audit.test.ts` and `PHYSICS_AUDIT.md`)
 
 
 
