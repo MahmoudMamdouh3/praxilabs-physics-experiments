@@ -344,6 +344,91 @@ export class UI {
     `;
     rightPanel.appendChild(camHint);
 
+    // ── Integrator Panel ──────────────────────────────────────────────────────
+    const integratorPanel = el('div', {
+      padding: '12px 16px',
+      background: TOKEN.bg,
+      backdropFilter: TOKEN.panelBlur,
+      border: TOKEN.border,
+      borderRadius: TOKEN.radius,
+      boxShadow: TOKEN.shadow,
+      pointerEvents: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+    });
+    integratorPanel.title = "The Numerical Integrator is the math engine calculating motion frame-by-frame.";
+
+    const integratorHeader = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' });
+    integratorHeader.innerHTML = `<div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;letter-spacing:1px;">Numerical Integrator</div>`;
+    
+    const integratorToggle = document.createElement('button');
+    integratorToggle.textContent = '▾';
+    integratorToggle.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
+    
+    const integratorContent = el('div', { display: 'flex', flexDirection: 'column', gap: '6px' });
+    
+    integratorHeader.addEventListener('click', () => {
+      const isCollapsed = integratorContent.style.display === 'none';
+      integratorContent.style.display = isCollapsed ? 'flex' : 'none';
+      integratorToggle.textContent = isCollapsed ? '▾' : '▸';
+    });
+    
+    integratorHeader.appendChild(integratorToggle);
+    integratorPanel.appendChild(integratorHeader);
+    integratorPanel.appendChild(integratorContent);
+
+    const intSelect = document.createElement('select');
+    intSelect.style.cssText = `
+      width: 100%;
+      background: transparent;
+      color: ${TOKEN.textBright};
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 4px 6px;
+      font-size: 11px;
+      font-family: ${TOKEN.fontSans};
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    `;
+    intSelect.title = "Hover over the options to learn more.";
+
+    const integrators = [
+      { id: 'semi-implicit-euler', name: 'Semi-Implicit Euler', desc: "Choose this for springs and pendulums! It conserves energy so they don't explode out of control over time." },
+      { id: 'explicit-euler', name: 'Explicit Euler', desc: "The simplest, fastest engine. It adds fake energy over time, causing pendulums to eventually explode. Good for seeing how bad math breaks physics!" },
+      { id: 'rk4', name: 'Runge-Kutta 4 (RK4)', desc: "The gold standard. Calculates physics 4x per frame for extreme precision. Choose this if you need exact mathematical accuracy." }
+    ];
+
+    for (const intg of integrators) {
+      const opt = document.createElement('option');
+      opt.value = intg.id;
+      opt.textContent = intg.name;
+      opt.title = intg.desc;
+      intSelect.appendChild(opt);
+    }
+
+    const exp = this.engine.getActiveExperiment();
+    if (exp && (exp as any).integrator) {
+      intSelect.value = (exp as any).integrator.id;
+    }
+
+    intSelect.addEventListener('change', () => {
+      const active = this.engine.getActiveExperiment();
+      if (active && active.setIntegrator) {
+        active.setIntegrator(intSelect.value);
+        active.reset(this.physics.currentParams);
+      }
+      const active2 = this.engine.getActiveExperiment2();
+      if (active2 && active2.setIntegrator) {
+        active2.setIntegrator(intSelect.value);
+        active2.reset(this.physics2.currentParams);
+      }
+      this.graphPanel.reset();
+    });
+
+    integratorContent.appendChild(intSelect);
+    rightPanel.appendChild(integratorPanel);
+
     this.shell.appendChild(rightPanel);
     this.shell.appendChild(this.graphPanel.element);
 

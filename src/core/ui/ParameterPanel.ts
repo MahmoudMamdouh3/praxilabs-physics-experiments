@@ -134,69 +134,6 @@ export class ParameterPanel {
     } else {
       this._buildSinglePanel(schema);
     }
-
-    this._buildIntegratorDropdown();
-  }
-
-  private _buildIntegratorDropdown(): void {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = `margin: 15px 14px 10px; display: flex; flex-direction: column; gap: 6px;`;
-
-    const lbl = document.createElement('label');
-    lbl.textContent = 'Numerical Integrator (Experimental)';
-    lbl.style.cssText = `font-size:10px; font-weight:600; color:${TOKEN.textMuted}; text-transform:uppercase; letter-spacing:0.5px;`;
-    wrap.appendChild(lbl);
-
-    const select = document.createElement('select');
-    select.style.cssText = `
-      width: 100%;
-      background: ${TOKEN.bgBase};
-      color: ${TOKEN.textNormal};
-      border: 1px solid ${TOKEN.border};
-      padding: 4px 6px;
-      font-size: 12px;
-      border-radius: 4px;
-      outline: none;
-    `;
-
-    // Ensure we can dynamically import INTEGRATORS here or we can just hardcode them for UI if needed.
-    // Actually, we can fetch the active experiment's integrator.
-    const integrators = [
-      { id: 'semi-implicit-euler', name: 'Semi-Implicit Euler (Symplectic)' },
-      { id: 'explicit-euler', name: 'Explicit Euler' },
-      { id: 'rk4', name: 'Runge-Kutta 4 (RK4)' }
-    ];
-
-    for (const intg of integrators) {
-      const opt = document.createElement('option');
-      opt.value = intg.id;
-      opt.textContent = intg.name;
-      select.appendChild(opt);
-    }
-
-    // Set current value
-    const exp = this.engine.getActiveExperiment();
-    if (exp && (exp as any).integrator) {
-      select.value = (exp as any).integrator.id;
-    }
-
-    select.addEventListener('change', () => {
-      const active = this.engine.getActiveExperiment();
-      if (active && active.setIntegrator) {
-        active.setIntegrator(select.value);
-        active.reset(this.physics.currentParams);
-      }
-      const active2 = this.engine.getActiveExperiment2();
-      if (active2 && active2.setIntegrator) {
-        active2.setIntegrator(select.value);
-        active2.reset(this.physics2.currentParams);
-      }
-      // Force graph reset since the mathematical nature of the curve changed
-      this.onGraphReset();
-    });
-
-    wrap.appendChild(select);
-    this.paramSection.appendChild(wrap);
   }
 
   /**
