@@ -60,6 +60,9 @@ npm test
 
 These checks confirm the TypeScript build is clean and the Vitest physics tests pass. The current automated suite covers the fixed-timestep accumulator, pendulum integration, and the core experiment workflow.
 
+### Audit Notes
+This pass re-checked the original tracker items against the running UI and physics experience. The current build includes collapsible panels, richer CSV export output, clearer hover guidance, and a more defined lab backdrop so the workspace feels closer to a polished interactive lab than a bare prototype.
+
 ## Known Limitations & Future Work
 If I had more time outside of the 2-3 day timebox, I would implement the following:
 1.  **Runge-Kutta 4 (RK4) Integrator Option:** While Semi-Implicit Euler is fantastic for energy conservation in simple oscillators, an RK4 integration option would provide higher baseline precision for more complex, non-linear chaotic systems (like a double pendulum).

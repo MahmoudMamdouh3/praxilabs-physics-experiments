@@ -81,6 +81,19 @@ export class GraphPanel {
     graphLabel.textContent = 'Measurement Graph';
     headerLeft.appendChild(graphLabel);
 
+    const collapseBtn = document.createElement('button');
+    collapseBtn.textContent = '▾';
+    collapseBtn.title = 'Collapse or expand the graph panel';
+    collapseBtn.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
+    collapseBtn.addEventListener('click', () => {
+      const chartWrapper = this.element.querySelector('[data-chart-wrapper]') as HTMLDivElement | null;
+      if (!chartWrapper) return;
+      const isCollapsed = chartWrapper.style.display === 'none';
+      chartWrapper.style.display = isCollapsed ? 'block' : 'none';
+      collapseBtn.textContent = isCollapsed ? '▾' : '▸';
+    });
+    headerLeft.appendChild(collapseBtn);
+
     const modeSelect = document.createElement('select');
     modeSelect.id = 'graph-mode-select';
     modeSelect.style.cssText = `
@@ -133,6 +146,7 @@ export class GraphPanel {
 
     // Sized wrapper: Chart.js reads clientWidth × clientHeight for HiDPI scaling.
     const chartWrapper = document.createElement('div');
+    chartWrapper.dataset.chartWrapper = 'true';
     chartWrapper.style.cssText = 'position:relative;width:100%;height:130px;overflow:hidden;';
 
     this.canvas = document.createElement('canvas');

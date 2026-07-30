@@ -198,6 +198,21 @@ export class Engine {
     gridHelper.position.set(0, 0.01, 0);
     this.scene.add(gridHelper);
 
+    const backdrop = new THREE.Mesh(
+      new THREE.BoxGeometry(180, 40, 3),
+      new THREE.MeshStandardMaterial({ color: 0x11161d, roughness: 0.7, metalness: 0.2 })
+    );
+    backdrop.position.set(0, 20, -24);
+    this.scene.add(backdrop);
+
+    const supportRack = new THREE.Mesh(
+      new THREE.BoxGeometry(16, 12, 8),
+      new THREE.MeshStandardMaterial({ color: 0x1d2432, roughness: 0.4, metalness: 0.3 })
+    );
+    supportRack.position.set(28, 6, -12);
+    supportRack.castShadow = true;
+    this.scene.add(supportRack);
+
     // ── Resize handler ────────────────────────────────────────────────────────
     window.addEventListener('resize', this.onWindowResize);
   }

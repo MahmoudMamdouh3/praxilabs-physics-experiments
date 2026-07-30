@@ -31,6 +31,7 @@ export class ParameterPanel {
   readonly readoutsPanel: HTMLDivElement;
 
   private readonly readoutsHeading: HTMLDivElement;
+  private readonly readoutsContent: HTMLDivElement;
 
   // key → the <span> that shows the live value
   private readoutRows: Map<string, HTMLSpanElement> = new Map();
@@ -81,9 +82,23 @@ export class ParameterPanel {
     });
 
     this.readoutsHeading = document.createElement('div');
-    this.readoutsHeading.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:10px;`;
-    this.readoutsHeading.textContent = 'Live Readouts';
+    this.readoutsHeading.style.cssText = `display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:10px;`;
+    const readoutsLabel = document.createElement('span');
+    readoutsLabel.textContent = 'Live Readouts';
+    const readoutsToggle = document.createElement('button');
+    readoutsToggle.textContent = '▾';
+    readoutsToggle.title = 'Collapse or expand the live readouts panel';
+    readoutsToggle.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
+    this.readoutsContent = el('div', { display: 'flex', flexDirection: 'column', gap: '6px' });
+    readoutsToggle.addEventListener('click', () => {
+      const isCollapsed = this.readoutsContent.style.display === 'none';
+      this.readoutsContent.style.display = isCollapsed ? 'flex' : 'none';
+      readoutsToggle.textContent = isCollapsed ? '▾' : '▸';
+    });
+    this.readoutsHeading.appendChild(readoutsLabel);
+    this.readoutsHeading.appendChild(readoutsToggle);
     this.readoutsPanel.appendChild(this.readoutsHeading);
+    this.readoutsPanel.appendChild(this.readoutsContent);
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────
@@ -139,11 +154,8 @@ export class ParameterPanel {
    * Must be called together — clearing the Map alone leaves orphan DOM nodes.
    */
   clearReadouts(): void {
-    const children = Array.from(this.readoutsPanel.children);
-    for (const child of children) {
-      if (child !== this.readoutsHeading) {
-        this.readoutsPanel.removeChild(child);
-      }
+    for (const child of Array.from(this.readoutsContent.children)) {
+      this.readoutsContent.removeChild(child);
     }
     this.readoutRows.clear();
   }
@@ -369,7 +381,7 @@ export class ParameterPanel {
 
     row.appendChild(keyEl);
     row.appendChild(valEl);
-    this.readoutsPanel.appendChild(row);
+    this.readoutsContent.appendChild(row);
     this.readoutRows.set(key, valEl);
   }
 

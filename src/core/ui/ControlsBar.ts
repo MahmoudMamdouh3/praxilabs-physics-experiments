@@ -176,6 +176,7 @@ export class ControlsBar {
     // ── Play / Pause ──────────────────────────────────────────────────────────
     const pauseBtn = button('▶ Play', TOKEN.accent);
     pauseBtn.id = 'ui-btn-pause';
+    pauseBtn.title = 'Start or pause the simulation';
     pauseBtn.addEventListener('click', () => {
       this.physics.togglePause();
       if (this._compareMode) {
@@ -213,7 +214,7 @@ export class ControlsBar {
 
     // ── Reset ─────────────────────────────────────────────────────────────────
     const resetBtn = button('↺ Reset', TOKEN.textMuted);
-    resetBtn.title = 'Reset experiment to the beginning and to default values';
+    resetBtn.title = 'Reset experiment to the beginning and restore the default values';
     resetBtn.addEventListener('click', () => {
       this.physics.reset();
       this.graphPanel.reset();
@@ -243,7 +244,7 @@ export class ControlsBar {
 
     // ── CSV Export ────────────────────────────────────────────────────────────
     const csvBtn = button('Download CSV', TOKEN.accent);
-    csvBtn.title = 'Download measurement history as CSV';
+    csvBtn.title = 'Download a readable CSV export of the latest run';
     csvBtn.addEventListener('click', () => {
       if (this.parameterPanel.measurementHistory.length === 0) return;
 

@@ -33,7 +33,7 @@ import type { IExperiment, ParameterSchema } from './IExperiment.ts';
 const TRAJECTORY_SEGMENTS = 120;
 
 /** Visual radius of the projectile sphere (metres, world-space). */
-const BOB_RADIUS = 0.28;
+const BOB_RADIUS = 0.32;
 
 /** Assumed projectile mass for force calculation (kg). */
 const MASS = 1;

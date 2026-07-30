@@ -231,7 +231,7 @@ export class Spring implements IExperiment {
     scene.add(this.anchorMesh);
 
     // ── Mass block ────────────────────────────────────────────────────────────
-    this.massGeometry = new THREE.BoxGeometry(0.85, 0.85, 0.85);
+    this.massGeometry = new THREE.BoxGeometry(1.0, 1.0, 1.0);
     this.massMaterial = new THREE.MeshStandardMaterial({
       color: 0x22aaff,       // electric blue — matches Pendulum bob for consistency
       metalness: 0.5,

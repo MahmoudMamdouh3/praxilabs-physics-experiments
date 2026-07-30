@@ -27,6 +27,9 @@ This guaranteed that all subsequent AI generation aligned with a scalable, highl
 ## Verification Workflow
 After each substantial chunk of implementation, the project was re-checked with `npx tsc --noEmit` and `npm test` so that the changes remained verified before moving to the next task. This was especially important after adding the pendulum, projectile, and spring experiment readouts, where the UI and physics logic both needed to stay consistent.
 
+### Full Audit Pass
+A later review of the task tracker re-checked the older checklist items against the current UI and physics behavior. The resulting pass focused on the remaining UX gaps: collapsible panels, richer CSV export content, better hover guidance, and stronger scene framing so the lab feels more complete and easier to read.
+
 ## Fully Hand-Written Parts
 I manually scaffolded the `.agents/project-rules.md` to strictly control the AI's architecture decisions. I also manually verified all the mathematical formulas (like the Semi-Implicit Euler integration for the spring-mass system) before allowing the AI to integrate them, to ensure they mapped precisely to the rubric requirements rather than generic approximations.
 
