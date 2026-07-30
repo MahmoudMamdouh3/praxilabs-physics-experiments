@@ -156,6 +156,18 @@ export class ControlsBar {
       pauseBtn.textContent = this.physics.isPaused ? '▶ Play' : '⏸ Pause';
     });
     bar.appendChild(pauseBtn);
+    
+    // Auto-pause listener triggered by experiments (e.g. target oscillations reached)
+    window.addEventListener('praxilabs-auto-pause', ((e: CustomEvent) => {
+      if (!this.physics.isPaused) {
+        this.physics.pause();
+        pauseBtn.textContent = '▶ Play';
+        
+        if (e.detail?.message) {
+          this.onModalWarning(e.detail.message);
+        }
+      }
+    }) as EventListener);
 
     // ── Step once ─────────────────────────────────────────────────────────────
     const stepBtn = button('⏭ Step', TOKEN.textMuted);

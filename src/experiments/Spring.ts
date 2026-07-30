@@ -93,6 +93,15 @@ export class Spring implements IExperiment {
       step: 0.1,
       tooltip: 'Starting stretch or compression of the spring from its natural equilibrium point.',
     },
+    targetOscillations: {
+      description: 'Target Oscillations',
+      unit: '',
+      min: 1,
+      max: 100,
+      default: 20,
+      step: 1,
+      tooltip: 'Number of oscillations to count before automatically pausing the simulation.',
+    },
   };
 
   // ── Physics state ─────────────────────────────────────────────────────────
@@ -129,6 +138,15 @@ export class Spring implements IExperiment {
 
   /** The most recently measured full period (two crossings = one period, s). */
   private measuredPeriod: number = 0;
+  
+  // ── Lab Workflow State (Virtual Stopwatch) ────────────────────────────────
+  
+  private lapCount: number = 0;
+  private stopwatchTime: number = 0;
+  private autoPaused: boolean = false;
+  private hasRenderedFinalLap: boolean = false;
+  private htmlStopwatch: HTMLDivElement | null = null;
+  private cachedParams: Record<string, number> = {};
 
   // ── Three.js objects ──────────────────────────────────────────────────────
 
@@ -154,6 +172,31 @@ export class Spring implements IExperiment {
 
   setup(scene: THREE.Scene): void {
     this.scene = scene;
+
+    // ── HTML Stopwatch Overlay ───────────────────────────────────────────────
+    this.htmlStopwatch = document.createElement('div');
+    this.htmlStopwatch.style.cssText = `
+      position: absolute;
+      top: 100px;
+      left: 360px;
+      background: rgba(15, 17, 21, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid #22aaff;
+      border-radius: 8px;
+      padding: 16px 24px;
+      color: #22aaff;
+      font-family: monospace;
+      font-size: 24px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 15;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    `;
+    this.htmlStopwatch.innerHTML = `
+      <div id="spring-laps" style="font-size: 10px; letter-spacing: 2px; color: #8a95a8; margin-bottom: 4px; text-transform: uppercase;">Oscillations: 0 / 20</div>
+      <div id="spring-time">00.00 s</div>
+    `;
+    document.body.appendChild(this.htmlStopwatch);
 
     // ── Ceiling anchor ────────────────────────────────────────────────────────
     this.anchorGeometry = new THREE.BoxGeometry(1.0, 0.3, 0.5);
@@ -230,9 +273,11 @@ export class Spring implements IExperiment {
    *   y  += vy * dt
    */
   update(dt: number, params: Record<string, number>): void {
+    this.cachedParams = params;
     const m = Math.max(params['mass']              ?? this.schema['mass'].default,          1e-6);
     const k = Math.max(params['springConstant']    ?? this.schema['springConstant'].default, 0);
     const b =          params['damping']           ?? this.schema['damping'].default;
+    const target =     params['targetOscillations'] ?? this.schema['targetOscillations'].default;
 
     this.currentM = m;
     this.currentK = k;
@@ -256,12 +301,54 @@ export class Spring implements IExperiment {
       this.prevCrossingTime = this.lastCrossingTime;
       this.lastCrossingTime = this.time;
       this.hasCrossing = true;
+      
+      // Virtual Stopwatch Logic
+      if (this.lapCount < target) {
+        this.lapCount += 0.5;
+        if (this.lapCount >= target) {
+          this.lapCount = target;
+        }
+      }
     }
     this.prevSign = currentSign;
+    
+    if (this.lapCount < target) {
+      this.stopwatchTime += dt;
+    } else if (!this.autoPaused) {
+      this.autoPaused = true;
+      window.dispatchEvent(new CustomEvent('praxilabs-auto-pause', { 
+        detail: { message: `Target of ${target} oscillations reached.` }
+      }));
+    }
+    
+    // Check for damping decay (Task 38)
+    const ke = 0.5 * m * (this.vy ** 2);
+    const pe = 0.5 * k * (this.y ** 2);
+    if ((ke + pe) < 0.0001 && this.time > 1.0) {
+      if (!this.autoPaused) {
+        this.autoPaused = true;
+        window.dispatchEvent(new CustomEvent('praxilabs-auto-pause', { 
+          detail: { message: `Energy has decayed to near zero. The system has stopped oscillating due to damping.` }
+        }));
+      }
+    }
   }
 
   render(): void {
     this.updateMeshes();
+    
+    const target = this.cachedParams['targetOscillations'] ?? 20;
+    
+    if (this.lapCount < target) {
+      this.updateStopwatchUI(target);
+    } else if (this.lapCount >= target && !this.hasRenderedFinalLap) {
+      this.updateStopwatchUI(target);
+      if (this.htmlStopwatch) {
+        this.htmlStopwatch.style.borderColor = '#00ffaa';
+        this.htmlStopwatch.style.color = '#00ffaa';
+      }
+      this.hasRenderedFinalLap = true;
+    }
   }
 
   /**
@@ -273,7 +360,9 @@ export class Spring implements IExperiment {
    *               hard-coded schema defaults.
    */
   reset(params?: Record<string, number>): void {
-    const d0 = params?.['initialDisplacement'] ?? this.schema['initialDisplacement'].default;
+    if (params) this.cachedParams = params;
+    const p = this.cachedParams;
+    const d0 = p['initialDisplacement'] ?? this.schema['initialDisplacement'].default;
 
     this.y    = d0;
     this.vy   = 0;
@@ -285,6 +374,19 @@ export class Spring implements IExperiment {
     this.prevCrossingTime = 0;
     this.hasCrossing      = false;
     this.measuredPeriod   = 0;
+    
+    this.lapCount = 0;
+    this.stopwatchTime = 0;
+    this.hasRenderedFinalLap = false;
+    this.autoPaused = false;
+    
+    if (this.htmlStopwatch) {
+      this.htmlStopwatch.style.borderColor = '#22aaff';
+      this.htmlStopwatch.style.color = '#22aaff';
+    }
+    
+    const target = p['targetOscillations'] ?? 20;
+    this.updateStopwatchUI(target);
 
     this.currentM = params?.['mass'] ?? this.schema['mass'].default;
     this.currentK = params?.['springConstant'] ?? this.schema['springConstant'].default;
@@ -323,6 +425,11 @@ export class Spring implements IExperiment {
   }
 
   dispose(): void {
+    if (this.htmlStopwatch && this.htmlStopwatch.parentNode) {
+      this.htmlStopwatch.parentNode.removeChild(this.htmlStopwatch);
+    }
+    this.htmlStopwatch = null;
+
     if (this.scene !== null) {
       if (this.anchorMesh !== null) this.scene.remove(this.anchorMesh);
       if (this.massMesh   !== null) this.scene.remove(this.massMesh);
@@ -346,6 +453,20 @@ export class Spring implements IExperiment {
     this.springGeometry = null;
     this.springMaterial = null;
     this.scene          = null;
+  }
+
+  private updateStopwatchUI(target: number): void {
+    if (!this.htmlStopwatch) return;
+    
+    const lapsEl = this.htmlStopwatch.querySelector('#spring-laps');
+    const timeEl = this.htmlStopwatch.querySelector('#spring-time');
+    
+    if (lapsEl) {
+      lapsEl.textContent = `Oscillations: ${Math.floor(this.lapCount)} / ${target}`;
+    }
+    if (timeEl) {
+      timeEl.textContent = `${this.stopwatchTime.toFixed(2)} s`;
+    }
   }
 
   // ── Private helpers ────────────────────────────────────────────────────────

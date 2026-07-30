@@ -33,9 +33,9 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] i do not want the reset button to reset the theme , i want the theme to be the same does not change by the rest button, i want it also to be under the live readouts panel. 
 - [x] the entire scene dimensions is faulty, it is gigantic compared to the experiment place , you produced absolute bad madness, you really did , you did not measure anything and the scene is a messs as if a blind man set it up . the spring starts from undeerr the floor and goes through it, 
 - [x] i do not wanted the word speed when controlling time , scale i want it to be "time scale"
-- [] i need to be able to control the number of osciliation i need to count, also when that number is reach the xperiment should pause itself 
+- [x] i need to be able to control the number of osciliation i need to count, also when that number is reach the xperiment should pause itself 
 - [x]  the warrning i get when i change the angle to 180 or when i set speed to 0 is overlapping wioth osicilation panel i need the warning to be larger, the appear in the middle of the screen, and to be still there auntill the user clicks X on them. 
-- [] if the ball stops because of the damping coffeicent or pecause of anything , i need to have some logic for that, i need the osicilations counter to stop after a while to let the user know it is not osciliating because of bla bla becuase now it continues counting even though the ball is not moving 
+- [x] if the ball stops because of the damping coffeicent or pecause of anything , i need to have some logic for that, i need the osicilations counter to stop after a while to let the user know it is not osciliating because of bla bla becuase now it continues counting even though the ball is not moving 
 - []
 - []
 - []

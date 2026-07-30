@@ -72,6 +72,15 @@ export class Pendulum implements IExperiment {
       step: 0.01,
       tooltip: 'Air resistance or friction that causes the pendulum to lose energy and eventually stop.',
     },
+    targetOscillations: {
+      description: 'Target Oscillations',
+      unit: '',
+      min: 1,
+      max: 100,
+      default: 20,
+      step: 1,
+      tooltip: 'Number of oscillations to count before automatically pausing the simulation.',
+    },
   };
 
   // ── Physics state ─────────────────────────────────────────────────────────
@@ -113,6 +122,9 @@ export class Pendulum implements IExperiment {
   
   /** Number of full oscillations (1 oscillation = A -> B -> A = 2 zero crossings) */
   private lapCount: number = 0;
+  
+  /** Have we auto-paused yet? */
+  private autoPaused: boolean = false;
   
   /** Elapsed stopwatch time (s) */
   private stopwatchTime: number = 0;
@@ -248,6 +260,7 @@ export class Pendulum implements IExperiment {
     const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
     const g = params['gravity'] ?? this.schema['gravity'].default;
     const b = params['damping'] ?? this.schema['damping'].default;
+    const target = params['targetOscillations'] ?? this.schema['targetOscillations'].default;
     
     this.currentL = L;
 
@@ -277,71 +290,95 @@ export class Pendulum implements IExperiment {
       
       // Virtual Stopwatch Logic
       // Each zero crossing is half an oscillation.
-      if (this.lapCount < 20) {
+      if (this.lapCount < target) {
         this.lapCount += 0.5;
-        if (this.lapCount >= 20) {
-          this.lapCount = 20; // Clamp
+        if (this.lapCount >= target) {
+          this.lapCount = target; // Clamp
         }
       }
     }
     this.prevSign = currentSign;
     
-    if (this.lapCount < 20) {
+    if (this.lapCount < target) {
       this.stopwatchTime += dt;
+    } else if (!this.autoPaused) {
+      this.autoPaused = true;
+      window.dispatchEvent(new CustomEvent('praxilabs-auto-pause', { 
+        detail: { message: `Target of ${target} oscillations reached.` }
+      }));
+    }
+    
+    // Check for damping decay (Task 38)
+    const m = params['mass'] ?? 1;
+    const ke = 0.5 * m * (this.currentL * this.omega) ** 2;
+    const pe = m * g * this.currentL * (1 - Math.cos(this.theta));
+    if ((ke + pe) < 0.0001 && this.time > 1.0) {
+      if (!this.autoPaused) {
+        this.autoPaused = true;
+        window.dispatchEvent(new CustomEvent('praxilabs-auto-pause', { 
+          detail: { message: `Energy has decayed to near zero. The system has stopped oscillating due to damping.` }
+        }));
+      }
     }
   }
 
   render(): void {
     this.updateMeshes(this.currentL);
     
-    if (this.lapCount < 20) {
-      this.updateStopwatchUI();
-    } else if (this.lapCount >= 20 && !this.hasRenderedFinalLap) {
+    const target = this.cachedParams['targetOscillations'] ?? 20;
+    
+    if (this.lapCount < target) {
+      this.updateStopwatchUI(target);
+    } else if (this.lapCount >= target && !this.hasRenderedFinalLap) {
       // Render the final green "success" state exactly once
-      this.updateStopwatchUI();
+      this.updateStopwatchUI(target);
+      if (this.htmlStopwatch) {
+        this.htmlStopwatch.style.borderColor = '#00ffaa';
+        this.htmlStopwatch.style.color = '#00ffaa';
+      }
       this.hasRenderedFinalLap = true;
     }
   }
 
   reset(params?: Record<string, number>): void {
     if (params) this.cachedParams = params;
-    const L = params?.['length'] ?? this.schema['length'].default;
-    const initialAngleDeg =
-      params?.['initialAngle'] ?? this.schema['initialAngle'].default;
-
-    // Convert to radians, clamp to avoid perfect 180° singularity
-    let initialAngleRad = (initialAngleDeg * Math.PI) / 180;
-    if (Math.abs(initialAngleDeg) === 180) {
-      initialAngleRad = (179.9 * Math.PI) / 180 * Math.sign(initialAngleDeg);
-    }
-
-    this.theta = initialAngleRad;
+    const p = this.cachedParams;
+    const initialAngle = p['initialAngle'] ?? this.schema['initialAngle'].default;
+    
+    this.theta = initialAngle * (Math.PI / 180);
     this.omega = 0;
     this.time = 0;
-
     this.prevSign = 0;
     this.lastCrossingTime = 0;
     this.prevCrossingTime = 0;
     this.hasCrossing = false;
     this.measuredPeriod = 0;
     
-    // Virtual stopwatch
     this.lapCount = 0;
-    this.hasRenderedFinalLap = false;
     this.stopwatchTime = 0;
-    this.updateStopwatchUI();
+    this.hasRenderedFinalLap = false;
+    this.autoPaused = false;
 
-    this.currentL = L;
-    this.render();
+    if (this.htmlStopwatch) {
+      this.htmlStopwatch.style.borderColor = '#22aaff';
+      this.htmlStopwatch.style.color = '#22aaff';
+    }
+    
+    const target = p['targetOscillations'] ?? 20;
+    this.updateStopwatchUI(target);
+
+    // One initial render so it looks right before unpausing.
+    this.currentL = p['length'] ?? this.schema['length'].default;
+    this.updateMeshes(this.currentL);
   }
 
-  private updateStopwatchUI(): void {
+  private updateStopwatchUI(target: number): void {
     if (this.htmlStopwatch) {
       const lapsEl = this.htmlStopwatch.querySelector('#pendulum-laps');
       const timeEl = this.htmlStopwatch.querySelector('#pendulum-time');
       
       if (lapsEl) {
-        lapsEl.textContent = `Oscillations: ${Math.floor(this.lapCount)} / 20`;
+        lapsEl.textContent = `Oscillations: ${Math.floor(this.lapCount)} / ${target}`;
       }
       if (timeEl) {
         timeEl.textContent = `${this.stopwatchTime.toFixed(2)} s`;
