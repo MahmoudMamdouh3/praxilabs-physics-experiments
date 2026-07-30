@@ -27,6 +27,8 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
     *   When loaded, an experiment is passed the master scene (e.g., `pendulum.setup(scene)`) and only adds its specific meshes into the room. When swapped out, the core calls `dispose()`, forcing the experiment to delete its shapes, geometries, and materials before the next experiment loads.
 *   **Decoupled Logic:** The core engine is completely blind to which experiment is running. Adding a new experiment requires only dropping a new class file into the directory and registering it, touching zero core rendering or UI files. **(See `docs/api-contract.md` for the exact developer guide on how to build one).**
 *   **Comparison Mode:** Click the **⚖ Compare** button in the controls bar to spawn a second independent instance of the current experiment side-by-side (offset 30 units right on the lab table). Each instance has its own parameter sliders (Set A / Set B) and its own physics accumulator, while sharing the master scene, camera, and renderer. The graph shows both datasets simultaneously as coloured lines (cyan vs. orange).
+    <br><br>
+    ![Comparison Mode](public/comparison_mode.png)
 
 ## Tech Stack & Integrator Choice
 *   **Frontend & Bundling:** Vanilla TypeScript powered by Vite. No heavy frontend frameworks (React/Vue) were used to minimize unnecessary dependencies. HTML/CSS is overlaid directly on the canvas.
