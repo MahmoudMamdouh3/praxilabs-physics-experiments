@@ -26,3 +26,8 @@ For `<select>` elements specifically: do NOT attempt visual click-based interact
   4. Screenshot only AFTER this, to verify the resulting state — never to locate the element beforehand.
 
 Hard rule: if any single interaction step fails to produce the expected DOM/visual change after 2 attempts, STOP retrying variations of the same approach. Switch strategy entirely (e.g., move from click-based to JS-eval-based interaction). Never spend more than 5 tool calls total attempting to locate or interact with a single element.
+
+## Git & GitHub Workflow Rule
+1. **Proactive Commits:** Whenever you finish a logical chunk of work (e.g., completing a feature, fixing a bug, or finishing an implementation plan phase), you MUST proactively propose a `git add . && git commit` command using the `run_command` tool. Do not wait for the user to ask you to commit.
+2. **Approval Gate:** By using the `run_command` tool, the system will naturally pause and wait for the user to approve the execution, satisfying the user's requirement to retain responsibility and oversight over repository history.
+3. **Commit Formatting:** Commit messages must **always** use bullet points for longer descriptions to maintain readability (e.g., `- Added feature X\n- Fixed issue Y`).
