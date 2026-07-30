@@ -139,14 +139,10 @@ export class Engine {
     this.controls.minAzimuthAngle = 0;
     this.controls.maxAzimuthAngle = 0;
 
-    // Lock polar angle (tilt) to exactly face-on (90 degrees / Math.PI / 2).
-    this.controls.minPolarAngle = Math.PI / 2;
-    this.controls.maxPolarAngle = Math.PI / 2;
-
     // ── Bounded Panning (Task 32) ─────────────────────────────────────────────
-    // Prevent the user from dragging the camera completely off the lab table.
-    const minPan = new THREE.Vector3(-10, -5, -5);
-    const maxPan = new THREE.Vector3(20, 10, 5);
+    // Prevent the user from dragging the camera completely off the lab table or under the floor.
+    const minPan = new THREE.Vector3(-30, 0, -30);
+    const maxPan = new THREE.Vector3(30, 20, 30);
 
     this.controls.addEventListener('change', () => {
       this.controls.target.clamp(minPan, maxPan);
@@ -182,7 +178,7 @@ export class Engine {
     this.scene.add(fillLight);
 
     // ── Laboratory Table ───────────────────────────────────────────────────
-    const tableGeometry = new THREE.BoxGeometry(160, 2, 160);
+    const tableGeometry = new THREE.BoxGeometry(96, 2, 96);
     const tableMaterial = new THREE.MeshStandardMaterial({
       color: 0x222630,
       roughness: 0.5,
@@ -193,7 +189,7 @@ export class Engine {
     tableMesh.receiveShadow = true;
     this.scene.add(tableMesh);
 
-    const gridHelper = new THREE.GridHelper(160, 160, 0x22aaff, 0x333948);
+    const gridHelper = new THREE.GridHelper(96, 96, 0x22aaff, 0x333948);
     gridHelper.position.set(0, 0.01, 0);
     this.scene.add(gridHelper);
 
