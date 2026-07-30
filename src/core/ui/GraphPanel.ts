@@ -67,7 +67,7 @@ export class GraphPanel {
       boxShadow: TOKEN.shadow,
       padding: '10px 14px 8px',
       overflow: 'hidden',
-      pointerEvents: 'none',
+      pointerEvents: 'auto', // Fix: Allow clicks so dropdown and zoom slider work
     });
 
     const header = document.createElement('div');
