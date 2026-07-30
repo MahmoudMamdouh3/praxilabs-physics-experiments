@@ -154,6 +154,9 @@ export class Pendulum implements IExperiment {
   /** HTML overlay for the virtual stopwatch. */
   private htmlStopwatch: HTMLDivElement | null = null;
 
+  /** HTML overlay for the period measurement readouts. */
+  private htmlPeriodMetrics: HTMLDivElement | null = null;
+
   // ── Three.js objects ──────────────────────────────────────────────────────
 
   /** Root anchor point — always at world origin (0, 0, 0). */
@@ -218,6 +221,32 @@ export class Pendulum implements IExperiment {
       <div id="pendulum-time">00.00 s</div>
     `;
     document.body.appendChild(this.htmlStopwatch);
+
+    this.htmlPeriodMetrics = document.createElement('div');
+    this.htmlPeriodMetrics.style.cssText = `
+      position: absolute;
+      top: 190px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 13, 15, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(34, 170, 255, 0.45);
+      border-radius: 8px;
+      padding: 12px 18px;
+      color: #cdd2d9;
+      font-family: monospace;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 15;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    `;
+    this.htmlPeriodMetrics.innerHTML = `
+      <div style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Period Measurement</div>
+      <div id="pendulum-period-status">Waiting for a full cycle...</div>
+      <div id="pendulum-period-values" style="margin-top:4px; color:#22aaff;">Measured: -- s · Theoretical: -- s · Diff: -- %</div>
+    `;
+    document.body.appendChild(this.htmlPeriodMetrics);
 
     // ── Bob ──────────────────────────────────────────────────────────────────
     this.bobGeometry = new THREE.SphereGeometry(0.28, 32, 32);
@@ -360,6 +389,8 @@ export class Pendulum implements IExperiment {
       }
       this.hasRenderedFinalLap = true;
     }
+
+    this.updatePeriodMetricsUI();
   }
 
   reset(params?: Record<string, number>): void {
@@ -388,6 +419,7 @@ export class Pendulum implements IExperiment {
     
     const target = p['targetOscillations'] ?? 20;
     this.updateStopwatchUI(target);
+    this.updatePeriodMetricsUI();
 
     // One initial render so it looks right before unpausing.
     this.currentL = p['length'] ?? this.schema['length'].default;
@@ -415,6 +447,31 @@ export class Pendulum implements IExperiment {
         this.htmlStopwatch.style.color = '#22aaff';
         if (lapsEl) (lapsEl as HTMLElement).style.color = '#8a95a8';
       }
+    }
+  }
+
+  private updatePeriodMetricsUI(): void {
+    if (!this.htmlPeriodMetrics) return;
+
+    const statusEl = this.htmlPeriodMetrics.querySelector('#pendulum-period-status');
+    const valuesEl = this.htmlPeriodMetrics.querySelector('#pendulum-period-values');
+
+    const L = this.cachedParams['length'] ?? this.schema['length'].default;
+    const g = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
+    const theoreticalPeriod = g > 0 ? 2 * Math.PI * Math.sqrt(L / g) : 0;
+
+    if (statusEl) {
+      statusEl.textContent = this.measuredPeriod > 0
+        ? 'Measured from completed cycles'
+        : 'Waiting for a full cycle...';
+    }
+
+    if (valuesEl) {
+      const diffPct = theoreticalPeriod > 0 && this.measuredPeriod > 0
+        ? (Math.abs(this.measuredPeriod - theoreticalPeriod) / theoreticalPeriod) * 100
+        : 0;
+
+      valuesEl.textContent = `Measured: ${this.measuredPeriod > 0 ? `${this.measuredPeriod.toFixed(3)} s` : '-- s'} · Theoretical: ${theoreticalPeriod > 0 ? `${theoreticalPeriod.toFixed(3)} s` : '-- s'} · Diff: ${diffPct.toFixed(2)} %`;
     }
   }
 
@@ -468,6 +525,9 @@ export class Pendulum implements IExperiment {
     
     if (this.htmlStopwatch && this.htmlStopwatch.parentNode) {
       this.htmlStopwatch.parentNode.removeChild(this.htmlStopwatch);
+    }
+    if (this.htmlPeriodMetrics && this.htmlPeriodMetrics.parentNode) {
+      this.htmlPeriodMetrics.parentNode.removeChild(this.htmlPeriodMetrics);
     }
     
     this.stringLine = null;
