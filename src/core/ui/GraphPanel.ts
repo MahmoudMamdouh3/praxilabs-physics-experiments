@@ -170,6 +170,9 @@ export class GraphPanel {
     let dragOffsetX = 0;
     let dragOffsetY = 0;
     header.addEventListener('pointerdown', (ev) => {
+      const targetTag = (ev.target as HTMLElement).tagName.toLowerCase();
+      if (['button', 'select', 'input', 'option'].includes(targetTag)) return;
+      
       isDragging = true;
       header.setPointerCapture(ev.pointerId);
       const rect = this.element.getBoundingClientRect();
