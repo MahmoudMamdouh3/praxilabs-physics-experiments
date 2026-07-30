@@ -144,6 +144,15 @@ export class Engine {
     this.controls.minPolarAngle = Math.PI / 2;
     this.controls.maxPolarAngle = Math.PI / 2;
 
+    // ── Bounded Panning (Task 32) ─────────────────────────────────────────────
+    // Prevent the user from dragging the camera completely off the lab table.
+    const minPan = new THREE.Vector3(-20, -10, -10);
+    const maxPan = new THREE.Vector3(50, 20, 10);
+
+    this.controls.addEventListener('change', () => {
+      this.controls.target.clamp(minPan, maxPan);
+    });
+
     // Sync camera look direction with the new orbit target.
     this.controls.update();
 
