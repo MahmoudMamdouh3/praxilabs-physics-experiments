@@ -112,9 +112,9 @@ export class Engine {
     // ── OrbitControls ─────────────────────────────────────────────────────────
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
-    // Focus slightly below the pivot so a mid-length pendulum sits centred
-    // in the viewport rather than the origin being at the top of frame.
-    this.controls.target.set(0, -1, 0);
+    // Focus at the same height as the camera to maintain a perfect 2D horizontal view
+    // (Math.PI / 2 polar angle).
+    this.controls.target.set(0, 5.6, 0);
 
     // Smooth deceleration — requires controls.update() every render frame.
     this.controls.enableDamping = true;
@@ -138,6 +138,11 @@ export class Engine {
     // Lock horizontal (azimuth) rotation to 0 — experiments are 2D (XY plane).
     this.controls.minAzimuthAngle = 0;
     this.controls.maxAzimuthAngle = 0;
+
+    // Lock polar angle (tilt) to exactly face-on (90 degrees / Math.PI / 2).
+    // This makes panning behave exactly like a 2D image hand tool.
+    this.controls.minPolarAngle = Math.PI / 2;
+    this.controls.maxPolarAngle = Math.PI / 2;
 
     // ── Bounded Panning (Task 32) ─────────────────────────────────────────────
     // Prevent the user from dragging the camera completely off the lab table or under the floor.
@@ -278,7 +283,7 @@ export class Engine {
    */
   resetCamera(): void {
     this.camera.position.set(0, 4.9, 25.2);
-    this.controls.target.set(0, -1, 0);
+    this.controls.target.set(0, 4.9, 0);
     this.controls.update();
   }
 
@@ -289,7 +294,7 @@ export class Engine {
     if (enabled) {
       // Center between the two experiments and pull back to see both.
       this.camera.position.set(7, 4.2, 25.2);
-      this.controls.target.set(7, -1, 0);
+      this.controls.target.set(7, 4.2, 0);
     } else {
       this.resetCamera();
     }
