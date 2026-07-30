@@ -49,6 +49,17 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
 └── package.json            
 ```
 
+## Testing & Verification
+The project is verified with the following commands:
+
+```bash
+npm install
+npx tsc --noEmit
+npm test
+```
+
+These checks confirm the TypeScript build is clean and the Vitest physics tests pass. The current automated suite covers the fixed-timestep accumulator and pendulum integration behavior.
+
 ## Known Limitations & Future Work
 If I had more time outside of the 2-3 day timebox, I would implement the following:
 1.  **Runge-Kutta 4 (RK4) Integrator Option:** While Semi-Implicit Euler is fantastic for energy conservation in simple oscillators, an RK4 integration option would provide higher baseline precision for more complex, non-linear chaotic systems (like a double pendulum).
