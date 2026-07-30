@@ -32,9 +32,12 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
     *   *Justification:* Explicit Euler is inherently unstable for oscillating systems (like springs and pendulums) because mathematical errors accumulate, adding artificial energy to the system. Semi-Implicit Euler calculates the new velocity first, then uses it to calculate position. It is computationally lightweight, simple to implement, and symplectic (it naturally conserves energy in oscillating systems), making it ideal for this scope.
 
 ## Project Structure
-\`\`\`text
+```text
 /
 ├── .agents/                # AI workflow rules and persistent configuration
+├── docs/                   # Documentation and user guides
+├── helpers/                # Utility scripts
+├── public/                 # Static assets
 ├── src/
 │    ├── core/              # Master scene rendering, dynamic UI, and fixed-timestep loop
 │    ├── experiments/       # Individual experiment modules and IExperiment contract

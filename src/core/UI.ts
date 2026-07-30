@@ -207,7 +207,7 @@ export class UI {
 
   private showToast(message: string, type: 'warning' | 'info' = 'warning'): void {
     if (!this.toastContainer) return;
-    
+
     const toast = this.el('div', {
       background: TOKEN.bgSolid,
       border: type === 'warning' ? '1px solid #ff4444' : TOKEN.borderAccent,
@@ -224,12 +224,12 @@ export class UI {
     });
     toast.textContent = type === 'warning' ? `⚠️ ${message}` : `ℹ️ ${message}`;
     this.toastContainer.appendChild(toast);
-    
+
     // Trigger fade in
     requestAnimationFrame(() => {
       toast.style.opacity = '1';
     });
-    
+
     setTimeout(() => {
       toast.style.opacity = '0';
       setTimeout(() => {
@@ -296,7 +296,7 @@ export class UI {
       zIndex: '20',
       boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
     });
-    
+
     topHud.innerHTML = `
       <div style="display:flex; gap: 40px; align-items:center; font-family:${TOKEN.fontMono}; font-size:11px; letter-spacing:2px; color:${TOKEN.textBright}; font-weight:600;">
         <span>SYS.STATUS: ONLINE</span>
@@ -713,7 +713,7 @@ export class UI {
     // ── Theme Selector ────────────────────────────────────────────────────────
     const themeWrapper = document.createElement('div');
     themeWrapper.style.cssText = `display:flex; align-items:center; gap:6px; margin-left:auto;`;
-    
+
     const themeLabel = document.createElement('span');
     themeLabel.textContent = 'Theme:';
     themeLabel.style.cssText = `font-size:11px; color:${TOKEN.textMuted}; font-family:${TOKEN.fontSans};`;
@@ -726,7 +726,7 @@ export class UI {
       font-size:11px; font-family:${TOKEN.fontSans};
       padding:4px 8px; cursor:pointer; outline:none;
     `;
-    
+
     const themes = [
       { val: 'default', name: 'Sci-Fi Dark' },
       { val: 'light', name: 'Clean Light' },
@@ -739,7 +739,7 @@ export class UI {
       { val: 'solarized-light', name: 'Solarized Light' },
       { val: 'monokai', name: 'Monokai' },
     ];
-    
+
     for (const t of themes) {
       const opt = document.createElement('option');
       opt.value = t.val;
@@ -748,7 +748,7 @@ export class UI {
       opt.style.color = '#fff';
       themeSelect.appendChild(opt);
     }
-    
+
     themeWrapper.appendChild(themeSelect);
     bar.appendChild(themeWrapper);
 
@@ -911,13 +911,13 @@ export class UI {
 
     slider.addEventListener('input', (e: Event) => {
       const val = parseFloat((e.target as HTMLInputElement).value);
-      
+
       // Update our stored params
       this.physics.currentParams[key] = val;
-      
+
       // Format to maximum 2 decimals for display
       valueDisplay.textContent = `${val.toFixed(2)} ${s.unit}`;
-      
+
       // Fill the track to the left of the thumb
       this.styleSlider(slider);
 
@@ -1118,8 +1118,8 @@ export class UI {
 
   private formatValue(key: string, val: number): string {
     if (key.endsWith('_deg')) return `${val.toFixed(2)} °`;
-    if (key.endsWith('_s'))   return `${val.toFixed(3)} s`;
-    if (key.endsWith('_ms'))  return `${val.toFixed(1)} m/s`;
+    if (key.endsWith('_s')) return `${val.toFixed(3)} s`;
+    if (key.endsWith('_ms')) return `${val.toFixed(1)} m/s`;
     if (key.endsWith('_rads')) return `${val.toFixed(4)} rad/s`;
     return val.toFixed(4);
   }
