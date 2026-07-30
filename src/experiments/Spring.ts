@@ -308,14 +308,7 @@ export class Spring implements IExperiment {
     this.reset(defaults);
   }
 
-   * Force model: Hooke's Law + linear damping (no gravity — equilibrium is the
-   * origin so gravity is already absorbed into the natural length).
-   *
-   * Semi-Implicit Euler (velocity first, then position):
-   *   ay  = -(k / m) * y - (b / m) * vy
-   *   vy += ay * dt
-   *   y  += vy * dt
-   */
+
   update(dt: number, params: Record<string, number>): void {
     this.cachedParams = params;
     const m = Math.max(params['mass']              ?? this.schema['mass'].default,          1e-6);
