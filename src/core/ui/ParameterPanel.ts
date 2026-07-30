@@ -68,6 +68,10 @@ export class ParameterPanel {
       display: 'flex',
       flexDirection: 'column',
       gap: '6px',
+      maxHeight: 'calc(100vh - 250px)',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      paddingRight: '4px' // Room for scrollbar
     });
 
     // ── Right-side readouts panel ─────────────────────────────────────────────
