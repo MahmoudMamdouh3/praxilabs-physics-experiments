@@ -140,8 +140,6 @@ export class Projectile implements IExperiment {
   private htmlRangeMetrics: HTMLDivElement | null = null;
 
   /** Cannon / Launcher ─────────────────────────────────────────────────────── */
-  private launcherGroup: THREE.Group | null = null;
-  private launcherBarrel: THREE.Mesh | null = null;
   /** Reference to the master scene (needed for dispose()). */
   private scene: THREE.Scene | null = null;
 
@@ -161,7 +159,7 @@ export class Projectile implements IExperiment {
     this.config = config;
 
     if (this.config?.isSetB) {
-      this.schema['launchDirection'].default = -1;
+      Object.defineProperty(this.schema['launchDirection'], 'default', { value: -1, writable: false });
     }
 
     // ── Projectile bob ────────────────────────────────────────────────────────

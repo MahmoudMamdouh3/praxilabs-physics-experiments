@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
-import { type PhysicsState, type IIntegrator, INTEGRATORS, SemiImplicitEulerIntegrator } from '../core/Integrator.ts';
+import { type IIntegrator, INTEGRATORS, SemiImplicitEulerIntegrator } from '../core/Integrator.ts';
 
 // ---------------------------------------------------------------------------
 // Spring-Mass System — Experiment C

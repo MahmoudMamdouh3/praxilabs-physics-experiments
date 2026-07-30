@@ -48,6 +48,16 @@ export interface ParameterSchema {
 // ---------------------------------------------------------------------------
 
 /**
+ * Configuration options passed by the Engine during setup.
+ */
+export interface ExperimentConfig {
+  /** True if the Engine is currently running two experiments side-by-side. */
+  compareMode?: boolean;
+  /** True if this instance is the second experiment (Set B) in compare mode. */
+  isSetB?: boolean;
+}
+
+/**
  * The core framework contract for all physics experiments.
  *
  * **Lifecycle:**
@@ -100,15 +110,7 @@ export interface IExperiment {
 
   // ── Lifecycle Methods ─────────────────────────────────────────────────────
 
-  /**
-   * Configuration options passed by the Engine during setup.
-   */
-export interface ExperimentConfig {
-  /** True if the Engine is currently running two experiments side-by-side. */
-  compareMode?: boolean;
-  /** True if this instance is the second experiment (Set B) in compare mode. */
-  isSetB?: boolean;
-}
+
 
   /**
    * Initialise the experiment.
