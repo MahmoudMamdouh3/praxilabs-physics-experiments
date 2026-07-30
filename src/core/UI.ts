@@ -361,9 +361,9 @@ export class UI {
       flexDirection: 'column',
       alignItems: 'center',
       gap: '8px',
-      zIndex: '9999',
+      zIndex: '2147483647', // Maximum possible z-index
     });
-    this.shell.appendChild(this.toastContainer);
+    document.body.appendChild(this.toastContainer);
   }
 
   // ── Public API (delegates to sub-components) ──────────────────────────────
