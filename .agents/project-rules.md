@@ -45,3 +45,10 @@ Failure to keep documentation in sync with code is a violation of the agent work
 
 ## Planning Workflow Rule
 For any substantial, multi-file, or complex architectural changes, you MUST write an `implementation_plan.md` first and wait for the user to explicitly approve it before writing code. Trivial bug fixes, simple textual edits, and minor one-line changes do not require an implementation plan and can be executed directly.
+
+## Clean Code & Formatting Standards
+1. **Minimalist Commenting:** Do not add extra, redundant comments inside functional code blocks or implementations. The code must be self-documenting through clear, descriptive variable and method naming. Reserve comments solely for explaining complex mathematical formulas or unconventional architectural decisions. Use JSDoc strictly for public API contracts.
+2. **Code-First Architecture:** Keep implementations ultra-minimalist and systems-focused. Avoid unnecessary boilerplate, over-engineering, or deeply nested logic. 
+3. **Strict Typing:** Leverage TypeScript's strict typing system entirely. You are forbidden from using `any`. Define explicit, precise interfaces and types for all data structures, payloads, and component states.
+4. **Scoping and Modularity:** Keep functions small, single-purpose, and pure where possible (especially for physics calculations). Do not pollute the global scope. 
+5. **Fail-Fast & Defensive Programming:** Validate parameters and state boundaries at the top of functions. If a system enters an invalid state, fail loudly and early rather than silently propagating `NaN` or `undefined` through the physics loops.
