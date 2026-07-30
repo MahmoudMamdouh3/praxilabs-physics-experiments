@@ -197,20 +197,7 @@ export class Engine {
     gridHelper.position.set(0, 0.01, 0);
     this.scene.add(gridHelper);
 
-    const backdrop = new THREE.Mesh(
-      new THREE.BoxGeometry(30, 10, 3),
-      new THREE.MeshStandardMaterial({ color: 0x11161d, roughness: 0.7, metalness: 0.2 })
-    );
-    backdrop.position.set(0, 10, -12);
-    this.scene.add(backdrop);
-
-    const supportRack = new THREE.Mesh(
-      new THREE.BoxGeometry(6, 6, 4),
-      new THREE.MeshStandardMaterial({ color: 0x1d2432, roughness: 0.4, metalness: 0.3 })
-    );
-    supportRack.position.set(8, 3, -5);
-    supportRack.castShadow = true;
-    this.scene.add(supportRack);
+    // Keep the scene minimal: only the table and grid are shown. No backdrop or support objects.
 
     // ── Resize handler ────────────────────────────────────────────────────────
     window.addEventListener('resize', this.onWindowResize);

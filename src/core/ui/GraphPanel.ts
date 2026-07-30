@@ -9,7 +9,7 @@ import {
   type ChartDataset,
 } from 'chart.js';
 import type { Physics } from '../Physics.ts';
-import { TOKEN, el } from './tokens.ts';
+import { TOKEN, el, styleSlider } from './tokens.ts';
 
 // Register Chart.js components exactly once (tree-shaking friendly).
 Chart.register(LineController, LineElement, PointElement, LinearScale, Filler, Tooltip);
@@ -54,12 +54,13 @@ export class GraphPanel {
   constructor(physics: Physics) {
     this.physics = physics;
     // ── Outer panel (bottom, centre of screen) ───────────────────────────────
+    // Start with a left offset that matches the left-side panel width (320px + margin)
     this.element = el('div', {
       position: 'absolute',
       bottom: '16px',
-      left: '312px',
-      right: '272px',
+      left: '336px',
       height: '180px',
+      width: 'min(900px, calc(100vw - 368px))',
       background: TOKEN.bg,
       backdropFilter: TOKEN.panelBlur,
       border: TOKEN.border,
@@ -67,11 +68,12 @@ export class GraphPanel {
       boxShadow: TOKEN.shadow,
       padding: '10px 14px 8px',
       overflow: 'hidden',
-      pointerEvents: 'auto', // Fix: Allow clicks so dropdown and zoom slider work
+      pointerEvents: 'auto', // Allow clicks so dropdown and zoom slider work
+      boxSizing: 'border-box',
     });
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;';
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; cursor:grab;';
 
     const headerLeft = document.createElement('div');
     headerLeft.style.cssText = 'display:flex; align-items:center; gap:8px;';
@@ -86,11 +88,19 @@ export class GraphPanel {
     collapseBtn.title = 'Collapse or expand the graph panel';
     collapseBtn.style.cssText = `background:transparent;border:none;color:${TOKEN.textMuted};cursor:pointer;font-size:11px;`;
     collapseBtn.addEventListener('click', () => {
-      const chartWrapper = this.element.querySelector('[data-chart-wrapper]') as HTMLDivElement | null;
-      if (!chartWrapper) return;
-      const isCollapsed = chartWrapper.style.display === 'none';
-      chartWrapper.style.display = isCollapsed ? 'block' : 'none';
+      // Toggle visibility of all non-header children (chart, controls, size slider)
+      const children = Array.from(this.element.children) as HTMLElement[];
+      // children[0] === header; toggle everything else
+      let isCollapsed = false;
+      if (children.length > 1) {
+        isCollapsed = (children[1].style.display === 'none');
+      }
+      for (let i = 1; i < children.length; i++) {
+        children[i].style.display = isCollapsed ? '' : 'none';
+      }
       collapseBtn.textContent = isCollapsed ? '▾' : '▸';
+      // Also adjust the panel height when collapsed for a compact header-only view
+      this.element.style.height = isCollapsed ? '180px' : '36px';
     });
     headerLeft.appendChild(collapseBtn);
 
@@ -113,7 +123,7 @@ export class GraphPanel {
     optPrimary.textContent = 'Primary Variable';
     const optEnergy = document.createElement('option');
     optEnergy.value = 'energy';
-    optEnergy.textContent = 'Energy Plot (Bonus)';
+    optEnergy.textContent = 'Energy Plot';
     modeSelect.appendChild(optPrimary);
     modeSelect.appendChild(optEnergy);
     
@@ -130,30 +140,150 @@ export class GraphPanel {
     zoomLabel.textContent = 'Zoom:';
     const zoomSlider = document.createElement('input');
     zoomSlider.type = 'range';
+    // More granular and wider zoom range so user can zoom out further and with better precision
     zoomSlider.min = '50';
-    zoomSlider.max = '800';
-    zoomSlider.step = '10';
-    zoomSlider.value = '150';
-    zoomSlider.style.cssText = `width: 80px; accent-color:${TOKEN.accent};`;
+    zoomSlider.max = '5000';
+    zoomSlider.step = '1';
+    zoomSlider.value = String(this.maxPoints);
+    zoomSlider.style.cssText = `width: 140px; accent-color:${TOKEN.accent};`;
     zoomSlider.addEventListener('input', (e) => {
-      this.maxPoints = parseInt((e.target as HTMLInputElement).value, 10);
+      // Direct mapping: more points => more zoomed-out
+      this.maxPoints = parseInt((e.target as HTMLInputElement).value, 10) || 150;
     });
+    // Style the zoom slider track for visibility
+    styleSlider(zoomSlider);
     zoomWrapper.appendChild(zoomLabel);
     zoomWrapper.appendChild(zoomSlider);
     header.appendChild(zoomWrapper);
 
     this.element.appendChild(header);
 
+    // Make the panel draggable by its header
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    header.addEventListener('pointerdown', (ev) => {
+      isDragging = true;
+      header.setPointerCapture(ev.pointerId);
+      const rect = this.element.getBoundingClientRect();
+      dragOffsetX = ev.clientX - rect.left;
+      dragOffsetY = ev.clientY - rect.top;
+      this.element.style.transition = 'none';
+      this.element.style.cursor = 'grabbing';
+    });
+    window.addEventListener('pointermove', (ev) => {
+      if (!isDragging) return;
+      const x = ev.clientX - dragOffsetX;
+      const y = ev.clientY - dragOffsetY;
+      // Keep within viewport bounds with a small margin
+      const margin = 8;
+      const maxX = window.innerWidth - this.element.offsetWidth - margin;
+      const maxY = window.innerHeight - this.element.offsetHeight - margin;
+      this.element.style.left = `${Math.min(Math.max(margin, x), Math.max(margin, maxX))}px`;
+      this.element.style.top = `${Math.min(Math.max(margin, y), Math.max(margin, maxY))}px`;
+      // When dragging, unset bottom to allow top positioning
+      this.element.style.bottom = '';
+      this.element.style.position = 'fixed';
+    });
+    window.addEventListener('pointerup', (ev) => {
+      if (!isDragging) return;
+      isDragging = false;
+      try { header.releasePointerCapture(ev.pointerId); } catch (e) {}
+      this.element.style.cursor = 'grab';
+      this.element.style.transition = '';
+    });
+
     // Sized wrapper: Chart.js reads clientWidth × clientHeight for HiDPI scaling.
     const chartWrapper = document.createElement('div');
     chartWrapper.dataset.chartWrapper = 'true';
-    chartWrapper.style.cssText = 'position:relative;width:100%;height:130px;overflow:hidden;';
+    // Layout chart + persistent legend side-by-side
+    chartWrapper.style.cssText = 'position:relative;display:flex;flex-direction:row;width:100%;height:130px;overflow:hidden;align-items:stretch;';
 
+    const canvasWrapper = document.createElement('div');
+    canvasWrapper.style.cssText = 'flex:1;min-width:200px;height:100%;';
     this.canvas = document.createElement('canvas');
-    chartWrapper.appendChild(this.canvas);
+    this.canvas.style.cssText = 'width:100%;height:100%;display:block;';
+    canvasWrapper.appendChild(this.canvas);
+    chartWrapper.appendChild(canvasWrapper);
+
+    // Persistent legend column on the right of the graph
+    const legendCol = document.createElement('div');
+    legendCol.style.cssText = `width:170px;padding-left:10px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;align-items:flex-start;justify-content:center;`;
+    legendCol.setAttribute('data-legend-col', 'true');
+    chartWrapper.appendChild(legendCol);
+
     this.element.appendChild(chartWrapper);
 
+    // Size controllers: Width and Height sliders (bounded)
+    const sizeWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' });
+    // Width control
+    const widthLabel = el('span', { fontSize: '10px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
+    widthLabel.textContent = 'Width:';
+    const widthSlider = document.createElement('input');
+    widthSlider.type = 'range';
+    const minW = 300;
+    const maxW = Math.max(600, Math.min(1200, window.innerWidth - 200));
+    widthSlider.min = String(minW);
+    widthSlider.max = String(maxW);
+    widthSlider.step = '10';
+    const initW = Math.min(900, Math.max(400, Math.floor((window.innerWidth - 368) * 0.9)));
+    widthSlider.value = String(initW);
+    widthSlider.style.cssText = `width:220px;`;
+    widthSlider.addEventListener('input', (e) => {
+      const w = parseInt((e.target as HTMLInputElement).value, 10) || initW;
+      this.element.style.width = `${w}px`;
+    });
+    styleSlider(widthSlider);
+
+    // Height control
+    const heightLabel = el('span', { fontSize: '10px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
+    heightLabel.textContent = 'Height:';
+    const heightSlider = document.createElement('input');
+    heightSlider.type = 'range';
+    const minH = 80;
+    const maxH = Math.max(120, Math.min(360, Math.floor(window.innerHeight * 0.6)));
+    heightSlider.min = String(minH);
+    heightSlider.max = String(maxH);
+    heightSlider.step = '2';
+    const initH = 180;
+    heightSlider.value = String(initH);
+    heightSlider.style.cssText = `width:180px;`;
+    heightSlider.addEventListener('input', (e) => {
+      const h = parseInt((e.target as HTMLInputElement).value, 10) || initH;
+      this.element.style.height = `${h}px`;
+      // Also update inner chart wrapper height
+      const chartWrap = this.element.querySelector('[data-chart-wrapper]') as HTMLElement | null;
+      if (chartWrap) chartWrap.style.height = `${Math.max(60, h - 40)}px`;
+    });
+    styleSlider(heightSlider);
+
+    sizeWrapper.appendChild(widthLabel);
+    sizeWrapper.appendChild(widthSlider);
+    sizeWrapper.appendChild(heightLabel);
+    sizeWrapper.appendChild(heightSlider);
+    this.element.appendChild(sizeWrapper);
+
+    // Populate the legend column initially (will be updated on data)
+    const legendColEl = this.element.querySelector('[data-legend-col]') as HTMLDivElement | null;
+    if (legendColEl) {
+      legendColEl.innerHTML = '';
+      // no static title — legend entries will be populated dynamically
+    }
+
     this.initChart();
+
+    // Accessibility: ensure the panel never overlaps the left-side parameter panel
+    const ensureNoOverlap = () => {
+      const leftPanel = document.querySelector('div[style*="left: 16px"][style*="width: 320px"]') as HTMLElement | null;
+      if (leftPanel) {
+        const leftRect = leftPanel.getBoundingClientRect();
+        const minLeft = Math.ceil(leftRect.right + 16);
+        const currentLeft = parseInt(this.element.style.left || '336', 10);
+        if (currentLeft < minLeft) this.element.style.left = `${minLeft}px`;
+      }
+    };
+    window.addEventListener('resize', ensureNoOverlap);
+    ensureNoOverlap();
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────
@@ -283,6 +413,7 @@ export class GraphPanel {
     const ctx = this.canvas.getContext('2d');
     if (ctx === null) return;
 
+    const self = this;
     this.chart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -340,7 +471,7 @@ export class GraphPanel {
             type: 'linear',
             title: { display: false },
             ticks: {
-              color: TOKEN.textMuted,
+              color: TOKEN.textBright,
               font: { family: TOKEN.fontMono, size: 9 },
               maxTicksLimit: 6,
             },
@@ -349,7 +480,7 @@ export class GraphPanel {
           },
           y: {
             ticks: {
-              color: TOKEN.textMuted,
+              color: TOKEN.textBright,
               font: { family: TOKEN.fontMono, size: 9 },
               maxTicksLimit: 5,
             },
@@ -381,6 +512,37 @@ export class GraphPanel {
               label: (item) => {
                 const label = item.dataset.label || '';
                 return `${label}: ${(item.parsed.y ?? 0).toFixed(4)}`;
+              },
+              footer: (items) => {
+                if (!self.chart) return '';
+                // Update persistent legend column with current visible datasets
+                const legendCol = document.querySelector('[data-legend-col]') as HTMLElement | null;
+                if (legendCol && self.chart) {
+                  legendCol.innerHTML = '';
+                  const title = document.createElement('div');
+                  title.style.cssText = `font-size:11px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};margin-bottom:6px;`;
+                  title.textContent = 'Legend';
+                  legendCol.appendChild(title);
+                  for (const ds of (self.chart.data.datasets || [])) {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'display:flex;align-items:center;gap:8px;font-family:' + TOKEN.fontMono + ';font-size:12px;color:' + TOKEN.textBright + ';';
+                    const box = document.createElement('span');
+                    box.style.cssText = `width:14px;height:14px;display:inline-block;border-radius:2px;background:${(ds as any).borderColor || '#fff'};`;
+                    const lbl = document.createElement('span');
+                    lbl.textContent = ds.label || '';
+                    item.appendChild(box);
+                    item.appendChild(lbl);
+                    legendCol.appendChild(item);
+                  }
+                }
+                // Footer explanatory text for tooltips
+                if (self.isEnergyMode) {
+                  const lbl = items[0]?.dataset.label || '';
+                  if (/Kinetic/i.test(lbl)) return 'Kinetic energy (½ m v²)';
+                  if (/Potential/i.test(lbl)) return 'Potential energy (m g h or ½ k x²)';
+                  if (/Total/i.test(lbl)) return 'Total mechanical energy (KE + PE)';
+                }
+                return self.graphKey ? `Primary: ${self.graphKey}` : '';
               },
             },
           },

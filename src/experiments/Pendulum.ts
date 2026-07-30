@@ -248,6 +248,27 @@ export class Pendulum implements IExperiment {
     `;
     document.body.appendChild(this.htmlPeriodMetrics);
 
+    // Add a small collapse toggle to the period metrics box
+    const periodToggle = document.createElement('button');
+    periodToggle.textContent = '▾';
+    periodToggle.title = 'Collapse or expand period metrics';
+    periodToggle.style.cssText = `position:absolute;top:6px;right:8px;background:transparent;border:none;color:#8a95a8;cursor:pointer;font-size:12px;`;
+    // Default to expanded
+    (this.htmlPeriodMetrics as HTMLDivElement).dataset.collapsed = '0';
+    periodToggle.addEventListener('click', () => {
+      const container = this.htmlPeriodMetrics as HTMLDivElement;
+      const isCollapsed = container.dataset.collapsed === '1';
+      // Toggle all child nodes except the toggle itself
+      for (const child of Array.from(container.children)) {
+        if (child === periodToggle) continue;
+        const el = child as HTMLElement;
+        el.style.display = isCollapsed ? '' : 'none';
+      }
+      container.dataset.collapsed = isCollapsed ? '0' : '1';
+      periodToggle.textContent = isCollapsed ? '▾' : '▸';
+    });
+    this.htmlPeriodMetrics.appendChild(periodToggle);
+
     // ── Bob ──────────────────────────────────────────────────────────────────
     this.bobGeometry = new THREE.SphereGeometry(0.32, 32, 32);
     this.bobMaterial = new THREE.MeshStandardMaterial({

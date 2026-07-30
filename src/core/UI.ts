@@ -246,6 +246,11 @@ export class UI {
     themeWrapper.appendChild(themeSelect);
     settingsContent.appendChild(themeWrapper);
 
+    // Theme development notice
+    const themeNotice = el('div', { fontSize: '11px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
+    themeNotice.textContent = 'Note: Theme switching is under active development; some colors may be experimental.';
+    settingsContent.appendChild(themeNotice);
+
     // UI Scale Slider
     const scaleWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '8px' });
     const scaleLabel = el('span', { fontSize: '11px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });

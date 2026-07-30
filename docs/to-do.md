@@ -51,7 +51,15 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] the live readouts panel is placed in a wrong position, it is out of the browser window rather than using the same padding and dimensions as the other panels
 - [x] i must check that the entire UI is consistent
 - [x] i need to mention that the system architecture diagram is also still under development and i should update it later
-- can i put a small demo in the readme? to make it more professional and also for faster understanding of the system
+- [] can i put a small demo in the readme? to make it more professional and also for faster understanding of the system ? should it be a gif or what ?
+- [] i need to make the scene much much larger , because now i zoomed out to the max i can see gigantic scene that is entirely empty and that i do not need, 
+- [] the pendulum string and ball is not even attached to the dark metal standing body , they are in the wrong coordinates with resect to each other, same issue with the spring experiment. we can simplify it to use a flying top instead
+- [] i want the frequency comparison panel to be collapsle aswell
+ - [] remove 'Legend' static label from measurement graph
+ - [] make measurement graph size controller change both width and height (bounded)
+ - [] ensure measurement graph sliders (zoom/size) are visible and styled
+ - [] fix pendulum period metrics collapse so it hides/shows correctly
+ - [] add theme "under development" notice in settings
 
 
 
