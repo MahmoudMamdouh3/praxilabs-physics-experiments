@@ -50,6 +50,7 @@ describe('Physics Audit Suite', () => {
       const analyticY = 2 * Math.cos(w * t);
       
       const finalY = (spring as any).y;
+      console.log(`Spring Analytic Error: ${Math.abs(finalY - analyticY)}`);
       expect(Math.abs(finalY - analyticY)).toBeLessThan(0.05);
     });
 
@@ -71,7 +72,7 @@ describe('Physics Audit Suite', () => {
       const t = steps * dt;
       const analyticTheta = theta0 * Math.cos(w * t);
       const finalTheta = (p as any).theta;
-      
+      console.log(`Pendulum Analytic Error: ${Math.abs(finalTheta - analyticTheta)}`);
       expect(Math.abs(finalTheta - analyticTheta)).toBeLessThan(0.01);
     });
 
@@ -99,6 +100,7 @@ describe('Physics Audit Suite', () => {
       
       const finalX = (proj as any).x;
       const finalY = (proj as any).y;
+      console.log(`Projectile Analytic X Error: ${Math.abs(finalX - analyticX)}, Y Error: ${Math.abs(finalY - analyticY)}`);
       expect(Math.abs(finalX - analyticX)).toBeLessThan(0.05);
       expect(Math.abs(finalY - analyticY)).toBeLessThan(0.05);
     });
@@ -127,6 +129,7 @@ describe('Physics Audit Suite', () => {
       }
       
       const drift = (maxEnergy - minEnergy) / initialEnergy;
+      console.log(`Spring Energy Drift: ${drift * 100}%`);
       expect(drift).toBeLessThan(0.02);
     });
 
@@ -180,10 +183,12 @@ describe('Physics Audit Suite', () => {
       const errSemi_005 = Math.abs(semi_y_005 - trueY);
       
       const semiRatio = errSemi_01 / errSemi_005;
+      console.log(`Semi-Implicit Euler Convergence Ratio: ${semiRatio}`);
       expect(semiRatio).toBeGreaterThan(1.8);
       expect(semiRatio).toBeLessThan(2.2);
       
       const rk4Ratio = errRK4_01 / errRK4_005;
+      console.log(`RK4 Convergence Ratio: ${rk4Ratio}`);
       expect(rk4Ratio).toBeGreaterThan(14);
       expect(rk4Ratio).toBeLessThan(18);
     });
@@ -221,7 +226,7 @@ describe('Physics Audit Suite', () => {
       const t1 = getFinalTheta(fps60);
       const t2 = getFinalTheta(fps30);
       const t3 = getFinalTheta(jitter);
-      
+      console.log(`Frame-Rate Independence. Diff 60vs30: ${Math.abs(t1 - t2)}, Diff 60vsJitter: ${Math.abs(t1 - t3)}`);
       expect(Math.abs(t1 - t2)).toBeLessThan(1e-9);
       expect(Math.abs(t1 - t3)).toBeLessThan(1e-9);
     });
@@ -242,6 +247,7 @@ describe('Physics Audit Suite', () => {
       
       const t1 = (p1 as any).theta;
       const t2 = (p2 as any).theta;
+      console.log(`Symmetry Invariant Error (Pendulum): ${Math.abs(t1 + t2)}`);
       expect(Math.abs(t1 + t2)).toBeLessThan(1e-9);
     });
 
@@ -266,6 +272,7 @@ describe('Physics Audit Suite', () => {
       
       const p1 = crossings1[crossings1.length - 1];
       const p2 = crossings2[crossings2.length - 1];
+      console.log(`Amplitude Independence Error (Spring Period Diff): ${Math.abs(p1 - p2)}`);
       expect(Math.abs(p1 - p2)).toBeLessThan(1e-9);
     });
   });
