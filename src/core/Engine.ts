@@ -355,6 +355,20 @@ export class Engine {
   }
 
   /**
+   * Adjust camera to frame both experiments in Compare Mode, or revert to normal.
+   */
+  setCompareCameraView(enabled: boolean): void {
+    if (enabled) {
+      // Center between x=0 and x=30, and pull back to see both.
+      this.camera.position.set(15, 0, 35);
+      this.controls.target.set(15, -3, 0);
+    } else {
+      this.resetCamera();
+    }
+    this.controls.update();
+  }
+
+  /**
    * Start the RAF render loop.
    * Safe to call multiple times — subsequent calls are no-ops.
    */

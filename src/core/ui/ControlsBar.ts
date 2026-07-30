@@ -126,6 +126,7 @@ export class ControlsBar {
         this.engine.disposeExperiment2();
         this.physics2.reset();
         this.physics2.pause();
+        this.engine.setCompareCameraView(false); // Fix: revert camera
         // Update UI button state implicitly handled since we rebuild panel below
         const compareBtn = document.getElementById('ui-btn-compare');
         if (compareBtn) {
@@ -176,6 +177,11 @@ export class ControlsBar {
     pauseBtn.id = 'ui-btn-pause';
     pauseBtn.addEventListener('click', () => {
       this.physics.togglePause();
+      if (this._compareMode) {
+        // Synchronize the second experiment
+        if (this.physics.isPaused) this.physics2.pause();
+        else this.physics2.play();
+      }
       pauseBtn.textContent = this.physics.isPaused ? '▶ Play' : '⏸ Pause';
     });
     bar.appendChild(pauseBtn);
@@ -184,6 +190,7 @@ export class ControlsBar {
     window.addEventListener('praxilabs-auto-pause', ((e: CustomEvent) => {
       if (!this.physics.isPaused) {
         this.physics.pause();
+        if (this._compareMode) this.physics2.pause();
         pauseBtn.textContent = '▶ Play';
         
         if (e.detail?.message) {
@@ -197,6 +204,9 @@ export class ControlsBar {
     stepBtn.title = 'Advance exactly one physics tick (useful when paused)';
     stepBtn.addEventListener('click', () => {
       this.physics.stepOnce(this.engine.getActiveExperiment());
+      if (this._compareMode) {
+        this.physics2.stepOnce(this.engine.getActiveExperiment2());
+      }
     });
     bar.appendChild(stepBtn);
 
@@ -204,14 +214,27 @@ export class ControlsBar {
     const resetBtn = button('↺ Reset', TOKEN.textMuted);
     resetBtn.title = 'Reset experiment to the beginning and to default values';
     resetBtn.addEventListener('click', () => {
-      // The original code was missing the click listener somehow! Let me add it back.
       this.physics.reset();
       this.graphPanel.reset();
+      
       const exp = this.engine.getActiveExperiment();
       if (exp) {
         const defaults: Record<string, number> = {};
         for (const [k, s] of Object.entries(exp.schema)) defaults[k] = s.default;
         this.physics.setParams(defaults);
+      }
+      
+      if (this._compareMode) {
+        this.physics2.reset();
+        const exp2 = this.engine.getActiveExperiment2();
+        if (exp2) {
+          const defaults2: Record<string, number> = {};
+          for (const [k, s] of Object.entries(exp2.schema)) defaults2[k] = s.default;
+          this.physics2.setParams(defaults2);
+        }
+      }
+      
+      if (exp) {
         this.parameterPanel.buildPanel(exp.schema, this._compareMode);
       }
     });
@@ -267,7 +290,9 @@ export class ControlsBar {
 
         const currentExp = this.engine.getActiveExperiment();
         if (currentExp) this.parameterPanel.buildPanel(currentExp.schema, this._compareMode);
-        this.onToast('Comparison mode ON — Set B appears 30 units right. Press Play to run both.', 'info');
+        
+        this.engine.setCompareCameraView(true);
+        this.onToast('Comparison mode ON — Both experiments framed. Press Play to run both.', 'info');
 
       } else {
         compareBtn.style.background = 'transparent';
@@ -278,6 +303,8 @@ export class ControlsBar {
         this.physics2.reset();
         this.physics2.pause();
         this.graphPanel.reset();
+        
+        this.engine.setCompareCameraView(false);
 
         const currentExp = this.engine.getActiveExperiment();
         if (currentExp) this.parameterPanel.buildPanel(currentExp.schema, this._compareMode);
