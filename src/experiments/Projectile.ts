@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
+import { type PhysicsState, type IIntegrator, INTEGRATORS, SemiImplicitEulerIntegrator } from '../core/Integrator.ts';
 
 // ---------------------------------------------------------------------------
 // Projectile Motion — Experiment B
@@ -87,6 +88,15 @@ export class Projectile implements IExperiment {
       step: 0.01,
       tooltip: 'Air resistance that slows the projectile down, shortening its actual range. Note: The dashed line represents the drag-free analytic prediction for comparison.',
     },
+    launchDirection: {
+      description: 'Launch Direction (1=Right, -1=Left)',
+      unit: '',
+      min: -1,
+      max: 1,
+      default: 1,
+      step: 2,
+      tooltip: 'Direction of the launch along the X axis.',
+    },
   };
 
   // ── Physics state ─────────────────────────────────────────────────────────
@@ -105,6 +115,7 @@ export class Projectile implements IExperiment {
   private hasLanded: boolean = false;
   /** Horizontal position at landing (m); 0 until landed. */
   private actualRange: number = 0;
+  private predictedRange: number = 0;
   
   private cachedParams: Record<string, number> = {};
 
@@ -131,22 +142,33 @@ export class Projectile implements IExperiment {
   /** Cannon / Launcher ─────────────────────────────────────────────────────── */
   private launcherGroup: THREE.Group | null = null;
   private launcherBarrel: THREE.Mesh | null = null;
-
   /** Reference to the master scene (needed for dispose()). */
   private scene: THREE.Scene | null = null;
 
   private config?: ExperimentConfig;
 
+  public integrator: IIntegrator = new SemiImplicitEulerIntegrator();
+
+  public setIntegrator(id: string): void {
+    const found = INTEGRATORS.find(i => i.id === id);
+    if (found) this.integrator = found;
+  }
+
   // ── IExperiment lifecycle ─────────────────────────────────────────────────
 
   setup(scene: THREE.Scene, config?: ExperimentConfig): void {
-    this.config = config;
     this.scene = scene;
+    this.config = config;
+
+    if (this.config?.isSetB) {
+      this.schema['launchDirection'].default = -1;
+    }
 
     // ── Projectile bob ────────────────────────────────────────────────────────
     this.bobGeometry = new THREE.SphereGeometry(BOB_RADIUS, 32, 32);
+    const bobColor = this.config?.isSetB ? 0xff9900 : 0x22aaff;
     this.bobMaterial = new THREE.MeshStandardMaterial({
-      color: 0x22aaff,       // cyan
+      color: bobColor,
       metalness: 0.4,
       roughness: 0.3,
       emissive: 0x003355,
@@ -156,10 +178,7 @@ export class Projectile implements IExperiment {
     this.bobMesh.castShadow = true;
     scene.add(this.bobMesh);
 
-    // Launcher Stand removed as per user request
-
     // ── Predicted trajectory (dashed line) ───────────────────────────────────
-    // Pre-allocate TRAJECTORY_SEGMENTS+1 vertices; content set in reset().
     this.trajectoryGeometry = new THREE.BufferGeometry();
     const posArr = new Float32Array((TRAJECTORY_SEGMENTS + 1) * 3);
     this.trajectoryGeometry.setAttribute(
@@ -174,8 +193,6 @@ export class Projectile implements IExperiment {
       transparent: true,
     });
     this.trajectoryLine = new THREE.Line(this.trajectoryGeometry, this.trajectoryMaterial);
-    // computeLineDistances() is required for LineDashedMaterial to work.
-    // It is called after every geometry update in updateTrajectory().
     scene.add(this.trajectoryLine);
 
     // ── Landing marker (flat ring at y=0) ─────────────────────────────────────
@@ -187,7 +204,6 @@ export class Projectile implements IExperiment {
       opacity: 0.75,
     });
     this.landingMarker = new THREE.Mesh(this.landingGeometry, this.landingMaterial);
-    // Rotate flat in XZ plane (ring is created in XY plane by default).
     this.landingMarker.rotation.x = -Math.PI / 2;
     this.landingMarker.visible = false;
     scene.add(this.landingMarker);
@@ -238,39 +254,42 @@ export class Projectile implements IExperiment {
     });
     this.htmlRangeMetrics.appendChild(rangeToggle);
 
-    // Initialise everything to schema defaults.
     const defaults: Record<string, number> = {};
     for (const [key, s] of Object.entries(this.schema)) defaults[key] = s.default;
     this.reset(defaults);
   }
 
+  private derivative = (state: PhysicsState, params: Record<string, number>): PhysicsState => {
+    const g    = params['gravity']          ?? this.schema['gravity'].default;
+    const drag = params['dragCoefficient']  ?? this.schema['dragCoefficient'].default;
+    const b    = drag / MASS;
+
+    const ax = -b * state.vx;
+    const ay = -g - b * state.vy;
+
+    return {
+      vx: ax,
+      vy: ay,
+      x: state.vx,
+      y: state.vy
+    };
+  };
+
   /**
-   * Advance the simulation by one fixed physics timestep.
-   * No-op once the projectile has landed.
-   *
-   * Force model:
-   *   ax = -(drag / mass) * vx
-   *   ay = -gravity - (drag / mass) * vy
-   *
-   * Semi-Implicit Euler: update v first, then x.
+   * Advance the simulation by one fixed timestep.
    */
   update(dt: number, params: Record<string, number>): void {
     this.cachedParams = params;
     if (this.hasLanded) return;
 
-    const g    = params['gravity']          ?? this.schema['gravity'].default;
-    const drag = params['dragCoefficient']  ?? this.schema['dragCoefficient'].default;
-    const b    = drag / MASS;
+    // ── Generic Integration ───────────────────────────────────────────────────
+    const state: PhysicsState = { vx: this.vx, vy: this.vy, x: this.x, y: this.y };
+    const nextState = this.integrator.step(state, this.derivative, params, dt);
 
-    // Accelerations
-    const ax = -b * this.vx;
-    const ay = -g - b * this.vy;
-
-    // Semi-Implicit Euler: velocity then position
-    this.vx += ax * dt;
-    this.vy += ay * dt;
-    this.x  += this.vx * dt;
-    this.y  += this.vy * dt;
+    this.vx = nextState.vx;
+    this.vy = nextState.vy;
+    this.x = nextState.x;
+    this.y = nextState.y;
 
     this.time += dt;
 
@@ -296,26 +315,19 @@ export class Projectile implements IExperiment {
     this.updateRangeMetricsUI();
   }
 
-  /**
-   * Restore the projectile to its initial conditions.
-   * Reuses all existing GPU resources — no geometry/material recreation.
-   *
-   * @param params Optional current parameter snapshot. When provided, the
-   *               simulation respects the user's current slider values rather
-   *               than hard-coded schema defaults.
-   */
   reset(params?: Record<string, number>): void {
     if (params) this.cachedParams = params;
-    const speed = params?.['initialSpeed']     ?? this.schema['initialSpeed'].default;
-    const angle = params?.['launchAngle']      ?? this.schema['launchAngle'].default;
+    const v0       = params?.['initialSpeed'] ?? this.schema['initialSpeed'].default;
+    const angleDeg = params?.['launchAngle']  ?? this.schema['launchAngle'].default;
+    const dir      = params?.['launchDirection'] ?? this.schema['launchDirection'].default;
 
-    const angleRad = (angle * Math.PI) / 180;
+    const angleRad = (angleDeg * Math.PI) / 180;
 
-    // Physics state
-    this.x         = 0;
-    this.y         = 0;
-    this.vx        = speed * Math.cos(angleRad);
-    this.vy        = speed * Math.sin(angleRad);
+    // Reset physics state
+    this.x  = 0;
+    this.y  = 0;
+    this.vx = v0 * Math.cos(angleRad) * dir;
+    this.vy = v0 * Math.sin(angleRad);
     this.time      = 0;
     this.hasLanded = false;
     this.actualRange = 0;
@@ -324,8 +336,6 @@ export class Projectile implements IExperiment {
     if (this.bobMesh !== null) {
       this.bobMesh.position.set(0, BOB_RADIUS, 0);
     }
-
-
 
     // Rebuild the analytic predicted trajectory.
     this.updateTrajectory(params);
@@ -339,12 +349,6 @@ export class Projectile implements IExperiment {
     const statusEl = this.htmlRangeMetrics.querySelector('#projectile-range-status');
     const valuesEl = this.htmlRangeMetrics.querySelector('#projectile-range-values');
 
-    const speed = this.cachedParams['initialSpeed'] ?? this.schema['initialSpeed'].default;
-    const angle = this.cachedParams['launchAngle'] ?? this.schema['launchAngle'].default;
-    const g = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
-    const angleRad = (angle * Math.PI) / 180;
-    const predictedRange = g > 0 ? (speed * speed * Math.sin(2 * angleRad)) / g : 0;
-
     if (statusEl) {
       statusEl.textContent = this.hasLanded
         ? 'Actual range captured at landing.'
@@ -352,20 +356,12 @@ export class Projectile implements IExperiment {
     }
 
     if (valuesEl) {
-      valuesEl.textContent = `Predicted: ${predictedRange.toFixed(2)} m · Actual: ${this.hasLanded ? this.actualRange.toFixed(2) : '--'} m`;
+      valuesEl.textContent = `Predicted: ${Math.abs(this.predictedRange).toFixed(2)} m · Actual: ${this.hasLanded ? Math.abs(this.actualRange).toFixed(2) : '--'} m`;
     }
   }
 
   getMeasurements(): Record<string, number> {
-    const speed  = this.cachedParams['initialSpeed'] ?? this.schema['initialSpeed'].default;
-    const angle  = this.cachedParams['launchAngle'] ?? this.schema['launchAngle'].default;
-    const g      = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
-
-    // Analytic range (drag-free): R = v² * sin(2θ) / g
-    const angleRad = (angle * Math.PI) / 180;
-    const predictedRange = g > 0
-      ? (speed * speed * Math.sin(2 * angleRad)) / g
-      : 0;
+    const g = this.cachedParams['gravity'] ?? this.schema['gravity'].default;
 
     const v2 = this.vx * this.vx + this.vy * this.vy;
     const kineticEnergy = 0.5 * MASS * v2;
@@ -375,8 +371,8 @@ export class Projectile implements IExperiment {
     return {
       time_s:            this.time,
       current_y_m:       this.y,
-      predicted_range_m: predictedRange,
-      actual_range_m:    this.hasLanded ? this.actualRange : 0,
+      predicted_range_m: Math.abs(this.predictedRange),
+      actual_range_m:    this.hasLanded ? Math.abs(this.actualRange) : 0,
       kinetic_energy:    kineticEnergy,
       potential_energy:  potentialEnergy,
       total_energy:      totalEnergy,
@@ -413,43 +409,28 @@ export class Projectile implements IExperiment {
     this.scene             = null;
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────────
-
-  /**
-   * Recompute the analytic (drag-free) parabolic trajectory and write the
-   * result into the pre-allocated BufferGeometry position attribute.
-   *
-   * Analytic formula (no drag):
-   *   x(t) = v₀ · cos(θ) · t
-   *   y(t) = v₀ · sin(θ) · t - ½ · g · t²
-   *
-   * Time of flight: t_f = 2 · v₀ · sin(θ) / g
-   *
-   * After updating positions, `computeLineDistances()` MUST be called so
-   * that LineDashedMaterial can measure segment lengths and place dashes.
-   */
   private updateTrajectory(params?: Record<string, number>): void {
     if (this.trajectoryGeometry === null) return;
 
-    const speed = params?.['initialSpeed'] ?? this.schema['initialSpeed'].default;
-    const angle = params?.['launchAngle']  ?? this.schema['launchAngle'].default;
-    const g     = params?.['gravity']      ?? this.schema['gravity'].default;
+    const p = params ?? this.cachedParams;
+    const v0       = p['initialSpeed'] ?? this.schema['initialSpeed'].default;
+    const angleDeg = p['launchAngle']  ?? this.schema['launchAngle'].default;
+    const g        = p['gravity']      ?? this.schema['gravity'].default;
+    const dir      = p['launchDirection'] ?? this.schema['launchDirection'].default;
 
-    const angleRad = (angle * Math.PI) / 180;
-    const v0x = speed * Math.cos(angleRad);
-    const v0y = speed * Math.sin(angleRad);
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const v0x = v0 * Math.cos(angleRad) * dir;
+    const v0y = v0 * Math.sin(angleRad);
 
-    // Time of flight for drag-free parabola; guard g=0.
-    const flightTime = g > 0 ? (2 * v0y) / g : 1;
+    const timeOfFlight = g > 0 ? (2 * v0y) / g : 1;
+    this.predictedRange = v0x * timeOfFlight;
 
     const pos = this.trajectoryGeometry.attributes['position'] as THREE.BufferAttribute;
 
     for (let i = 0; i <= TRAJECTORY_SEGMENTS; i++) {
-      const t = (i / TRAJECTORY_SEGMENTS) * flightTime;
+      const t = (i / TRAJECTORY_SEGMENTS) * timeOfFlight;
       const tx = v0x * t;
       const ty = v0y * t - 0.5 * g * t * t;
-      // Clamp to ground — trailing vertices would go below y=0 on the last
-      // segments of a nearly-horizontal angle; keep them at ground level.
       pos.setXYZ(i, tx, Math.max(ty, 0), 0);
     }
 

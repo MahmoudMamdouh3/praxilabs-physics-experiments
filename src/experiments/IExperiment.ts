@@ -138,6 +138,12 @@ export interface ExperimentConfig {
   render(): void;
 
   /**
+   * Optional method to change the numerical integrator used by the experiment.
+   * Called by the UI when the user selects a different integrator from the dropdown.
+   */
+  setIntegrator?(id: string): void;
+
+  /**
    * Restore the experiment to its initial conditions.
    * Reuse existing GPU resources — do NOT dispose and re-create meshes.
    * Called when the user clicks the Reset button or changes a parameter

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
+import { type PhysicsState, type IIntegrator, INTEGRATORS, SemiImplicitEulerIntegrator } from '../core/Integrator.ts';
 
 // ---------------------------------------------------------------------------
 // Spring-Mass System — Experiment C
@@ -174,6 +175,13 @@ export class Spring implements IExperiment {
 
   private config?: ExperimentConfig;
 
+  public integrator: IIntegrator = new SemiImplicitEulerIntegrator();
+
+  public setIntegrator(id: string): void {
+    const found = INTEGRATORS.find(i => i.id === id);
+    if (found) this.integrator = found;
+  }
+
   // ── IExperiment lifecycle ─────────────────────────────────────────────────
 
   setup(scene: THREE.Scene, config?: ExperimentConfig): void {
@@ -300,9 +308,6 @@ export class Spring implements IExperiment {
     this.reset(defaults);
   }
 
-  /**
-   * Advance the simulation by one fixed physics timestep.
-   *
    * Force model: Hooke's Law + linear damping (no gravity — equilibrium is the
    * origin so gravity is already absorbed into the natural length).
    *

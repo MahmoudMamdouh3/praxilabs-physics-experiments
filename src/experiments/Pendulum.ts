@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { IExperiment, ParameterSchema, ExperimentConfig } from './IExperiment.ts';
+import { type PhysicsState, type IIntegrator, INTEGRATORS, SemiImplicitEulerIntegrator } from '../core/Integrator.ts';
 
 // ---------------------------------------------------------------------------
 // Pendulum — Experiment A
@@ -177,6 +178,13 @@ export class Pendulum implements IExperiment {
 
   private config?: ExperimentConfig;
 
+  public integrator: IIntegrator = new SemiImplicitEulerIntegrator();
+
+  public setIntegrator(id: string): void {
+    const found = INTEGRATORS.find(i => i.id === id);
+    if (found) this.integrator = found;
+  }
+
   // ── Initialization ────────────────────────────────────────────────────────
 
   setup(scene: THREE.Scene, config?: ExperimentConfig): void {
@@ -323,25 +331,35 @@ export class Pendulum implements IExperiment {
     this.reset(defaultParams);
   }
 
+  private derivative = (state: PhysicsState, params: Record<string, number>): PhysicsState => {
+    const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
+    const g = params['gravity'] ?? this.schema['gravity'].default;
+    const b = params['damping'] ?? this.schema['damping'].default;
+
+    const alpha = -(g / L) * Math.sin(state.theta) - b * state.omega;
+    return {
+      omega: alpha,
+      theta: state.omega
+    };
+  };
+
   /**
    * Advance the simulation by one fixed timestep.
-   *
-   * Semi-Implicit Euler (velocity-first) keeps the pendulum numerically stable
-   * for oscillating systems compared to Explicit Euler.
    */
   update(dt: number, params: Record<string, number>): void {
     this.cachedParams = params;
     const L = Math.max(params['length'] ?? this.schema['length'].default, 1e-6);
     const g = params['gravity'] ?? this.schema['gravity'].default;
-    const b = params['damping'] ?? this.schema['damping'].default;
     const target = params['targetOscillations'] ?? this.schema['targetOscillations'].default;
     
     this.currentL = L;
 
-    // ── Semi-Implicit Euler integration ───────────────────────────────────────
-    const alpha = -(g / L) * Math.sin(this.theta) - b * this.omega;
-    this.omega += alpha * dt;    // update velocity first
-    this.theta += this.omega * dt; // then position
+    // ── Generic Integration ───────────────────────────────────────────────────
+    const state: PhysicsState = { omega: this.omega, theta: this.theta };
+    const nextState = this.integrator.step(state, this.derivative, params, dt);
+    
+    this.omega = nextState.omega;
+    this.theta = nextState.theta;
 
     this.time += dt;
 

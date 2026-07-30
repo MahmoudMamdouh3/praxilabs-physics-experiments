@@ -60,6 +60,13 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
  - [x] ensure measurement graph sliders (zoom/size) are visible and styled
  - [x] fix pendulum period metrics collapse so it hides/shows correctly
  - [x] add theme "under development" notice in settings
+ - [x] Extract numerical integrators into a generic swappable module (`Integrator.ts`)
+ - [x] Add UI dropdown in the parameter panel to hot-swap integrators at runtime
+ - [x] Implement mathematical proof test asserting Semi-Implicit vs Explicit divergence
+ - [x] Fix compare mode UI positioning so the parameters panel does not overflow
+ - [x] Re-center UI and reset physics state fully when swapping experiments
+ - [x] Fix Compare Mode 3D spacing so both experiments are grouped around the center rather than pushed far right
+ - [x] Add Launch Direction parameter to Projectile and colorize bobs to prevent visual overlap in compare mode
 
 
 

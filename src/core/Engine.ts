@@ -50,15 +50,12 @@ export class Engine {
 
   // ── Experiment management ──────────────────────────────────────────────────
 
+  /** The active primary experiment. */
   private currentExperiment: IExperiment | null = null;
+  private readonly offsetGroup1: THREE.Group;
 
-  // ── Comparison Mode — second experiment slot ───────────────────────────────
-  // The second instance lives in the same master scene but is wrapped inside
-  // an offset Group so it doesn't overlap with the primary experiment.
-
+  /** The secondary experiment for comparison mode. */
   private currentExperiment2: IExperiment | null = null;
-
-  /** THREE.Group that spatially offsets the second experiment's meshes. */
   private readonly offsetGroup2: THREE.Group;
 
   // ── Loop state ─────────────────────────────────────────────────────────────
@@ -78,10 +75,14 @@ export class Engine {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0d0d0f);
 
+    // Offset group for the primary experiment.
+    this.offsetGroup1 = new THREE.Group();
+    this.offsetGroup1.position.set(0, 0, 0);
+    this.scene.add(this.offsetGroup1);
+
     // Offset group for the second experiment (comparison mode).
-    // Use a much smaller X offset so the scene stays compact when comparing.
     this.offsetGroup2 = new THREE.Group();
-    this.offsetGroup2.position.set(10, 0, 0);
+    this.offsetGroup2.position.set(0, 0, 0);
     this.scene.add(this.offsetGroup2);
 
     // ── Camera ───────────────────────────────────────────────────────────────
@@ -222,9 +223,16 @@ export class Engine {
   loadExperiment(experiment: IExperiment, config?: { compareMode?: boolean; isSetB?: boolean }): void {
     if (this.currentExperiment !== null) {
       this.currentExperiment.dispose();
+      while (this.offsetGroup1.children.length > 0) {
+        this.offsetGroup1.remove(this.offsetGroup1.children[0]);
+      }
     }
     this.currentExperiment = experiment;
-    experiment.setup(this.scene, config);
+    const proxyScene = new THREE.Scene();
+    experiment.setup(proxyScene, config);
+    while (proxyScene.children.length > 0) {
+      this.offsetGroup1.add(proxyScene.children[0]);
+    }
   }
 
   /** Return the currently active experiment, or `null` if none is loaded. */
@@ -287,15 +295,17 @@ export class Engine {
     this.controls.update();
   }
 
-  /**
-   * Adjust camera to frame both experiments in Compare Mode, or revert to normal.
-   */
   setCompareCameraView(enabled: boolean): void {
     if (enabled) {
-      // Center between the two experiments and pull back to see both.
-      this.camera.position.set(7, 4.2, 25.2);
-      this.controls.target.set(7, 4.2, 0);
+      // Shift experiments apart symmetrically
+      this.offsetGroup1.position.set(-8, 0, 0);
+      this.offsetGroup2.position.set(8, 0, 0);
+      // Keep camera centered, just pull back to see both
+      this.camera.position.set(0, 4.2, 25.2);
+      this.controls.target.set(0, 4.2, 0);
     } else {
+      // Restore primary experiment to center
+      this.offsetGroup1.position.set(0, 0, 0);
       this.resetCamera();
     }
     this.controls.update();
