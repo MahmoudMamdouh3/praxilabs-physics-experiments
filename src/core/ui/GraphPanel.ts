@@ -25,8 +25,6 @@ Chart.register(LineController, LineElement, PointElement, LinearScale, Filler, T
 //  - Resetting the buffer when experiments switch or Reset is pressed
 // ---------------------------------------------------------------------------
 
-/** Maximum rolling data-points kept in each graph buffer. */
-const MAX_GRAPH_POINTS = 150;
 
 export class GraphPanel {
   /** The DOM container for the graph panel — append to the shell. */
@@ -49,6 +47,9 @@ export class GraphPanel {
   private graphKey: string = '';
   private isEnergyMode: boolean = false;
   private readonly physics: Physics;
+  
+  /** Dynamic rolling window for graph zoom */
+  private maxPoints: number = 150;
 
   constructor(physics: Physics) {
     this.physics = physics;
@@ -104,7 +105,26 @@ export class GraphPanel {
       this.isEnergyMode = modeSelect.value === 'energy';
       if (this.chart) this.chart.update('none');
     });
-    header.appendChild(modeSelect);
+    headerLeft.appendChild(modeSelect);
+    header.appendChild(headerLeft);
+
+    // Zoom slider
+    const zoomWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '6px' });
+    const zoomLabel = el('span', { fontSize: '10px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
+    zoomLabel.textContent = 'Zoom:';
+    const zoomSlider = document.createElement('input');
+    zoomSlider.type = 'range';
+    zoomSlider.min = '50';
+    zoomSlider.max = '800';
+    zoomSlider.step = '10';
+    zoomSlider.value = '150';
+    zoomSlider.style.cssText = `width: 80px; accent-color:${TOKEN.accent};`;
+    zoomSlider.addEventListener('input', (e) => {
+      this.maxPoints = parseInt((e.target as HTMLInputElement).value, 10);
+    });
+    zoomWrapper.appendChild(zoomLabel);
+    zoomWrapper.appendChild(zoomSlider);
+    header.appendChild(zoomWrapper);
 
     this.element.appendChild(header);
 
@@ -149,8 +169,7 @@ export class GraphPanel {
     // ── Set A Primary ────────────────────────────────────────────────────────
     const y = measurements[this.graphKey] ?? 0;
     this.pointsA.push({ x: t, y });
-    if (this.pointsA.length > MAX_GRAPH_POINTS) this.pointsA.shift();
-
+    
     // ── Set A Energy ─────────────────────────────────────────────────────────
     const keA = measurements['kinetic_energy'] ?? 0;
     const peA = measurements['potential_energy'] ?? 0;
@@ -158,9 +177,12 @@ export class GraphPanel {
     this.pointsA_KE.push({ x: t, y: keA });
     this.pointsA_PE.push({ x: t, y: peA });
     this.pointsA_TE.push({ x: t, y: teA });
-    if (this.pointsA_KE.length > MAX_GRAPH_POINTS) this.pointsA_KE.shift();
-    if (this.pointsA_PE.length > MAX_GRAPH_POINTS) this.pointsA_PE.shift();
-    if (this.pointsA_TE.length > MAX_GRAPH_POINTS) this.pointsA_TE.shift();
+
+    // Truncate arrays if they exceed maxPoints
+    if (this.pointsA.length > this.maxPoints) this.pointsA.splice(0, this.pointsA.length - this.maxPoints);
+    if (this.pointsA_KE.length > this.maxPoints) this.pointsA_KE.splice(0, this.pointsA_KE.length - this.maxPoints);
+    if (this.pointsA_PE.length > this.maxPoints) this.pointsA_PE.splice(0, this.pointsA_PE.length - this.maxPoints);
+    if (this.pointsA_TE.length > this.maxPoints) this.pointsA_TE.splice(0, this.pointsA_TE.length - this.maxPoints);
 
     const dss = this.chart.data.datasets as ChartDataset<'line', Array<{ x: number; y: number }>>[];
     dss[0].data = [...this.pointsA];
@@ -174,7 +196,6 @@ export class GraphPanel {
       const t2 = measurements2['time_s'] ?? 0;
       const y2 = measurements2[this.graphKey] ?? 0;
       this.pointsB.push({ x: t2, y: y2 });
-      if (this.pointsB.length > MAX_GRAPH_POINTS) this.pointsB.shift();
       dss[1].data = [...this.pointsB];
       dss[1].label = `Set B: ${this.graphKey}`;
 
@@ -184,9 +205,13 @@ export class GraphPanel {
       this.pointsB_KE.push({ x: t2, y: keB });
       this.pointsB_PE.push({ x: t2, y: peB });
       this.pointsB_TE.push({ x: t2, y: teB });
-      if (this.pointsB_KE.length > MAX_GRAPH_POINTS) this.pointsB_KE.shift();
-      if (this.pointsB_PE.length > MAX_GRAPH_POINTS) this.pointsB_PE.shift();
-      if (this.pointsB_TE.length > MAX_GRAPH_POINTS) this.pointsB_TE.shift();
+      
+      // Truncate arrays if they exceed maxPoints
+      if (this.pointsB.length > this.maxPoints) this.pointsB.splice(0, this.pointsB.length - this.maxPoints);
+      if (this.pointsB_KE.length > this.maxPoints) this.pointsB_KE.splice(0, this.pointsB_KE.length - this.maxPoints);
+      if (this.pointsB_PE.length > this.maxPoints) this.pointsB_PE.splice(0, this.pointsB_PE.length - this.maxPoints);
+      if (this.pointsB_TE.length > this.maxPoints) this.pointsB_TE.splice(0, this.pointsB_TE.length - this.maxPoints);
+      
       dss[5].data = [...this.pointsB_KE];
       dss[6].data = [...this.pointsB_PE];
       dss[7].data = [...this.pointsB_TE];

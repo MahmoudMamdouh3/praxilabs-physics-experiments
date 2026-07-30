@@ -134,7 +134,8 @@ export class UI {
       this.physics2,
       this.engine,
       () => this.graphPanel.reset(),
-      (msg, type) => this.showToast(msg, type)
+      (msg, type) => this.showToast(msg, type),
+      (msg) => this.showModalWarning(msg)
     );
     this.controlsBar = new ControlsBar(
       this.physics,
@@ -142,7 +143,8 @@ export class UI {
       this.engine,
       this.parameterPanel,
       this.graphPanel,
-      (msg, type) => this.showToast(msg, type)
+      (msg, type) => this.showToast(msg, type),
+      (msg) => this.showModalWarning(msg)
     );
 
     // Assemble the rest of the layout
@@ -319,6 +321,71 @@ export class UI {
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
+
+  private showModalWarning(message: string): void {
+    const modalBg = el('div', {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0, 0, 0, 0.6)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '10000',
+      pointerEvents: 'auto',
+    });
+
+    const modalBox = el('div', {
+      background: TOKEN.bgSolid,
+      border: '1px solid #ff4444',
+      borderRadius: '8px',
+      padding: '24px 32px',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '16px',
+      maxWidth: '400px',
+      textAlign: 'center',
+    });
+
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size: 32px; margin-bottom: -8px;';
+    icon.textContent = '⚠️';
+    modalBox.appendChild(icon);
+
+    const msgEl = document.createElement('div');
+    msgEl.style.cssText = `font-size:14px;color:${TOKEN.textBright};font-family:${TOKEN.fontSans};line-height:1.5;`;
+    msgEl.textContent = message;
+    modalBox.appendChild(msgEl);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Acknowledge & Close';
+    closeBtn.style.cssText = `
+      margin-top: 8px;
+      background: rgba(255, 68, 68, 0.15);
+      border: 1px solid #ff4444;
+      color: #ff4444;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-family: ${TOKEN.fontSans};
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    `;
+    closeBtn.addEventListener('mouseenter', () => closeBtn.style.background = 'rgba(255, 68, 68, 0.3)');
+    closeBtn.addEventListener('mouseleave', () => closeBtn.style.background = 'rgba(255, 68, 68, 0.15)');
+    closeBtn.addEventListener('click', () => {
+      if (modalBg.parentNode) modalBg.parentNode.removeChild(modalBg);
+    });
+
+    modalBox.appendChild(closeBtn);
+    modalBg.appendChild(modalBox);
+    document.body.appendChild(modalBg);
+  }
 
   private showToast(message: string, type: 'warning' | 'info' = 'warning'): void {
     if (!this.toastContainer) return;

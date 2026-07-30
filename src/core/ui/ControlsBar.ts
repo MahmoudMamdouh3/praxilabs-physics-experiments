@@ -13,6 +13,7 @@ import type { GraphPanel } from './GraphPanel.ts';
 // ---------------------------------------------------------------------------
 
 type OnToastFn = (msg: string, type: 'warning' | 'info') => void;
+type OnModalWarningFn = (msg: string) => void;
 
 export class ControlsBar {
   /** The DOM element for the bar itself — injected into sidePanel by UI.ts */
@@ -30,6 +31,7 @@ export class ControlsBar {
   private readonly parameterPanel: ParameterPanel;
   private readonly graphPanel: GraphPanel;
   private readonly onToast: OnToastFn;
+  private readonly onModalWarning: OnModalWarningFn;
 
   constructor(
     physics: Physics,
@@ -37,7 +39,8 @@ export class ControlsBar {
     engine: Engine,
     parameterPanel: ParameterPanel,
     graphPanel: GraphPanel,
-    onToast: OnToastFn
+    onToast: OnToastFn,
+    onModalWarning: OnModalWarningFn
   ) {
     this.physics = physics;
     this.physics2 = physics2;
@@ -45,6 +48,7 @@ export class ControlsBar {
     this.parameterPanel = parameterPanel;
     this.graphPanel = graphPanel;
     this.onToast = onToast;
+    this.onModalWarning = onModalWarning;
 
     this.switcherElement = this.buildSwitcher();
     this.element = this.buildBar();
@@ -276,7 +280,7 @@ export class ControlsBar {
       tsLabel.textContent = `${val}×`;
       styleSlider(tsSlider);
       if (val === 0) {
-        this.onToast('Time scale is 0. The simulation is frozen.', 'warning');
+        this.onModalWarning('Time scale is 0. The simulation is frozen.');
       }
     });
     bar.appendChild(tsRow);

@@ -42,3 +42,6 @@ Whenever you make a code change, feature addition, or architectural modification
 - `AI_USAGE.md`
 - Inline JSDoc block comments in TypeScript files.
 Failure to keep documentation in sync with code is a violation of the agent workflow.
+
+## Planning Workflow Rule
+For any substantial, multi-file, or complex architectural changes, you MUST write an `implementation_plan.md` first and wait for the user to explicitly approve it before writing code. Trivial bug fixes, simple textual edits, and minor one-line changes do not require an implementation plan and can be executed directly.

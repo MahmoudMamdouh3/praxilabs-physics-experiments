@@ -23,6 +23,9 @@ type OnGraphResetFn = () => void;
 /** Callback type for showing a toast notification. */
 type OnToastFn = (msg: string, type: 'warning' | 'info') => void;
 
+/** Callback type for a full screen modal warning */
+type OnModalWarningFn = (msg: string) => void;
+
 export class ParameterPanel {
   /** The scrollable slot in the left panel where sliders are injected. */
   readonly paramSection: HTMLDivElement;
@@ -43,6 +46,7 @@ export class ParameterPanel {
   private readonly engine: Engine;
   private readonly onGraphReset: OnGraphResetFn;
   private readonly onToast: OnToastFn;
+  private readonly onModalWarning: OnModalWarningFn;
 
   constructor(
     physics: Physics,
@@ -50,12 +54,14 @@ export class ParameterPanel {
     engine: Engine,
     onGraphReset: OnGraphResetFn,
     onToast: OnToastFn,
+    onModalWarning: OnModalWarningFn,
   ) {
     this.physics = physics;
     this.physics2 = physics2;
     this.engine = engine;
     this.onGraphReset = onGraphReset;
     this.onToast = onToast;
+    this.onModalWarning = onModalWarning;
 
     // ── Parameter section (injected into the left panel by UI.ts) ────────────
     this.paramSection = el('div', {
@@ -289,7 +295,7 @@ export class ParameterPanel {
       styleSlider(slider);
 
       if (key === 'initialAngle' && Math.abs(val) === 180) {
-        this.onToast('180° is a singular equilibrium point; it will not oscillate normally.', 'warning');
+        this.onModalWarning('180° is a singular equilibrium point; it will not oscillate normally.');
       }
 
       if (physicsTarget === this.physics2) {
