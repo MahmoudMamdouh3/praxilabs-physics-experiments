@@ -1,4 +1,4 @@
-# Antigravity Agent Directives: Physics Experiments Suite
+# AI Agent Directives: Physics Experiments Suite
 
 ## Core Stack & Constraints
 1. **Language:** Strict TypeScript. Do not output plain JavaScript.
