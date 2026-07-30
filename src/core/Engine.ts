@@ -79,9 +79,9 @@ export class Engine {
     this.scene.background = new THREE.Color(0x0d0d0f);
 
     // Offset group for the second experiment (comparison mode).
-    // Set an X offset of 30 so both experiments sit side-by-side on the table.
+    // Use a much smaller X offset so the scene stays compact when comparing.
     this.offsetGroup2 = new THREE.Group();
-    this.offsetGroup2.position.set(30, 0, 0);
+    this.offsetGroup2.position.set(10, 0, 0);
     this.scene.add(this.offsetGroup2);
 
     // ── Camera ───────────────────────────────────────────────────────────────
@@ -112,9 +112,9 @@ export class Engine {
     // ── OrbitControls ─────────────────────────────────────────────────────────
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
-    // Focus slightly below the pivot so a mid-length pendulum (4–6 m) sits
-    // centred in the viewport rather than the origin being at the top of frame.
-    this.controls.target.set(0, -3, 0);
+    // Focus slightly below the pivot so a mid-length pendulum sits centred
+    // in the viewport rather than the origin being at the top of frame.
+    this.controls.target.set(0, -1, 0);
 
     // Smooth deceleration — requires controls.update() every render frame.
     this.controls.enableDamping = true;
@@ -131,10 +131,9 @@ export class Engine {
       RIGHT: THREE.MOUSE.ROTATE
     };
 
-    // Zoom bounds: minDistance=6 keeps the camera outside the bob geometry.
-    // maxDistance=30 is enough to frame a 10 m pendulum with the UI panels clear.
-    this.controls.minDistance = 6;
-    this.controls.maxDistance = 300;
+    // Zoom bounds: reduce min/max so users cannot zoom out into a giant empty scene.
+    this.controls.minDistance = 1;
+    this.controls.maxDistance = 50;
 
     // Lock horizontal (azimuth) rotation to 0 — experiments are 2D (XY plane).
     this.controls.minAzimuthAngle = 0;
@@ -146,8 +145,8 @@ export class Engine {
 
     // ── Bounded Panning (Task 32) ─────────────────────────────────────────────
     // Prevent the user from dragging the camera completely off the lab table.
-    const minPan = new THREE.Vector3(-20, -10, -10);
-    const maxPan = new THREE.Vector3(50, 20, 10);
+    const minPan = new THREE.Vector3(-10, -5, -5);
+    const maxPan = new THREE.Vector3(20, 10, 5);
 
     this.controls.addEventListener('change', () => {
       this.controls.target.clamp(minPan, maxPan);
@@ -169,10 +168,10 @@ export class Engine {
     this.directionalLight.shadow.mapSize.set(2048, 2048);
     this.directionalLight.shadow.camera.near = 0.5;
     this.directionalLight.shadow.camera.far = 100;
-    this.directionalLight.shadow.camera.left = -30;
-    this.directionalLight.shadow.camera.right = 30;
-    this.directionalLight.shadow.camera.top = 30;
-    this.directionalLight.shadow.camera.bottom = -30;
+    this.directionalLight.shadow.camera.left = -15;
+    this.directionalLight.shadow.camera.right = 15;
+    this.directionalLight.shadow.camera.top = 15;
+    this.directionalLight.shadow.camera.bottom = -15;
     this.directionalLight.shadow.bias = -0.0005;
     this.directionalLight.target.position.set(0, 0, 0);
     this.scene.add(this.directionalLight.target);
@@ -183,33 +182,33 @@ export class Engine {
     this.scene.add(fillLight);
 
     // ── Laboratory Table ───────────────────────────────────────────────────
-    const tableGeometry = new THREE.BoxGeometry(200, 4, 40);
+    const tableGeometry = new THREE.BoxGeometry(20, 2, 8);
     const tableMaterial = new THREE.MeshStandardMaterial({
       color: 0x222630,
       roughness: 0.5,
       metalness: 0.2,
     });
     const tableMesh = new THREE.Mesh(tableGeometry, tableMaterial);
-    tableMesh.position.set(0, -2, 0);
+    tableMesh.position.set(0, -1, 0);
     tableMesh.receiveShadow = true;
     this.scene.add(tableMesh);
 
-    const gridHelper = new THREE.GridHelper(200, 200, 0x22aaff, 0x333948);
+    const gridHelper = new THREE.GridHelper(20, 20, 0x22aaff, 0x333948);
     gridHelper.position.set(0, 0.01, 0);
     this.scene.add(gridHelper);
 
     const backdrop = new THREE.Mesh(
-      new THREE.BoxGeometry(180, 40, 3),
+      new THREE.BoxGeometry(30, 10, 3),
       new THREE.MeshStandardMaterial({ color: 0x11161d, roughness: 0.7, metalness: 0.2 })
     );
-    backdrop.position.set(0, 20, -24);
+    backdrop.position.set(0, 10, -12);
     this.scene.add(backdrop);
 
     const supportRack = new THREE.Mesh(
-      new THREE.BoxGeometry(16, 12, 8),
+      new THREE.BoxGeometry(6, 6, 4),
       new THREE.MeshStandardMaterial({ color: 0x1d2432, roughness: 0.4, metalness: 0.3 })
     );
-    supportRack.position.set(28, 6, -12);
+    supportRack.position.set(8, 3, -5);
     supportRack.castShadow = true;
     this.scene.add(supportRack);
 
@@ -295,8 +294,8 @@ export class Engine {
    * to a known-good viewpoint regardless of how far they have zoomed/tilted.
    */
   resetCamera(): void {
-    this.camera.position.set(0, 0, 15);
-    this.controls.target.set(0, -3, 0);
+    this.camera.position.set(0, 1, 8);
+    this.controls.target.set(0, -1, 0);
     this.controls.update();
   }
 
@@ -305,9 +304,9 @@ export class Engine {
    */
   setCompareCameraView(enabled: boolean): void {
     if (enabled) {
-      // Center between x=0 and x=30, and pull back to see both.
-      this.camera.position.set(15, 0, 35);
-      this.controls.target.set(15, -3, 0);
+      // Center between the two experiments and pull back to see both.
+      this.camera.position.set(5, 1, 12);
+      this.controls.target.set(5, -1, 0);
     } else {
       this.resetCamera();
     }

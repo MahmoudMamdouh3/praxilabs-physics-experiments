@@ -42,6 +42,16 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] Fix Compare Mode 3D Spacing (camera doesn't show the second experiment).
 - [x] Fix Compare Mode Execution (Play/Pause/Reset don't work for the second experiment).
 - [x] Fix Compare Mode UI Overflow (Parameter panel overflows off the bottom of the screen).
+- [x] document exact testing done
+- [x] make the csv export more ui/ux friendly --> i need the document to be more explanatory rather than lots of numbers
+- [x] can i make the ui panels expandable and also collapsible? to save space if i wanted to?
+- [x] Reset button should reset both experiments in the comparing mode
+- [x] i need to notify the user that comparison mode is still under development because it has many features yet to be implemented and many bugs too
+- [x] why the oscillations panel in the spring mass system experiment is placed in a different location than the other experiments? i want it to be identical in the spacing
+- [x] the live readouts panel is placed in a wrong position, it is out of the browser window rather than using the same padding and dimensions as the other panels
+- [x] i must check that the entire UI is consistent
+- [x] i need to mention that the system architecture diagram is also still under development and i should update it later
+- can i put a small demo in the readme? to make it more professional and also for faster understanding of the system
 
 
 

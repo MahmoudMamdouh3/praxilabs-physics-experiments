@@ -2,6 +2,8 @@
 
 This document provides a comprehensive overview of the PraxiLabs Physics Engine's architecture, detailing the strict decoupling between the 3D rendering loop, the physics state, the UI layer, and the dynamic experiment modules.
 
+> Note: This architecture document is still under active development and will be refined further as the project evolves.
+
 ## High-Level Data Flow & Control Loop
 
 The core principle of this engine is a **Zero-Touch Core** with a strictly separated physics accumulator and render loop.

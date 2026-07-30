@@ -264,21 +264,16 @@ export class Pendulum implements IExperiment {
     // ── Stand / Crane ────────────────────────────────────────────────────────
     this.pivot = new THREE.Group();
     
-    // Vertical Pole
-    const poleGeo = new THREE.CylinderGeometry(0.15, 0.15, 12);
+    // Horizontal Arm and Pivot Mount (floating)
     const metalMat = new THREE.MeshStandardMaterial({
       color: 0x556677, metalness: 0.8, roughness: 0.2
     });
-    const pole = new THREE.Mesh(poleGeo, metalMat);
-    pole.position.set(-2, 6, -1); // Off to the left and back
-    pole.castShadow = true;
-    this.pivot.add(pole);
 
-    // Horizontal Arm
+    // Horizontal Arm (rod) — left in world space so the assembly appears to float
     const armGeo = new THREE.CylinderGeometry(0.1, 0.1, 4);
     const arm = new THREE.Mesh(armGeo, metalMat);
     arm.rotation.z = Math.PI / 2;
-    arm.position.set(-0.5, 12, -1);
+    arm.position.set(0, 12, 0);
     arm.castShadow = true;
     this.pivot.add(arm);
 
@@ -289,6 +284,7 @@ export class Pendulum implements IExperiment {
     mount.castShadow = true;
     this.pivot.add(mount);
 
+    // Add only the pivot group (arm + mount) — no ground column.
     this.scene.add(this.pivot);
 
     // Initialise positions with schema defaults so the scene is correct before

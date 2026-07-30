@@ -218,14 +218,15 @@ export class ControlsBar {
     resetBtn.addEventListener('click', () => {
       this.physics.reset();
       this.graphPanel.reset();
-      
+
       const exp = this.engine.getActiveExperiment();
       if (exp) {
         const defaults: Record<string, number> = {};
         for (const [k, s] of Object.entries(exp.schema)) defaults[k] = s.default;
         this.physics.setParams(defaults);
+        exp.reset(this.physics.currentParams);
       }
-      
+
       if (this._compareMode) {
         this.physics2.reset();
         const exp2 = this.engine.getActiveExperiment2();
@@ -233,9 +234,10 @@ export class ControlsBar {
           const defaults2: Record<string, number> = {};
           for (const [k, s] of Object.entries(exp2.schema)) defaults2[k] = s.default;
           this.physics2.setParams(defaults2);
+          exp2.reset(this.physics2.currentParams);
         }
       }
-      
+
       if (exp) {
         this.parameterPanel.buildPanel(exp.schema, this._compareMode);
       }
@@ -277,6 +279,7 @@ export class ControlsBar {
         compareBtn.style.background = 'rgba(255,153,0,0.18)';
         compareBtn.style.borderColor = '#ff9900';
         compareBtn.textContent = '⚖ Comparing';
+        this.onModalWarning('Comparison mode is still under active development and may have incomplete behaviour.');
 
         const activeEntry = EXPERIMENT_REGISTRY.find(
           (e) => e.id === (this.engine.getActiveExperiment()?.id ?? '')
@@ -373,6 +376,16 @@ export class ControlsBar {
       this.physics.setParams(defaults);
       exp.reset(this.physics.currentParams);
 
+      if (this._compareMode) {
+        const exp2 = this.engine.getActiveExperiment2();
+        if (exp2) {
+          const defaults2: Record<string, number> = {};
+          for (const [k, s] of Object.entries(exp2.schema)) defaults2[k] = s.default;
+          this.physics2.setParams(defaults2);
+          exp2.reset(this.physics2.currentParams);
+        }
+      }
+
       this.parameterPanel.buildPanel(exp.schema, this._compareMode);
 
       this.graphPanel.reset();
@@ -381,7 +394,10 @@ export class ControlsBar {
       this.physics.reset();
       this.physics.pause();
       this.physics.setTimeScale(1);
-      
+      this.physics2.reset();
+      this.physics2.pause();
+      this.physics2.setTimeScale(1);
+
       pauseBtn.textContent = '▶ Play';
       tsSlider.value = '1';
       tsLabel.textContent = '1×';

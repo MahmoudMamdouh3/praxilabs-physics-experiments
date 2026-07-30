@@ -161,13 +161,16 @@ export class UI {
       display: 'flex',
       flexDirection: 'column',
       gap: '12px',
-      width: '240px',
+      width: 'min(260px, calc(100vw - 32px))',
+      maxWidth: '260px',
       pointerEvents: 'none',
       zIndex: '10',
     });
 
     // Make children interactive
     this.parameterPanel.readoutsPanel.style.pointerEvents = 'auto';
+    this.parameterPanel.readoutsPanel.style.width = '100%';
+    this.parameterPanel.readoutsPanel.style.boxSizing = 'border-box';
     rightPanel.appendChild(this.parameterPanel.readoutsPanel);
 
     // ── Settings Panel ────────────────────────────────────────────────────────

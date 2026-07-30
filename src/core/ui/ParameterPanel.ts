@@ -71,7 +71,8 @@ export class ParameterPanel {
 
     // ── Right-side readouts panel ─────────────────────────────────────────────
     this.readoutsPanel = el('div', {
-      width: '240px',
+      width: '100%',
+      maxWidth: '260px',
       padding: '14px 16px',
       background: TOKEN.bg,
       backdropFilter: TOKEN.panelBlur,
@@ -79,6 +80,7 @@ export class ParameterPanel {
       borderRadius: TOKEN.radius,
       boxShadow: TOKEN.shadow,
       pointerEvents: 'none',
+      boxSizing: 'border-box',
     });
 
     this.readoutsHeading = document.createElement('div');
