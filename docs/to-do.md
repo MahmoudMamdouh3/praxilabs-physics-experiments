@@ -27,12 +27,12 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] in the spring mass experment the spring moves past the top base , it goes through it litterly, is that normal ? 
 - [x] i need to work on the polishment of the 3d shapes of the experiments item, becuase they all looks ugly
 - [] i want to able to zoom out and in the measurement graph, because the default one is very zoomed in and it looks like as if it is moving very fast 
-- [] the measurement gragh is overlapped with the camer controls panels , i need the camera controls guide panel to be under the live readoutpanels
-- [] i need to be able to control the font size on the fly, but also to be bounded so i do not break the front end
+- [x] the measurement gragh is overlapped with the camer controls panels , i need the camera controls guide panel to be under the live readoutpanels
+- [x] i need to be able to control the font size on the fly, but also to be bounded so i do not break the front end
 - [] i need the panning to bounded to an area i set myself, because now i can pan outside the entire scene 
-- [] i do not want the reset button to reset the theme , i want the theme to be the same does not change by the rest button, i want it also to be under the live readouts panel. 
+- [x] i do not want the reset button to reset the theme , i want the theme to be the same does not change by the rest button, i want it also to be under the live readouts panel. 
 - [] the entire scene dimensions is faulty, it is gigantic compared to the experiment place , you produced absolute bad madness, you really did , you did not measure anything and the scene is a messs as if a blind man set it up . the spring starts from undeerr the floor and goes through it, 
-- [] i do not wanted the word speed when controlling time , scale i want it to be "time scale"
+- [x] i do not wanted the word speed when controlling time , scale i want it to be "time scale"
 - [] i need to be able to control the number of osciliation i need to count, also when that number is reach the xperiment should pause itself 
 - []  the warrning i get when i change the angle to 180 or when i set speed to 0 is overlapping wioth osicilation panel i need the warning to be larger, the appear in the middle of the screen, and to be still there auntill the user clicks X on them. 
 - [] if the ball stops because of the damping coffeicent or pecause of anything , i need to have some logic for that, i need the osicilations counter to stop after a while to let the user know it is not osciliating because of bla bla becuase now it continues counting even though the ball is not moving 

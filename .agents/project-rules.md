@@ -30,9 +30,10 @@ For `<select>` elements specifically: do NOT attempt visual click-based interact
 Hard rule: if any single interaction step fails to produce the expected DOM/visual change after 2 attempts, STOP retrying variations of the same approach. Switch strategy entirely (e.g., move from click-based to JS-eval-based interaction). Never spend more than 5 tool calls total attempting to locate or interact with a single element.
 
 ## Git & GitHub Workflow Rule
-1. **Proactive Commits:** Whenever you finish a logical chunk of work (e.g., completing a feature, fixing a bug, or finishing an implementation plan phase), you MUST proactively propose a `git add . && git commit` command using the `run_command` tool. Do not wait for the user to ask you to commit.
-2. **Approval Gate:** By using the `run_command` tool, the system will naturally pause and wait for the user to approve the execution, satisfying the user's requirement to retain responsibility and oversight over repository history.
-3. **Commit Formatting:** Commit messages must **always** use bullet points for longer descriptions to maintain readability (e.g., `- Added feature X\n- Fixed issue Y`).
+1. **Show Commit Message First:** Whenever you finish a logical chunk of work, you MUST first show the proposed commit message (using bullet points) in the chat.
+2. **Explicit Yes/No:** You MUST explicitly ask the user for a "yes" or "no" to commit.
+3. **Execution:** ONLY after the user explicitly answers "yes", use the `run_command` tool to execute `git add . && git commit`.
+4. **Commit Formatting:** Commit messages must **always** use bullet points for longer descriptions to maintain readability (e.g., `- Added feature X\n- Fixed issue Y`).
 
 ## Documentation Synchronization Rule
 Whenever you make a code change, feature addition, or architectural modification, you MUST actively evaluate if that change affects existing documentation. Before considering a task complete or proposing a git commit, you must ensure all relevant documents are updated to reflect the new state of the project. This includes, but is not limited to:

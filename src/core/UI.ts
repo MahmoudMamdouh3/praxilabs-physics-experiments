@@ -149,9 +149,111 @@ export class UI {
     sidePanel.appendChild(this.controlsBar.switcherElement);
     sidePanel.appendChild(this.controlsBar.element);
     sidePanel.appendChild(this.parameterPanel.paramSection);
+    // ── Right Panel Container ────────────────────────────────────────────────
+    const rightPanel = el('div', {
+      position: 'absolute',
+      top: '56px',
+      right: '16px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      width: '240px',
+      pointerEvents: 'none',
+      zIndex: '10',
+    });
+
+    // Make children interactive
+    this.parameterPanel.readoutsPanel.style.pointerEvents = 'auto';
+    rightPanel.appendChild(this.parameterPanel.readoutsPanel);
+
+    // ── Settings Panel ────────────────────────────────────────────────────────
+    const settingsPanel = el('div', {
+      padding: '12px 16px',
+      background: TOKEN.bg,
+      backdropFilter: TOKEN.panelBlur,
+      border: TOKEN.border,
+      borderRadius: TOKEN.radius,
+      boxShadow: TOKEN.shadow,
+      pointerEvents: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px'
+    });
+    settingsPanel.innerHTML = `<div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;letter-spacing:1px;">Settings</div>`;
+
+    // Theme Selector
+    const themeWrapper = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center' });
+    const themeLabel = el('span', { fontSize: '11px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
+    themeLabel.textContent = 'Theme:';
     
-    this.shell.appendChild(this.parameterPanel.readoutsPanel);
-    this.shell.appendChild(this.graphPanel.element);
+    const themeSelect = document.createElement('select');
+    themeSelect.style.cssText = `
+      background:transparent; color:${TOKEN.textBright};
+      border:1px solid rgba(255,255,255,0.2); border-radius:4px;
+      font-size:11px; font-family:${TOKEN.fontSans};
+      padding:4px 8px; cursor:pointer; outline:none;
+      max-width: 130px;
+    `;
+    const themes = [
+      { val: 'default', name: 'Sci-Fi Dark' },
+      { val: 'light', name: 'Clean Light' },
+      { val: 'hc-dark', name: 'High Contrast Dark' },
+      { val: 'hc-light', name: 'High Contrast Light' },
+      { val: 'protanopia', name: 'Protanopia Safe' },
+      { val: 'deuteranopia', name: 'Deuteranopia Safe' },
+      { val: 'tritanopia', name: 'Tritanopia Safe' },
+      { val: 'solarized-dark', name: 'Solarized Dark' },
+      { val: 'solarized-light', name: 'Solarized Light' },
+      { val: 'monokai', name: 'Monokai' },
+    ];
+    for (const t of themes) {
+      const opt = document.createElement('option');
+      opt.value = t.val;
+      opt.textContent = t.name;
+      opt.style.background = '#0d0e12';
+      opt.style.color = '#fff';
+      themeSelect.appendChild(opt);
+    }
+    const savedTheme = localStorage.getItem('praxilabs-theme') || 'default';
+    document.body.dataset.theme = savedTheme;
+    themeSelect.value = savedTheme;
+    themeSelect.addEventListener('change', () => {
+      document.body.dataset.theme = themeSelect.value;
+      localStorage.setItem('praxilabs-theme', themeSelect.value);
+    });
+    
+    themeWrapper.appendChild(themeLabel);
+    themeWrapper.appendChild(themeSelect);
+    settingsPanel.appendChild(themeWrapper);
+
+    // UI Scale Slider
+    const scaleWrapper = el('div', { display: 'flex', alignItems: 'center', gap: '8px' });
+    const scaleLabel = el('span', { fontSize: '11px', color: TOKEN.textMuted, fontFamily: TOKEN.fontSans });
+    scaleLabel.textContent = 'UI Scale:';
+    
+    const scaleSlider = document.createElement('input');
+    scaleSlider.type = 'range';
+    scaleSlider.min = '0.8';
+    scaleSlider.max = '1.5';
+    scaleSlider.step = '0.1';
+    scaleSlider.value = '1.0';
+    scaleSlider.style.flex = '1';
+    scaleSlider.style.minWidth = '0';
+    // Use the styleSlider logic inline since it's hard to import if not exported? Wait, we can import styleSlider from tokens.ts.
+    // I see styleSlider is imported at the top of UI.ts? No, let's check UI.ts imports.
+    // I'll just apply basic styles to make it safe.
+    scaleSlider.style.cssText = `flex:1; min-width:0; accent-color:${TOKEN.accent};`;
+    
+    scaleSlider.addEventListener('input', (e) => {
+      const val = (e.target as HTMLInputElement).value;
+      (this.shell as any).style.zoom = val;
+    });
+    
+    scaleWrapper.appendChild(scaleLabel);
+    scaleWrapper.appendChild(scaleSlider);
+    settingsPanel.appendChild(scaleWrapper);
+    
+    rightPanel.appendChild(settingsPanel);
 
     // ── Camera controls hint ─────────────────────────────────────────────────
     const camHint = el('div', {
@@ -161,6 +263,7 @@ export class UI {
       border: TOKEN.border,
       borderRadius: TOKEN.radius,
       boxShadow: TOKEN.shadow,
+      pointerEvents: 'auto',
     });
     camHint.innerHTML = `
       <div style="font-size:10px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">Camera Controls</div>
@@ -169,7 +272,10 @@ export class UI {
         <b style="color:${TOKEN.textBright};">Scroll Wheel</b>: Zoom In / Out
       </div>
     `;
-    sidePanel.appendChild(camHint);
+    rightPanel.appendChild(camHint);
+
+    this.shell.appendChild(rightPanel);
+    this.shell.appendChild(this.graphPanel.element);
 
     // ── Toast Container ───────────────────────────────────────────────────────
     this.toastContainer = el('div', {

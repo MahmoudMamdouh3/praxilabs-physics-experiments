@@ -66,9 +66,6 @@ export class ParameterPanel {
 
     // ── Right-side readouts panel ─────────────────────────────────────────────
     this.readoutsPanel = el('div', {
-      position: 'absolute',
-      top: '56px',
-      right: '16px',
       width: '240px',
       padding: '14px 16px',
       background: TOKEN.bg,

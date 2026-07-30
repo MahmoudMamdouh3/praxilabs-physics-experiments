@@ -234,56 +234,6 @@ export class ControlsBar {
     });
     bar.appendChild(compareBtn);
 
-    // ── Theme Selector ────────────────────────────────────────────────────────
-    const themeWrapper = document.createElement('div');
-    themeWrapper.style.cssText = `display:flex; align-items:center; gap:6px; margin-left:auto;`;
-
-    const themeLabel = document.createElement('span');
-    themeLabel.textContent = 'Theme:';
-    themeLabel.style.cssText = `font-size:11px; color:${TOKEN.textMuted}; font-family:${TOKEN.fontSans};`;
-    themeWrapper.appendChild(themeLabel);
-
-    const themeSelect = document.createElement('select');
-    themeSelect.style.cssText = `
-      background:transparent; color:${TOKEN.textBright};
-      border:1px solid rgba(255,255,255,0.2); border-radius:4px;
-      font-size:11px; font-family:${TOKEN.fontSans};
-      padding:4px 8px; cursor:pointer; outline:none;
-    `;
-
-    const themes = [
-      { val: 'default', name: 'Sci-Fi Dark' },
-      { val: 'light', name: 'Clean Light' },
-      { val: 'hc-dark', name: 'High Contrast Dark' },
-      { val: 'hc-light', name: 'High Contrast Light' },
-      { val: 'protanopia', name: 'Protanopia Safe' },
-      { val: 'deuteranopia', name: 'Deuteranopia Safe' },
-      { val: 'tritanopia', name: 'Tritanopia Safe' },
-      { val: 'solarized-dark', name: 'Solarized Dark' },
-      { val: 'solarized-light', name: 'Solarized Light' },
-      { val: 'monokai', name: 'Monokai' },
-    ];
-
-    for (const t of themes) {
-      const opt = document.createElement('option');
-      opt.value = t.val;
-      opt.textContent = t.name;
-      opt.style.background = '#0d0e12';
-      opt.style.color = '#fff';
-      themeSelect.appendChild(opt);
-    }
-
-    themeWrapper.appendChild(themeSelect);
-    bar.appendChild(themeWrapper);
-
-    const savedTheme = localStorage.getItem('praxilabs-theme') || 'default';
-    document.body.dataset.theme = savedTheme;
-    themeSelect.value = savedTheme;
-
-    themeSelect.addEventListener('change', () => {
-      document.body.dataset.theme = themeSelect.value;
-      localStorage.setItem('praxilabs-theme', themeSelect.value);
-    });
 
     // ── Time-scale row ─────────────────────────────────────────────────────────
     const tsRow = el('div', {
@@ -298,7 +248,7 @@ export class ControlsBar {
 
     const tsStaticLabel = document.createElement('span');
     tsStaticLabel.style.cssText = `font-size:10px;color:${TOKEN.textMuted};font-family:${TOKEN.fontMono};white-space:nowrap;flex-shrink:0;`;
-    tsStaticLabel.textContent = 'Speed:';
+    tsStaticLabel.textContent = 'Time Scale:';
     tsRow.appendChild(tsStaticLabel);
 
     const tsSlider = document.createElement('input');
@@ -354,10 +304,6 @@ export class ControlsBar {
       tsSlider.value = '1';
       tsLabel.textContent = '1×';
       styleSlider(tsSlider);
-
-      themeSelect.value = 'default';
-      document.body.dataset.theme = 'default';
-      localStorage.removeItem('praxilabs-theme');
 
       this.engine.resetCamera();
     });
