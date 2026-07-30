@@ -28,7 +28,7 @@ Called exactly once when the user selects your experiment.
 - **Rule:** Do NOT create a `THREE.Scene`, `THREE.Camera`, or `THREE.WebGLRenderer`. The engine owns the master scene. You simply create your `THREE.Mesh` objects and `scene.add()` them to the provided scene.
 
 #### B. `update(dt: number, params: Record<string, number>)`
-This is the **math loop**. It runs on a fixed physics timestep (Semi-Implicit Euler), decoupled from the monitor's refresh rate.
+This is the **math loop**. It runs on a fixed physics timestep, decoupled from the monitor's refresh rate. By default, it is recommended to use the swappable `Integrator.ts` architecture to solve your derivatives (e.g., RK4, Semi-Implicit Euler), but you may also run custom math loops inline here.
 - **Rule:** Do NOT mutate Three.js objects (like `mesh.position`) inside `update()`.
 - **Rule:** Mutate only internal math variables (e.g., `this.theta`, `this.velocity`).
 - **Rule:** `dt` is provided in seconds. `params` provides the current slider values (already clamped to your schema bounds).

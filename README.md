@@ -35,8 +35,11 @@ The platform is built on a **Modular Plugin Architecture** that utilizes the **S
 *   **3D Engine:** Three.js.
 *   **Graphing:** Chart.js is used for plotting real-time 2D measurement data with high-DPI canvas scaling.
 *   **Testing:** Vitest for isolated testing of pure physics functions.
-*   **Physics Integrator:** Semi-Implicit Euler. 
-    *   *Justification:* Explicit Euler is inherently unstable for oscillating systems (like springs and pendulums) because mathematical errors accumulate, adding artificial energy to the system. Semi-Implicit Euler calculates the new velocity first, then uses it to calculate position. It is computationally lightweight, simple to implement, and symplectic (it naturally conserves energy in oscillating systems), making it ideal for this scope.
+*   **Physics Integrators:** A swappable `IIntegrator` module (`src/core/Integrator.ts`) supports:
+    *   **Semi-Implicit Euler (Default):** Symplectic, conserves energy in oscillating systems.
+    *   **Explicit Euler:** Included for educational comparison (demonstrates energy divergence).
+    *   **Runge-Kutta 4 (RK4):** High-precision 4th-order method for complex trajectories.
+*   **Physics Audit:** The engine has undergone a rigorous, mathematically verified audit covering dimensional analysis, conservation laws, and frame-rate independence (see `PHYSICS_AUDIT.md`).
 
 ## Project Structure
 ```text
@@ -64,12 +67,11 @@ npx tsc --noEmit
 npm test
 ```
 
-These checks confirm the TypeScript build is clean and the Vitest physics tests pass. The current automated suite covers the fixed-timestep accumulator, pendulum integration, and the core experiment workflow.
+These checks confirm the TypeScript build is clean and the Vitest physics tests pass. The automated suite (`tests/physics-audit.test.ts`) covers fixed-timestep accumulation, exact mathematical integration convergence (RK4 vs Euler), symplectic energy bounds, and invariant physics conditions.
 
 ### Audit Notes
-This pass re-checked the original tracker items against the running UI and physics experience. The current build includes collapsible panels, richer CSV export output, clearer hover guidance, and a more defined lab backdrop so the workspace feels closer to a polished interactive lab than a bare prototype.
+A rigorous mathematical physics audit has been performed on this engine. See the `PHYSICS_AUDIT.md` file in the repository root for the exact numeric results proving stability, symplectic energy bounds, and convergence order across all experiments.
 
 ## Known Limitations & Future Work
-If I had more time outside of the 2-3 day timebox, I would implement the following:
-1.  **Runge-Kutta 4 (RK4) Integrator Option:** While Semi-Implicit Euler is fantastic for energy conservation in simple oscillators, an RK4 integration option would provide higher baseline precision for more complex, non-linear chaotic systems (like a double pendulum).
-2.  **Advanced 3D Interactivity:** Currently, the parameter schema completely drives the physics state. I would add `THREE.Raycaster` support so users could click and drag the pendulum bob or spring mass directly in the 3D canvas to set the initial displacement, which would natively bi-directionally sync back to the HTML sliders.
+If I had more time outside of the initial timebox, I would implement the following:
+1.  **Advanced 3D Interactivity:** Currently, the parameter schema completely drives the physics state. I would add `THREE.Raycaster` support so users could click and drag the pendulum bob or spring mass directly in the 3D canvas to set the initial displacement, which would natively bi-directionally sync back to the HTML sliders.

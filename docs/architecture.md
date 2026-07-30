@@ -31,6 +31,7 @@ flowchart LR
     subgraph Experiments
         IExp{{IExperiment}}
         Impl[Pendulum / Projectile / Spring]
+        Integrator{{IIntegrator}}
     end
 
     %% Bootstrapping
@@ -53,7 +54,10 @@ flowchart LR
     Controls -->|Set Camera| Engine
 
     Impl -.->|Implements| IExp
+    Impl -->|Uses| Integrator
 ```
+
+*(Note: The Comparison Mode module and Integrator architectures are experimental and currently under development.)*
 
 ## Component Breakdown
 
@@ -72,9 +76,14 @@ flowchart LR
 - **Compare Mode:** When active, `ParameterPanel` generates two distinct panels (Set A and Set B), and routes their inputs to `physics` and `physics2` respectively.
 
 ### 4. Experiments (`IExperiment.ts` & Implementations)
-- **Responsibility:** Defines the mathematical model, numerical integrator (e.g., Semi-Implicit Euler), and the 3D meshes for a specific phenomenon.
+- **Responsibility:** Defines the mathematical model, numerical integrator (e.g., Semi-Implicit Euler, RK4), and the 3D meshes for a specific phenomenon.
 - **Contract:** Must define a `schema` detailing what parameters it accepts. Must implement `setup(scene)`, `render()`, `dispose()`, and `getMeasurements()`.
 - **Extensibility:** Adding a new experiment requires creating a single file that implements `IExperiment` and calling `registerExperiment()` in `main.ts`. No core files ever need modification.
+
+### 5. Integrators (`Integrator.ts`)
+- **Responsibility:** Abstract mathematical engines that solve the differential equations defined by the experiments over time.
+- **Implementations:** Semi-Implicit Euler (Symplectic, default), Explicit Euler (Divergent, for education), and RK4 (4th-order high precision).
+- **Architecture:** Experiments define their `derivative()` functions and pass them to the selected `IIntegrator` module every frame, allowing users to hot-swap integration methods at runtime without touching the physical simulation logic.
 
 ## The RAF Tick Lifecycle
 Every frame, the following sequence perfectly executes:

@@ -16,6 +16,7 @@ Located on the top left of your screen:
 - **Reset:** Revert the experiment to its initial starting conditions.
 - **Theme:** Select between different color palettes (Ocean, Cyberpunk, High Contrast, etc.). Your choice is automatically saved.
 - **Download CSV:** Export all recorded data for the current session to a `.csv` file.
+- **Compare:** Spawns a second instance of the current experiment side-by-side to allow for direct comparative analysis with independent parameter controls.
 
 ---
 
@@ -58,3 +59,13 @@ The **Right Panel** displays real-time live telemetry:
 - **Live Graph:** Watch variables change over time on the oscilloscope-style graph.
 
 If you wish to do further analysis in Excel or Python, simply click **Download CSV** from the top bar!
+
+---
+
+## Advanced Settings (Experimental)
+
+### Numerical Integrator Options
+Located below the main parameter controls, you can hot-swap the mathematical engine driving the simulation:
+- **Semi-Implicit Euler (Default):** Perfectly balances stability and performance; intrinsically conserves energy over time for oscillating systems (Symplectic).
+- **Explicit Euler:** Standard academic integration method. It is highly unstable over time for oscillating systems (energy will noticeably explode). Included to demonstrate numerical divergence.
+- **Runge-Kutta 4 (RK4):** A highly precise 4th-order method ideal for complex trajectories, but computationally heavier.
