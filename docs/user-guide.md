@@ -30,7 +30,7 @@ A classical pendulum demonstrating simple harmonic motion.
 - **Gravity:** Alter the strength of gravity.
 - **Initial Angle:** Choose how high to pull the pendulum before releasing.
 
-*Tip: A virtual stopwatch tracks the elapsed time and automatically counts up to 20 oscillations.*
+*Tip: A virtual stopwatch tracks the elapsed time and automatically counts up to 20 oscillations. A dedicated period panel also shows measured period, theoretical period, and percentage difference as the motion progresses.*
 
 ### 2. Spring-Mass System
 A vertical spring following Hooke's Law with optional damping.
@@ -46,14 +46,15 @@ Fire a projectile to analyze parabolic trajectories.
 - **Gravity:** Downward pull.
 - **Air Drag Coefficient:** Introduce realistic drag. A dotted white line shows the theoretical "drag-free" path for comparison.
 
-*Tip: The simulation will automatically pause the exact moment the projectile hits the ground.*
+*Tip: The simulation will automatically pause the exact moment the projectile hits the ground. A range panel also shows predicted range before launch and actual range after landing.*
 
 ---
 
 ## Data & Measurements
 
 The **Right Panel** displays real-time live telemetry:
-- **Live Numbers:** Check exact measurements (Energy, Frequency, Time). 
+- **Live Numbers:** Check exact measurements (Energy, Frequency, Time).
+- **Experiment Readouts:** Pendulum, projectile, and spring experiments each expose dedicated comparison panels for the task-specific measurements.
 - **Live Graph:** Watch variables change over time on the oscilloscope-style graph.
 
 If you wish to do further analysis in Excel or Python, simply click **Download CSV** from the top bar!

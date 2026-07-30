@@ -43,6 +43,9 @@ Whenever you make a code change, feature addition, or architectural modification
 - Inline JSDoc block comments in TypeScript files.
 Failure to keep documentation in sync with code is a violation of the agent workflow.
 
+## Verification & Delivery Rule
+Before presenting a completed chunk, the agent must verify the change with the relevant project checks and report the exact command output. For this repository, that means running `npx tsc --noEmit` and `npm test` whenever a code change is made. If a task is delivered in chunks, each chunk must be self-contained, tested, and accompanied by a clear proposed commit message before the next chunk begins.
+
 ## Planning Workflow Rule
 For any substantial, multi-file, or complex architectural changes, you MUST write an `implementation_plan.md` first and wait for the user to explicitly approve it before writing code. Trivial bug fixes, simple textual edits, and minor one-line changes do not require an implementation plan and can be executed directly.
 

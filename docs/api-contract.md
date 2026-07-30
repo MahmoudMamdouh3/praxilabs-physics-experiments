@@ -88,3 +88,12 @@ registerExperiment('friction', 'Friction Plane', () => new FrictionPlane());
 ```
 
 By following this contract, a new experiment will effortlessly snap into the platform, automatically gaining dynamic UI controls, graphing capabilities, comparison mode support, and decoupled numerical stability.
+
+## 3. Extension Checklist
+Before considering a new experiment complete, verify the following:
+
+- The experiment implements `setup`, `update`, `render`, `reset`, `getMeasurements`, and `dispose` in the expected lifecycle order.
+- The experiment uses a parameter schema so the UI can generate controls automatically.
+- The physics state is kept separate from Three.js mesh updates, and the render loop only syncs visuals.
+- The experiment disposes all geometries, materials, and scene nodes it creates.
+- The repository still passes `npx tsc --noEmit` and `npm test` after the change.

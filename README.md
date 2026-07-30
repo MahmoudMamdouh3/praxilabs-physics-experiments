@@ -58,7 +58,7 @@ npx tsc --noEmit
 npm test
 ```
 
-These checks confirm the TypeScript build is clean and the Vitest physics tests pass. The current automated suite covers the fixed-timestep accumulator and pendulum integration behavior.
+These checks confirm the TypeScript build is clean and the Vitest physics tests pass. The current automated suite covers the fixed-timestep accumulator, pendulum integration, and the core experiment workflow.
 
 ## Known Limitations & Future Work
 If I had more time outside of the 2-3 day timebox, I would implement the following:
