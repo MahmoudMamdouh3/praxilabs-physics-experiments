@@ -32,6 +32,28 @@ export class Pendulum implements IExperiment {
   readonly description =
     'A simple pendulum demonstrating the exact (non-linear) equation of motion ' +
     'with optional damping, integrated via Semi-Implicit Euler.';
+  
+  readonly tutorialHtml = `
+    <div style="margin-bottom:16px;">
+      <h3 style="color:#22aaff; margin-top:0; margin-bottom:8px; font-size:16px; letter-spacing:1px; text-transform:uppercase;">Learning Objectives</h3>
+      <ul style="margin:0; padding-left:20px; color:#cdd2d9;">
+        <li style="margin-bottom:6px;">Understand the motion of a simple pendulum under a <strong>small angle approximation</strong>.</li>
+        <li style="margin-bottom:6px;">Introduce <strong>Simple Harmonic Motion (SHM)</strong> as an example of periodic motion.</li>
+        <li style="margin-bottom:6px;">Analyze the mathematical relationship between physical pendulum motion and theoretical SHM.</li>
+      </ul>
+    </div>
+    
+    <div>
+      <h3 style="color:#22aaff; margin-top:0; margin-bottom:8px; font-size:16px; letter-spacing:1px; text-transform:uppercase;">Procedure</h3>
+      <ol style="margin:0; padding-left:20px; color:#cdd2d9;">
+        <li style="margin-bottom:6px;">Adjust the Pendulum Length to your desired starting point (e.g., <strong>2.00 m</strong>).</li>
+        <li style="margin-bottom:6px;">Set the Initial Angle. For the small angle approximation to hold, keep it under <strong>15°</strong>.</li>
+        <li style="margin-bottom:6px;">The simulation will count exactly <strong>20 complete oscillations</strong> (A → B → A).</li>
+        <li style="margin-bottom:6px;">Once 20 laps are reached, the system will automatically pause and log the theoretical vs measured period.</li>
+        <li style="margin-bottom:6px;">Click <strong>Download CSV</strong> to record your results, then repeat with different lengths.</li>
+      </ol>
+    </div>
+  `;
 
   // ── Parameter schema ──────────────────────────────────────────────────────
 

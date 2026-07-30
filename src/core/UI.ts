@@ -30,6 +30,8 @@ export class UI {
   private readonly physics: Physics;
   private readonly physics2: Physics;
   private readonly engine: Engine;
+  
+  private hasWarnedViewport: boolean = false;
 
   constructor(
     physics: Physics,
@@ -144,7 +146,8 @@ export class UI {
       this.parameterPanel,
       this.graphPanel,
       (msg, type) => this.showToast(msg, type),
-      (msg) => this.showModalWarning(msg)
+      (msg) => this.showModalWarning(msg),
+      (title, contentHtml) => this.showHelpModal(title, contentHtml)
     );
 
     // Assemble the rest of the layout
@@ -279,6 +282,9 @@ export class UI {
     this.shell.appendChild(rightPanel);
     this.shell.appendChild(this.graphPanel.element);
 
+    this.checkViewportSize();
+    window.addEventListener('resize', () => this.checkViewportSize());
+
     // ── Toast Container ───────────────────────────────────────────────────────
     this.toastContainer = el('div', {
       position: 'absolute',
@@ -321,6 +327,71 @@ export class UI {
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
+
+  private showHelpModal(title: string, contentHtml: string): void {
+    const modalBg = el('div', {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0, 0, 0, 0.7)',
+      backdropFilter: 'blur(10px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '10000',
+      pointerEvents: 'auto',
+    });
+
+    const modalBox = el('div', {
+      background: TOKEN.bgSolid,
+      border: TOKEN.borderAccent,
+      borderRadius: '8px',
+      padding: '24px 32px',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+      maxWidth: '600px',
+      maxHeight: '80vh',
+      overflowY: 'auto',
+    });
+
+    const header = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center' });
+    const titleEl = el('div', { fontSize: '18px', fontWeight: '600', color: TOKEN.accent, fontFamily: TOKEN.fontSans });
+    titleEl.textContent = title;
+    
+    const closeIcon = document.createElement('button');
+    closeIcon.innerHTML = '&times;';
+    closeIcon.style.cssText = `
+      background: transparent; border: none; color: ${TOKEN.textMuted}; font-size: 24px;
+      cursor: pointer; padding: 0; line-height: 1; outline: none;
+    `;
+    closeIcon.addEventListener('click', () => {
+      if (modalBg.parentNode) modalBg.parentNode.removeChild(modalBg);
+    });
+
+    header.appendChild(titleEl);
+    header.appendChild(closeIcon);
+    modalBox.appendChild(header);
+
+    const contentBox = document.createElement('div');
+    contentBox.style.cssText = `font-size:14px;color:${TOKEN.textBright};font-family:${TOKEN.fontSans};line-height:1.6;`;
+    contentBox.innerHTML = contentHtml;
+    modalBox.appendChild(contentBox);
+
+    modalBg.appendChild(modalBox);
+    
+    // Close on clicking outside
+    modalBg.addEventListener('click', (e) => {
+      if (e.target === modalBg) {
+        if (modalBg.parentNode) modalBg.parentNode.removeChild(modalBg);
+      }
+    });
+
+    document.body.appendChild(modalBg);
+  }
 
   private showModalWarning(message: string): void {
     const modalBg = el('div', {
@@ -417,5 +488,17 @@ export class UI {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
       }, 300);
     }, 4000);
+  }
+
+  private checkViewportSize(): void {
+    if (this.hasWarnedViewport) return;
+    
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    if (width < 1024 || height < 700) {
+      this.showToast('Window size is too small for optimal layout. Please maximize.', 'warning');
+      this.hasWarnedViewport = true; // Only warn once per session to avoid spam
+    }
   }
 }

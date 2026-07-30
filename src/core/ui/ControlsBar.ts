@@ -14,6 +14,7 @@ import type { GraphPanel } from './GraphPanel.ts';
 
 type OnToastFn = (msg: string, type: 'warning' | 'info') => void;
 type OnModalWarningFn = (msg: string) => void;
+type OnHelpModalFn = (title: string, contentHtml: string) => void;
 
 export class ControlsBar {
   /** The DOM element for the bar itself — injected into sidePanel by UI.ts */
@@ -32,6 +33,7 @@ export class ControlsBar {
   private readonly graphPanel: GraphPanel;
   private readonly onToast: OnToastFn;
   private readonly onModalWarning: OnModalWarningFn;
+  private readonly onHelpModal: OnHelpModalFn;
 
   constructor(
     physics: Physics,
@@ -40,7 +42,8 @@ export class ControlsBar {
     parameterPanel: ParameterPanel,
     graphPanel: GraphPanel,
     onToast: OnToastFn,
-    onModalWarning: OnModalWarningFn
+    onModalWarning: OnModalWarningFn,
+    onHelpModal: OnHelpModalFn
   ) {
     this.physics = physics;
     this.physics2 = physics2;
@@ -49,6 +52,7 @@ export class ControlsBar {
     this.graphPanel = graphPanel;
     this.onToast = onToast;
     this.onModalWarning = onModalWarning;
+    this.onHelpModal = onHelpModal;
 
     this.switcherElement = this.buildSwitcher();
     this.element = this.buildBar();
@@ -66,10 +70,29 @@ export class ControlsBar {
       padding: '10px 14px',
     });
 
+    const header = el('div', { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' });
     const label = document.createElement('div');
-    label.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;margin-bottom:8px;`;
+    label.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
     label.textContent = 'Experiment';
-    wrapper.appendChild(label);
+    header.appendChild(label);
+
+    const helpBtn = document.createElement('button');
+    helpBtn.textContent = '? Help';
+    helpBtn.style.cssText = `
+      background: rgba(34, 170, 255, 0.1); border: 1px solid rgba(34, 170, 255, 0.3);
+      color: ${TOKEN.accent}; border-radius: 4px; padding: 2px 6px;
+      font-size: 10px; font-family: ${TOKEN.fontMono}; cursor: pointer; outline: none;
+    `;
+    helpBtn.addEventListener('click', () => {
+      const exp = this.engine.getActiveExperiment();
+      if (exp) {
+        // Fallback content until we extract actual tutorial HTML in Chunk 3
+        const content = (exp as any).tutorialHtml || `<p>Help content for ${exp.name} has not been authored yet.</p>`;
+        this.onHelpModal(`${exp.name} - Guide`, content);
+      }
+    });
+    header.appendChild(helpBtn);
+    wrapper.appendChild(header);
 
     const select = document.createElement('select');
     select.id = 'ui-exp-switcher';

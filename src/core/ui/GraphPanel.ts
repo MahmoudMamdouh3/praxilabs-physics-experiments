@@ -73,10 +73,13 @@ export class GraphPanel {
     const header = document.createElement('div');
     header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;';
 
+    const headerLeft = document.createElement('div');
+    headerLeft.style.cssText = 'display:flex; align-items:center; gap:8px;';
+
     const graphLabel = document.createElement('div');
     graphLabel.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
     graphLabel.textContent = 'Measurement Graph';
-    header.appendChild(graphLabel);
+    headerLeft.appendChild(graphLabel);
 
     const modeSelect = document.createElement('select');
     modeSelect.id = 'graph-mode-select';
