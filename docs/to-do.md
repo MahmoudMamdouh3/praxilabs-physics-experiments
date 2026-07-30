@@ -38,10 +38,10 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] if the ball stops because of the damping coffeicent or pecause of anything , i need to have some logic for that, i need the osicilations counter to stop after a while to let the user know it is not osciliating because of bla bla becuase now it continues counting even though the ball is not moving 
 - [x] when i hover over the reset button --> i should get info that this will reset the experiment to the beggining and to the default values
 - [x] i need another ressett button for the settings panel , with a hover info too
-- [ ] Fix Graph Panel UI buttons (mode select and zoom) not working due to pointer-events.
-- [ ] Fix Compare Mode 3D Spacing (camera doesn't show the second experiment).
-- [ ] Fix Compare Mode Execution (Play/Pause/Reset don't work for the second experiment).
-- [ ] Fix Compare Mode UI Overflow (Parameter panel overflows off the bottom of the screen).
+- [x] Fix Graph Panel UI buttons (mode select and zoom) not working due to pointer-events.
+- [x] Fix Compare Mode 3D Spacing (camera doesn't show the second experiment).
+- [x] Fix Compare Mode Execution (Play/Pause/Reset don't work for the second experiment).
+- [x] Fix Compare Mode UI Overflow (Parameter panel overflows off the bottom of the screen).
 
 
 
