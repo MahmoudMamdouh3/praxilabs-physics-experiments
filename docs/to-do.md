@@ -69,6 +69,8 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
  - [x] Add Launch Direction parameter to Projectile and colorize bobs to prevent visual overlap in compare mode
  - [x] Fix Numerical Integrator select dropdown styling (background color for options)
  - [x] Update Numerical Integrator panel title to include "(Experimental)"
+ - [x] Fix Measurement Graph axis numbers rendering in black (Chart.js cannot parse CSS variables, using explicit RGBA)
+ - [x] Add "(DRAG TO MOVE)" hint to the Measurement Graph title
 
 
 

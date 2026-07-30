@@ -83,7 +83,7 @@ export class GraphPanel {
 
     const graphLabel = document.createElement('div');
     graphLabel.style.cssText = `font-size:10px;letter-spacing:2px;color:${TOKEN.accent};font-family:${TOKEN.fontMono};text-transform:uppercase;`;
-    graphLabel.textContent = 'Measurement Graph';
+    graphLabel.textContent = 'MEASUREMENT GRAPH (DRAG TO MOVE)';
     headerLeft.appendChild(graphLabel);
 
     const collapseBtn = document.createElement('button');
@@ -435,7 +435,7 @@ export class GraphPanel {
             type: 'linear',
             title: { display: false },
             ticks: {
-              color: TOKEN.textBright,
+              color: 'rgba(255, 255, 255, 0.7)', // Chart.js Canvas cannot read CSS variables
               font: { family: TOKEN.fontMono, size: 9 },
               maxTicksLimit: 6,
             },
@@ -444,7 +444,7 @@ export class GraphPanel {
           },
           y: {
             ticks: {
-              color: TOKEN.textBright,
+              color: 'rgba(255, 255, 255, 0.7)', // Chart.js Canvas cannot read CSS variables
               font: { family: TOKEN.fontMono, size: 9 },
               maxTicksLimit: 5,
             },
