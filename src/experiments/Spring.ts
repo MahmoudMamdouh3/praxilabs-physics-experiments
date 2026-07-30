@@ -168,6 +168,9 @@ export class Spring implements IExperiment {
   /** Reference to the master scene — required by dispose() to remove objects. */
   private scene: THREE.Scene | null = null;
 
+  /** HTML overlay for measured vs theoretical frequency readouts. */
+  private htmlFrequencyMetrics: HTMLDivElement | null = null;
+
   // ── IExperiment lifecycle ─────────────────────────────────────────────────
 
   setup(scene: THREE.Scene): void {
@@ -254,6 +257,32 @@ export class Spring implements IExperiment {
     });
     this.springLine = new THREE.Line(this.springGeometry, this.springMaterial);
     scene.add(this.springLine);
+
+    this.htmlFrequencyMetrics = document.createElement('div');
+    this.htmlFrequencyMetrics.style.cssText = `
+      position: absolute;
+      top: 190px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 13, 15, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(34, 170, 255, 0.45);
+      border-radius: 8px;
+      padding: 12px 18px;
+      color: #cdd2d9;
+      font-family: monospace;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+      z-index: 15;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    `;
+    this.htmlFrequencyMetrics.innerHTML = `
+      <div style="font-size:10px; letter-spacing:2px; color:#8a95a8; text-transform:uppercase; margin-bottom:4px;">Frequency Comparison</div>
+      <div id="spring-frequency-status">Waiting for a full cycle...</div>
+      <div id="spring-frequency-values" style="margin-top:4px; color:#22aaff;">Measured: -- Hz · Theoretical: -- Hz</div>
+    `;
+    document.body.appendChild(this.htmlFrequencyMetrics);
 
     // Initialise positions to schema defaults before the first physics tick.
     const defaults: Record<string, number> = {};
@@ -349,6 +378,8 @@ export class Spring implements IExperiment {
       }
       this.hasRenderedFinalLap = true;
     }
+
+    this.updateFrequencyMetricsUI();
   }
 
   /**
@@ -387,6 +418,7 @@ export class Spring implements IExperiment {
     
     const target = p['targetOscillations'] ?? 20;
     this.updateStopwatchUI(target);
+    this.updateFrequencyMetricsUI();
 
     this.currentM = params?.['mass'] ?? this.schema['mass'].default;
     this.currentK = params?.['springConstant'] ?? this.schema['springConstant'].default;
@@ -436,6 +468,10 @@ export class Spring implements IExperiment {
       if (this.springLine !== null) this.scene.remove(this.springLine);
     }
 
+    if (this.htmlFrequencyMetrics && this.htmlFrequencyMetrics.parentNode) {
+      this.htmlFrequencyMetrics.parentNode.removeChild(this.htmlFrequencyMetrics);
+    }
+
     this.anchorGeometry?.dispose();
     this.anchorMaterial?.dispose();
     this.massGeometry?.dispose();
@@ -466,6 +502,28 @@ export class Spring implements IExperiment {
     }
     if (timeEl) {
       timeEl.textContent = `${this.stopwatchTime.toFixed(2)} s`;
+    }
+  }
+
+  private updateFrequencyMetricsUI(): void {
+    if (!this.htmlFrequencyMetrics) return;
+
+    const statusEl = this.htmlFrequencyMetrics.querySelector('#spring-frequency-status');
+    const valuesEl = this.htmlFrequencyMetrics.querySelector('#spring-frequency-values');
+
+    const k = this.currentK;
+    const m = this.currentM;
+    const theoreticalFrequency = m > 0 ? Math.sqrt(k / m) / (2 * Math.PI) : 0;
+    const measuredFrequency = this.measuredPeriod > 0 ? 1 / this.measuredPeriod : 0;
+
+    if (statusEl) {
+      statusEl.textContent = this.measuredPeriod > 0
+        ? 'Measured from completed cycles'
+        : 'Waiting for a full cycle...';
+    }
+
+    if (valuesEl) {
+      valuesEl.textContent = `Measured: ${measuredFrequency > 0 ? `${measuredFrequency.toFixed(3)} Hz` : '-- Hz'} · Theoretical: ${theoreticalFrequency > 0 ? `${theoreticalFrequency.toFixed(3)} Hz` : '-- Hz'}`;
     }
   }
 
