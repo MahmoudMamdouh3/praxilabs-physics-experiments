@@ -1,7 +1,8 @@
 # Physics Experiments Suite
 
 ![PraxiLabs Physics Lab Preview](public/image.png)
-![Spring-Mass System](public/image.png)
+![Projectile Motion](public/projectile_motion.png)
+![Real Spring](public/real_spring.png)
 
 A modular, browser-based physics laboratory built with Three.js and TypeScript. This platform features a shared core framework capable of running interchangeable physics experiments seamlessly.
 

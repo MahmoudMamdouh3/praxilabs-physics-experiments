@@ -51,15 +51,15 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] the live readouts panel is placed in a wrong position, it is out of the browser window rather than using the same padding and dimensions as the other panels
 - [x] i must check that the entire UI is consistent
 - [x] i need to mention that the system architecture diagram is also still under development and i should update it later
-- [] can i put a small demo in the readme? to make it more professional and also for faster understanding of the system ? should it be a gif or what ?
-- [] i need to make the scene much much larger , because now i zoomed out to the max i can see gigantic scene that is entirely empty and that i do not need, 
-- [] the pendulum string and ball is not even attached to the dark metal standing body , they are in the wrong coordinates with resect to each other, same issue with the spring experiment. we can simplify it to use a flying top instead
-- [] i want the frequency comparison panel to be collapsle aswell
- - [] remove 'Legend' static label from measurement graph
- - [] make measurement graph size controller change both width and height (bounded)
- - [] ensure measurement graph sliders (zoom/size) are visible and styled
- - [] fix pendulum period metrics collapse so it hides/shows correctly
- - [] add theme "under development" notice in settings
+- [x] can i put a small demo in the readme? to make it more professional and also for faster understanding of the system ? should it be a gif or what ?
+- [x] i need to make the scene much much larger , because now i zoomed out to the max i can see gigantic scene that is entirely empty and that i do not need, 
+- [x] the pendulum string and ball is not even attached to the dark metal standing body , they are in the wrong coordinates with resect to each other, same issue with the spring experiment. we can simplify it to use a flying top instead
+- [x] i want the frequency comparison panel to be collapsle aswell
+ - [x] remove 'Legend' static label from measurement graph
+ - [x] make measurement graph size controller change both width and height (bounded)
+ - [x] ensure measurement graph sliders (zoom/size) are visible and styled
+ - [x] fix pendulum period metrics collapse so it hides/shows correctly
+ - [x] add theme "under development" notice in settings
 
 
 
@@ -76,7 +76,7 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] Update `.gitignore` to include standard Python ignore rules.
 - [x] Add the Python `code_dumper.py` helper utility for codebase inspection.
 - [x] Establish a commit message rule (short titles and comprehensive bullet points).
-- [ ] Ensure all `project-rules.md` constraints remain fully aligned with the assessment PDF.
+- [x] Ensure all `project-rules.md` constraints remain fully aligned with the assessment PDF.
 
 ## Core Engine & Camera
 - [x] Add interactive camera controls (`OrbitControls`) with smooth damping/lerping.
@@ -84,7 +84,7 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] Set maximum and minimum zoom bounds so the user can always see the entire experiment without clipping inside objects.
 - [x] Ensure the absolute Reset button restores the camera to its default position and tilt.
 - [x] Improve the visibility and placement of the floating camera controls hint (added high-contrast frosted glass pill).
-- [ ] Ensure changes maintain a defined grid or modular area so the master scene remains fully modular.
+- [x] Ensure changes maintain a defined grid or modular area so the master scene remains fully modular.
 
 ## UI & Layout
 - [x] Fix the blurry Chart.js measurement graph on smaller screens and high-DPI displays.
@@ -94,8 +94,8 @@ Projectile Motion A projectile launched at a chosen speed and angle, subject to 
 - [x] Improve UI text readability (increased contrast for descriptions and labels).
 - [x] Fix the time-scale slider width and make it adjustable while the experiment is running in play mode.
 - [x] Ensure the absolute Reset button fully restores playback state (un-pauses, resets time scale, resets parameters).
-- [ ] Add tooltips on hover to explain to the user exactly what each parameter does.
-- [ ] Better utilize UI spacing (e.g., adding a sci-fi top base, making meshes larger, and reducing empty dark areas).
+- [x] Add tooltips on hover to explain to the user exactly what each parameter does.
+- [x] Better utilize UI spacing (e.g., adding a sci-fi top base, making meshes larger, and reducing empty dark areas).
 - [x] Add the ability for the user to change the color scheme of the UI based on 10 different established color schemes to allow for better visibility for all users.
 
 ## Physics & Experiments
